@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Font Name="Tahoma" Size="8.25" />
+  <Class Name="Enyim.Caching.Memcached.MemcachedClientException" Collapsed="true">
+    <Position X="11.25" Y="3.5" Width="2.25" />
+    <TypeIdentifier>
+      <FileName>Memcached\MemcachedClientException.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.MemcachedException" Collapsed="true">
+    <Position X="11.25" Y="2.25" Width="2.25" />
+    <TypeIdentifier>
+      <FileName>Memcached\MemcachedException.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.MemcachedNode" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="10" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\MemcachedServer.cs</FileName>
+      <HashCode>AQEAAAAAACgFQABFEkAACAAAQCAIDECAAAABCBEAAAI=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.DeleteOperation" Collapsed="true">
+    <Position X="8.25" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\Operations\DeleteOperation.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.GetOperation" Collapsed="true">
+    <Position X="3.25" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\Operations\GetOperation.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAABAAACAQAAAAAAAAAAAAAABAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.StoreOperation" Collapsed="true">
+    <Position X="5.75" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\Operations\StoreOperation.cs</FileName>
+      <HashCode>AAAAAIAAAAgAAQCAAAAAAAAAAAAgACAACAAAARBAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.PooledSocket" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="11.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\PooledSocket.cs</FileName>
+      <HashCode>AQFAAAAAACAIRAAAAAAAKAAgAAxAAAIACAERCAEAQAA=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.ServerPool" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="10" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\ServerPool.cs</FileName>
+      <HashCode>BAAgAAwAAACIAAIAgkAEACABAACIAiAAACAhAAQAAAA=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.IncrementOperation" Collapsed="true">
+    <Position X="4.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\Operations\IncrementOperation.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAABAAAAAQAAAAAgAAAAAAAABAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.DecrementOperation" Collapsed="true">
+    <Position X="7" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\Operations\DecrementOperation.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAABAAAAAQAAAAAgAAAAAAAABAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.Operation" Collapsed="true">
+    <Position X="3.75" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\Operations\Operation.cs</FileName>
+      <HashCode>AAAAAAAAACAAAAQAEEAACABAAgAAAAIAAAABCBAAAAA=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.StatsOperation" Collapsed="true">
+    <Position X="4" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\Operations\StatsOperation.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAACAAACAAAAAgAAAAAABAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.ItemOperation" Collapsed="true">
+    <Position X="5.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\Operations\ItemOperation.cs</FileName>
+      <HashCode>BAAAAAQAACAAAAQAAAAECAAAAAAAAQAAAAEAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.FlushOperation" Collapsed="true">
+    <Position X="2.25" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\Operations\FlushOperation.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.MultiGetOperation" Collapsed="true">
+    <Position X="0.5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\Operations\MultiGetOperation.cs</FileName>
+      <HashCode>AAAAAAAAAAgIAAAIBAAACAQAAAAAAAAAAAAAABAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.Base64KeyTransformer" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="11.75" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\KeyTransformers\Base64Transformer.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAA=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.TigerHashKeyTransformer" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="13.5" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\KeyTransformers\TigerHashTransformer.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAA=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.DefaultKeyTransformer" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="13.5" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\KeyTransformers\DefaultKeyTransformer.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAEAAAAAAA=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Enyim.Caching.Memcached.SHA1KeyTransformer" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="11.75" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\KeyTransformers\SHA1HashTransformer.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAA=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Interface Name="Enyim.Caching.IKeyTransformer">
+    <Position X="10" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>IKeyTransformer.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="Enyim.Caching.Memcached.StoreMode" Collapsed="true">
+    <Position X="11.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Memcached\StoreMode.cs</FileName>
+      <HashCode>AAIAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAACA=</HashCode>
+    </TypeIdentifier>
+  </Enum>
+</ClassDiagram>

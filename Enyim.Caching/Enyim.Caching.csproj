@@ -1,0 +1,122 @@
+﻿<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{D438C0B3-A168-40B8-BDDD-61F0939DFF35}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Enyim.Caching</RootNamespace>
+    <AssemblyName>Enyim.Caching</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;SIGN</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile>bin\Release\Enyim.Caching.XML</DocumentationFile>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRules>-Microsoft.Design#CA1020;-Microsoft.Naming#CA1709;-Microsoft.Naming#CA1704</CodeAnalysisRules>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\binaries\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Configuration\ConfigurationHelper.cs" />
+    <Compile Include="HashCodeCombiner.cs" />
+    <Compile Include="InterlockedQueue.cs" />
+    <Compile Include="Memcached\CommandNotSupportedException.cs" />
+    <Compile Include="Memcached\IMemcachedKeyTransformer.cs" />
+    <Compile Include="Memcached\KeyTransformers\Base64KeyTransformer.cs" />
+    <Compile Include="Memcached\KeyTransformers\DefaultKeyTransformer.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\KeyTransformers\KeyTransformerBase.cs" />
+    <Compile Include="Memcached\KeyTransformers\SHA1KeyTransformer.cs" />
+    <Compile Include="Memcached\KeyTransformers\TigerHashKeyTransformer.cs" />
+    <Compile Include="Memcached\MemcachedNode.cs" />
+    <Compile Include="Memcached\InstancePerformanceCounters.cs" />
+    <Compile Include="Memcached\InstancePerformanceCountersInstaller.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Memcached\SingleNodeLocator.cs" />
+    <Compile Include="Memcached\StatItem.cs" />
+    <Compile Include="Memcached\Transcoders\DefaultTranscoder.cs" />
+    <Compile Include="Configuration\IMemcachedClientConfiguration.cs" />
+    <Compile Include="Configuration\EndPointElement.cs" />
+    <Compile Include="Configuration\InterfaceValidator.cs" />
+    <Compile Include="Configuration\ISocketPoolConfiguration.cs" />
+    <Compile Include="Configuration\MemcachedClientConfiguration.cs" />
+    <Compile Include="Configuration\SocketPoolElement.cs" />
+    <Compile Include="Configuration\EndPointElementCollection.cs" />
+    <Compile Include="FastActivator.cs" />
+    <Compile Include="IFastObjectFacory.cs" />
+    <Compile Include="Memcached\DefaultNodeLocator.cs" />
+    <Compile Include="Memcached\IMemcachedNodeLocator.cs" />
+    <Compile Include="Memcached\Operations\GetHelper.cs" />
+    <Compile Include="Memcached\Operations\MultiGetOperation.cs" />
+    <Compile Include="Memcached\Operations\StatsOperation.cs" />
+    <Compile Include="Memcached\Operations\DecrementOperation.cs" />
+    <Compile Include="Memcached\Operations\DeleteOperation.cs" />
+    <Compile Include="FnvHash.cs" />
+    <Compile Include="Memcached\Operations\FlushOperation.cs" />
+    <Compile Include="Memcached\Operations\GetOperation.cs" />
+    <Compile Include="MemcachedClient.cs" />
+    <Compile Include="Memcached\MemcachedClientException.cs" />
+    <Compile Include="Configuration\MemcachedClientSection.cs" />
+    <Compile Include="Memcached\MemcachedException.cs" />
+    <Compile Include="Memcached\Operations\ItemOperation.cs" />
+    <Compile Include="Memcached\Operations\IncrementOperation.cs" />
+    <Compile Include="Memcached\Operations\Operation.cs" />
+    <Compile Include="Memcached\PooledSocket.cs" />
+    <Compile Include="Memcached\ServerStats.cs" />
+    <Compile Include="Memcached\ThrowHelper.cs" />
+    <Compile Include="Memcached\Transcoders\CacheItem.cs" />
+    <Compile Include="Memcached\Transcoders\ITranscoder.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Memcached\ServerPool.cs" />
+    <Compile Include="Memcached\StoreMode.cs" />
+    <Compile Include="Memcached\Operations\StoreOperation.cs" />
+    <Compile Include="TigerHash.cs" />
+    <Compile Include="UIntEqualityComparer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="Memcached.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="License.html" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRunConfiguration id="5324c468-b0c9-4664-8fc7-767ed081d0d6" name="Local Test Run" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2006">
+  <Description>This is a default test run configuration for a local test run.</Description>
+  <CodeCoverage enabled="true" instrumentInPlace="true" keyFile="D:\Enyim\keys\enyim.snk">
+    <Regular>
+      <CodeCoverageItem binaryFile="Enyim.Caching\bin\Debug\Enyim.Caching.dll" pdbFile="Enyim.Caching\bin\Debug\Enyim.Caching.pdb" />
+    </Regular>
+    <AspNet />
+  </CodeCoverage>
+  <Timeouts runTimeout="0" testTimeout="0" agentNotRespondingTimeout="300000" deploymentTimeout="300000" />
+  <Deployment />
+  <NamingScheme baseName="Memcached" useDefault="false" />
+  <Hosts />
+</TestRunConfiguration>
