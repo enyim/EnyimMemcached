@@ -34,7 +34,7 @@ namespace Enyim.Caching
 		}
 
 		/// <summary>
-		/// Initializes a new MemcacedClient instance using the specified configuration section. 
+		/// Initializes a new MemcachedClient instance using the specified configuration section. 
 		/// This overload allows to create multiple MemcachedClients with different pool configurations.
 		/// </summary>
 		/// <param name="sectionName">The name of the configuration section to be used for configuring the behavior of the client.</param>
@@ -46,7 +46,6 @@ namespace Enyim.Caching
 
 			this.pool = new ServerPool(section);
 		}
-
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClient"/> using the specified configuration.

@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace Enyim.Caching.Memcached
 {
-	internal class InstancePerformanceCounters : IDisposable
+	internal class InstancePerformanceCounters : IPerformanceCounters
 	{
 		private static InstancePerformanceCounters GlobalInstance = new InstancePerformanceCounters(String.Empty);
 
@@ -257,7 +257,25 @@ namespace Enyim.Caching.Memcached
 			public const string CategoryName = "Enyim.Caching.Memcached";
 		}
 		#endregion
-		#region [ IDisposable implementation   ]
+		#region [ IPerformanceCounters         ]
+
+		void IPerformanceCounters.LogGet(bool success)
+		{
+			this.LogGet(success);
+		}
+
+		void IPerformanceCounters.LogStore(StoreCommand cmd, bool success)
+		{
+			this.LogStore(cmd, success);
+		}
+
+		void IPerformanceCounters.LogDelete(bool success)
+		{
+			this.LogDelete(success);
+		}
+
+		#endregion
+		#region [ IDisposable                  ]
 		public void Dispose()
 		{
 			if (this.pcAdd_PerSec != null)
@@ -350,5 +368,30 @@ namespace Enyim.Caching.Memcached
 			this.Dispose();
 		}
 		#endregion
+	}
+
+	class NullPerformanceCounter : IPerformanceCounters
+	{
+		#region [ IPerformanceCounters         ]
+
+		void IPerformanceCounters.LogGet(bool success) { }
+		void IPerformanceCounters.LogStore(StoreCommand cmd, bool success) { }
+		void IPerformanceCounters.LogDelete(bool success) { }
+
+		#endregion
+		#region [ IDisposable                  ]
+
+		void IDisposable.Dispose()
+		{
+		}
+
+		#endregion
+	}
+
+	interface IPerformanceCounters : IDisposable
+	{
+		void LogGet(bool success);
+		void LogStore(StoreCommand cmd, bool success);
+		void LogDelete(bool success);
 	}
 }

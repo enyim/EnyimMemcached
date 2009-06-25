@@ -14,7 +14,7 @@ namespace Enyim.Caching.Memcached
 {
 	internal class ServerPool : IDisposable
 	{
-		private static MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
+		internal static MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
 
 		// holds all dead servers which will be periodically rechecked and put back into the working servers if found alive
 		List<MemcachedNode> deadServers = new List<MemcachedNode>();
@@ -44,19 +44,17 @@ namespace Enyim.Caching.Memcached
 
 			// create the key transformer instance
 			Type t = this.configuration.KeyTransformer;
-			this.keyTransformer = (t == null) ? new DefaultKeyTransformer() : (IMemcachedKeyTransformer)Activator.CreateInstance(t);
+			this.keyTransformer = (t == null) ? new DefaultKeyTransformer() : (IMemcachedKeyTransformer)Enyim.Reflection.FastActivator.CreateInstance(t);
 
 			// create the item transcoder instance
 			t = this.configuration.Transcoder;
-			this.transcoder = (t == null) ? new DefaultTranscoder() : (ITranscoder)Activator.CreateInstance(t);
-
-
+			this.transcoder = (t == null) ? new DefaultTranscoder() : (ITranscoder)Enyim.Reflection.FastActivator.CreateInstance(t);
+			
 			// initialize the server list
-			ISocketPoolConfiguration ispc = configuration.SocketPool;
 			
 			foreach (IPEndPoint ip in configuration.Servers)
 			{
-				this.workingServers.Add(MemcachedNode.Factory.Get(ip, ispc));
+				this.workingServers.Add(MemcachedNode.Factory.Get(ip, configuration));
 			}
 
 			// (re)creates the locator

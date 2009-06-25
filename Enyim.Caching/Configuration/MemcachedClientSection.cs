@@ -65,6 +65,17 @@ namespace Enyim.Caching.Configuration
 		}
 
 		/// <summary>
+		/// Gets or sets a value indicating whether operation statistics are created using Windows Performance Counters.
+		/// </summary>
+		/// <remarks>This is set to false by default so the application using this library will work even if teh performance counters are not installed.</remarks>
+		[ConfigurationProperty("enablePerformanceCounters", IsRequired = false, DefaultValue = false)]
+		public bool EnablePerformanceCounters
+		{
+			get { return (bool)base["enablePerformanceCounters"]; }
+			set { base["enablePerformanceCounters"] = value; }
+		}
+
+		/// <summary>
 		/// Called after deserialization.
 		/// </summary>
 		protected override void PostDeserialize()

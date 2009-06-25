@@ -25,25 +25,26 @@ namespace Enyim.Caching.Memcached
 		private IPEndPoint endPoint;
 		private ISocketPoolConfiguration config;
 		private InternalPoolImpl internalPoolImpl;
-		private InstancePerformanceCounters perfomanceCounters;
 
-		private MemcachedNode(IPEndPoint endpoint, ISocketPoolConfiguration config)
+		private MemcachedNode(IPEndPoint endpoint, IMemcachedClientConfiguration clientConfig)
 		{
-			this.endPoint = endpoint;
-			this.config = config;
-			this.internalPoolImpl = new InternalPoolImpl(this, config);
+			var ispc = clientConfig.SocketPool;
 
-			this.deadTimeout = (int)config.DeadTimeout.TotalSeconds;
+			this.endPoint = endpoint;
+			this.config = ispc;
+			this.internalPoolImpl = new InternalPoolImpl(this, ispc);
+
+			this.deadTimeout = (int)ispc.DeadTimeout.TotalSeconds;
 			if (this.deadTimeout < 0)
 				throw new InvalidOperationException("deadTimeout must be >= TimeSpan.Zero");
 
-			this.perfomanceCounters = new InstancePerformanceCounters(this);
+			if (clientConfig.EnablePerformanceCounters)
+				this.PerfomanceCounters = new InstancePerformanceCounters(this);
+			else
+				this.PerfomanceCounters = new NullPerformanceCounter();
 		}
 
-		internal InstancePerformanceCounters PerfomanceCounters
-		{
-			get { return this.perfomanceCounters; }
-		}
+		internal IPerformanceCounters PerfomanceCounters { get; private set; }
 
 		/// <summary>
 		/// Gets the <see cref="T:IPEndPoint"/> of this instance
@@ -136,8 +137,8 @@ namespace Enyim.Caching.Memcached
 				this.internalPoolImpl.Dispose();
 				this.internalPoolImpl = null;
 
-				this.perfomanceCounters.Dispose();
-				this.perfomanceCounters = null;
+				this.PerfomanceCounters.Dispose();
+				this.PerfomanceCounters = null;
 			}
 		}
 
@@ -459,14 +460,16 @@ namespace Enyim.Caching.Memcached
 				AppDomain.CurrentDomain.DomainUnload += DestroyPool;
 			}
 
-			public MemcachedNode Get(IPEndPoint endpoint, ISocketPoolConfiguration config)
+			public MemcachedNode Get(IPEndPoint endpoint, IMemcachedClientConfiguration config)
 			{
+				var ispc = config.SocketPool;
+
 				string cacheKey = String.Concat(endpoint.ToString(), "-",
-													config.ConnectionTimeout.Ticks, "-",
-													config.DeadTimeout.Ticks, "-",
-													config.MaxPoolSize, "-",
-													config.MinPoolSize, "-",
-													config.ReceiveTimeout.Ticks);
+													ispc.ConnectionTimeout.Ticks, "-",
+													ispc.DeadTimeout.Ticks, "-",
+													ispc.MaxPoolSize, "-",
+													ispc.MinPoolSize, "-",
+													ispc.ReceiveTimeout.Ticks);
 
 				MemcachedNode node;
 

@@ -53,6 +53,12 @@ namespace Enyim.Caching.Configuration
 			get;
 			set;
 		}
+
+		bool EnablePerformanceCounters
+		{
+			get;
+			set;
+		}
 	}
 }
 

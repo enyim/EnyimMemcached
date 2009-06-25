@@ -24,6 +24,8 @@ namespace Enyim.Caching.Configuration
 		{
 			this.servers = new List<IPEndPoint>();
 			this.socketPool = new _SocketPoolConfig();
+
+			this.EnablePerformanceCounters = false;
 		}
 
 		/// <summary>
@@ -84,6 +86,12 @@ namespace Enyim.Caching.Configuration
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets a value indicating whether operation statistics are created using Windows Performance Counters.
+		/// </summary>
+		/// <remarks>This is set to false by default so the application using this library will work even if teh performance counters are not installed.</remarks>
+		public bool EnablePerformanceCounters { get; set; }
+
 		#region [ IMemcachedClientConfiguration]
 
 		IList<System.Net.IPEndPoint> IMemcachedClientConfiguration.Servers
@@ -112,6 +120,12 @@ namespace Enyim.Caching.Configuration
 		{
 			get { return this.Transcoder; }
 			set { this.Transcoder = value; }
+		}
+
+		bool IMemcachedClientConfiguration.EnablePerformanceCounters
+		{
+			get { return this.EnablePerformanceCounters; }
+			set { this.EnablePerformanceCounters = value; }
 		}
 		#endregion
 		#region [ T:SocketPoolConfig           ]
