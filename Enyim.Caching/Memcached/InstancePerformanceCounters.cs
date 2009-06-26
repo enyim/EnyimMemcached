@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
+using System.Configuration;
 
 namespace Enyim.Caching.Memcached
 {
@@ -100,10 +101,17 @@ namespace Enyim.Caching.Memcached
 
 		private PerformanceCounter CreateCounter(string name)
 		{
-			PerformanceCounter retval = new PerformanceCounter(Names.CategoryName, name, this.instanceName, false);
-			retval.RawValue = 0;
+			try
+			{
+				PerformanceCounter retval = new PerformanceCounter(Names.CategoryName, name, this.instanceName, false);
+				retval.RawValue = 0;
 
-			return retval;
+				return retval;
+			}
+			catch (Exception e)
+			{
+				throw new ConfigurationErrorsException(String.Format("Could not create performance counter {0}::{1}. Make sure the counters are installed using installutil.", this.instanceName, name), e);
+			}
 		}
 
 		public void LogGet(bool success)
@@ -370,7 +378,7 @@ namespace Enyim.Caching.Memcached
 		#endregion
 	}
 
-	class NullPerformanceCounter : IPerformanceCounters
+	internal class NullPerformanceCounter : IPerformanceCounters
 	{
 		#region [ IPerformanceCounters         ]
 
@@ -388,7 +396,7 @@ namespace Enyim.Caching.Memcached
 		#endregion
 	}
 
-	interface IPerformanceCounters : IDisposable
+	internal interface IPerformanceCounters : IDisposable
 	{
 		void LogGet(bool success);
 		void LogStore(StoreCommand cmd, bool success);

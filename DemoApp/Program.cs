@@ -15,7 +15,6 @@ namespace DemoApp
 			// create a MemcachedClient
 			// in your application you can cache the client in a static variable or just recreate it every time
 			MemcachedClient mc = new MemcachedClient();
-			mc.Get("");
 
 			// you can create another client using a different section from your app/web.config
 			// this client instance can have different pool settings, key transformer, etc.

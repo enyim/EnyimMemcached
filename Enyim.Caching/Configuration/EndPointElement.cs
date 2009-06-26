@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using System.Configuration;
@@ -15,7 +16,7 @@ namespace Enyim.Caching.Configuration
 		/// <summary>
 		/// Gets or sets the ip address of the node.
 		/// </summary>
-		[ConfigurationProperty("address", IsRequired = true, IsKey = true), ConfigurationValidator(typeof(EndPointElement.IPAddressValidator))]
+		[ConfigurationProperty("address", IsRequired = true, IsKey = true)]
 		public string Address
 		{
 			get { return (string)base["address"]; }
@@ -37,7 +38,26 @@ namespace Enyim.Caching.Configuration
 		/// </summary>
 		public System.Net.IPEndPoint EndPoint
 		{
-			get { return (this.endpoint ?? (this.endpoint = new System.Net.IPEndPoint(System.Net.IPAddress.Parse(this.Address), this.Port))); }
+			get
+			{
+				if (this.endpoint == null)
+				{
+					var entry = System.Net.Dns.GetHostEntry(this.Address);
+					var list = entry.AddressList;
+
+					if (list.Length == 0)
+						throw new ConfigurationErrorsException(String.Format("Could not resolve host '{0}'.", this.Address));
+
+					// get the first IPv4 address from the list (not sure how memcached works against ipv6 addresses whihc are not localhost)
+					var address = list.Where(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).FirstOrDefault();
+					if (address == null)
+						throw new ConfigurationErrorsException(String.Format("Host '{0}' does not have an IPv4 address.", this.Address));
+						
+					this.endpoint = new System.Net.IPEndPoint(address, this.Port);
+				}
+
+				return this.endpoint;
+			}
 		}
 
 		#region [ T:IPAddressValidator         ]
