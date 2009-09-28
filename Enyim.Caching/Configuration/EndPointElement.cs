@@ -1,8 +1,8 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using System.Configuration;
+using System.Net;
 
 namespace Enyim.Caching.Configuration
 {
@@ -49,7 +49,13 @@ namespace Enyim.Caching.Configuration
 						throw new ConfigurationErrorsException(String.Format("Could not resolve host '{0}'.", this.Address));
 
 					// get the first IPv4 address from the list (not sure how memcached works against ipv6 addresses whihc are not localhost)
-					var address = list.Where(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).FirstOrDefault();
+                    IPAddress address = null;
+                    for (int i = 0; i < list.Length; i++) {
+                        if (list[i].AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) {
+                            address = list[i];
+                            break;
+                        }
+                    }
 					if (address == null)
 						throw new ConfigurationErrorsException(String.Format("Host '{0}' does not have an IPv4 address.", this.Address));
 						
