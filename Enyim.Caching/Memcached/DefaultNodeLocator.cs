@@ -62,8 +62,7 @@ namespace Enyim.Caching.Memcached
 			if (this.keys.Length == 0)
 				return null;
 
-			uint itemKeyHash = BitConverter.ToUInt32(new FNV1a().ComputeHash(Encoding.Unicode.GetBytes(key)), 0);
-
+			uint itemKeyHash = BitConverter.ToUInt32(new FNV1a().ComputeHash(Encoding.UTF8.GetBytes(key)), 0);
 			// get the index of the server assigned to this hash
 			int foundIndex = Array.BinarySearch<uint>(this.keys, itemKeyHash);
 
