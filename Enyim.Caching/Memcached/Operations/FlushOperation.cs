@@ -14,8 +14,10 @@ namespace Enyim.Caching.Memcached
 			{
 				using (PooledSocket ps = server.Acquire())
 				{
-					if (ps != null)
-						ps.SendCommand("flush_all");
+                    if (ps != null) {
+                        ps.SendCommand("flush_all");
+                        ps.ReadResponse(); // No-op the response to avoid data hanging around.
+                    }
 				}
 			}
 
