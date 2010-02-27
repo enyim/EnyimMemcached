@@ -66,6 +66,17 @@
     <Compile Include="Memcached\InstancePerformanceCountersInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Memcached\Operations\Text\DecrementOperation.cs" />
+    <Compile Include="Memcached\Operations\Text\DeleteOperation.cs" />
+    <Compile Include="Memcached\Operations\Text\FlushOperation.cs" />
+    <Compile Include="Memcached\Operations\Text\GetHelper.cs" />
+    <Compile Include="Memcached\Operations\Text\GetOperation.cs" />
+    <Compile Include="Memcached\Operations\Text\IncrementOperation.cs" />
+    <Compile Include="Memcached\Operations\Text\ItemOperation.cs" />
+    <Compile Include="Memcached\Operations\Text\MultiGetOperation.cs" />
+    <Compile Include="Memcached\Operations\Text\Operation.cs" />
+    <Compile Include="Memcached\Operations\Text\StatsOperation.cs" />
+    <Compile Include="Memcached\Operations\Text\StoreOperation.cs" />
     <Compile Include="Memcached\SingleNodeLocator.cs" />
     <Compile Include="Memcached\StatItem.cs" />
     <Compile Include="Memcached\Transcoders\DefaultTranscoder.cs" />
@@ -80,21 +91,11 @@
     <Compile Include="IFastObjectFacory.cs" />
     <Compile Include="Memcached\DefaultNodeLocator.cs" />
     <Compile Include="Memcached\IMemcachedNodeLocator.cs" />
-    <Compile Include="Memcached\Operations\GetHelper.cs" />
-    <Compile Include="Memcached\Operations\MultiGetOperation.cs" />
-    <Compile Include="Memcached\Operations\StatsOperation.cs" />
-    <Compile Include="Memcached\Operations\DecrementOperation.cs" />
-    <Compile Include="Memcached\Operations\DeleteOperation.cs" />
     <Compile Include="FnvHash.cs" />
-    <Compile Include="Memcached\Operations\FlushOperation.cs" />
-    <Compile Include="Memcached\Operations\GetOperation.cs" />
     <Compile Include="MemcachedClient.cs" />
     <Compile Include="Memcached\MemcachedClientException.cs" />
     <Compile Include="Configuration\MemcachedClientSection.cs" />
     <Compile Include="Memcached\MemcachedException.cs" />
-    <Compile Include="Memcached\Operations\ItemOperation.cs" />
-    <Compile Include="Memcached\Operations\IncrementOperation.cs" />
-    <Compile Include="Memcached\Operations\Operation.cs" />
     <Compile Include="Memcached\PooledSocket.cs" />
     <Compile Include="Memcached\ServerStats.cs" />
     <Compile Include="Memcached\ThrowHelper.cs" />
@@ -103,7 +104,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Memcached\ServerPool.cs" />
     <Compile Include="Memcached\StoreMode.cs" />
-    <Compile Include="Memcached\Operations\StoreOperation.cs" />
     <Compile Include="TigerHash.cs" />
     <Compile Include="UIntEqualityComparer.cs" />
   </ItemGroup>
