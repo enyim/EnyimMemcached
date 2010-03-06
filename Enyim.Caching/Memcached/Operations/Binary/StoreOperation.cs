@@ -46,9 +46,8 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			request.Write(this.Socket);
 
 			BinaryResponse response = new BinaryResponse();
-			response.Read(this.Socket);
+			bool retval = response.Read(this.Socket);
 
-			bool retval = response.StatusCode == 0;
 			this.Socket.OwnerNode.PerfomanceCounters.LogStore(mode, retval);
 
 			return retval;

@@ -25,7 +25,8 @@ namespace Enyim.Caching.Memcached
 		bool Store(StoreMode mode, string key, object value, uint expiration);
 		bool Delete(string key);
 		ulong Mutate(MutationMode mode, string key, ulong startValue, ulong step, uint expiration);
-	}
+		bool Concatenate(ConcatenationMode mode, string key, ArraySegment<byte> data);
 
-	public enum MutationMode { Increment, Decrement };
+		void FlushAll();
+	}
 }

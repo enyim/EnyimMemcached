@@ -10,13 +10,13 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			PooledSocket socket = this.Socket;
 			if (socket == null) return false;
 
-			BinaryRequest request = new BinaryRequest(OpCode.Delete) { Key = this.HashedKey };
+			BinaryRequest request = new BinaryRequest(OpCode.Delete);
+			request.Key = this.HashedKey;
 			request.Write(this.Socket);
 
 			BinaryResponse response = new BinaryResponse();
-			response.Read(this.Socket);
 
-			bool retval = response.Success;
+			bool retval = response.Read(this.Socket);
 
 			this.Socket.OwnerNode.PerfomanceCounters.LogDelete(retval);
 			return retval;

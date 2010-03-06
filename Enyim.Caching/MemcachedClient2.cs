@@ -120,33 +120,20 @@ namespace Enyim.Caching
 			return this.protocol.Mutate(MutationMode.Decrement, key, defaultValue, step, MemcachedClient2.GetExpiration(null, expiresAt));
 		}
 
-		void IDisposable.Dispose()
+		public bool Append(string key, ArraySegment<byte> data)
 		{
-			this.Dispose();
+			return this.protocol.Concatenate(ConcatenationMode.Append, key, data);
 		}
 
-		/// <summary>
-		/// Releases all resources allocated by this instance
-		/// </summary>
-		/// <remarks>Technically it's not really neccesary to call this, since the client does not create "really" disposable objects, so it's safe to assume that when 
-		/// the AppPool shuts down all resources will be released correctly and no handles or such will remain in the memory.</remarks>
-		public void Dispose()
+		public bool Prepend(string key, ArraySegment<byte> data)
 		{
-			if (this.protocol == null)
-				throw new ObjectDisposedException("MemcachedClient");
-
-			GC.SuppressFinalize(this);
-
-			try
-			{
-				this.protocol.Dispose();
-			}
-			finally
-			{
-				this.protocol = null;
-			}
+			return this.protocol.Concatenate(ConcatenationMode.Prepend, key, data);
 		}
 
+		public void FlushAll()
+		{
+			this.protocol.FlushAll();
+		}
 
 		private const int MaxSeconds = 60 * 60 * 24 * 30;
 		private static readonly DateTime UnixEpoch = new DateTime(1971, 1, 1);
@@ -174,7 +161,34 @@ namespace Enyim.Caching
 			return (uint)ts.TotalSeconds;
 		}
 
+		#region [ IDisposable                  ]
+		void IDisposable.Dispose()
+		{
+			this.Dispose();
+		}
 
+		/// <summary>
+		/// Releases all resources allocated by this instance
+		/// </summary>
+		/// <remarks>Technically it's not really neccesary to call this, since the client does not create "really" disposable objects, so it's safe to assume that when 
+		/// the AppPool shuts down all resources will be released correctly and no handles or such will remain in the memory.</remarks>
+		public void Dispose()
+		{
+			if (this.protocol == null)
+				throw new ObjectDisposedException("MemcachedClient");
+
+			GC.SuppressFinalize(this);
+
+			try
+			{
+				this.protocol.Dispose();
+			}
+			finally
+			{
+				this.protocol = null;
+			}
+		}
+		#endregion
 	}
 }
 

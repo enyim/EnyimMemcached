@@ -10,7 +10,6 @@ namespace Enyim.Caching.Memcached.Operations
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(Operation));
 
 		private bool isDisposed;
-		private bool success;
 		private ServerPool serverPool;
 
 		protected Operation(ServerPool serverPool)

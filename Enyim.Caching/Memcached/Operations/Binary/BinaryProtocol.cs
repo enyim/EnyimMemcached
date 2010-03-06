@@ -84,6 +84,22 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				return g.Execute();
 			}
 		}
+
+		void IProtocolImplementation.FlushAll()
+		{
+			using (FlushOperation f = new FlushOperation(this.pool))
+			{
+				f.Execute();
+			}
+		}
+
+		bool IProtocolImplementation.Concatenate(ConcatenationMode mode, string key, ArraySegment<byte> data)
+		{
+			using (ConcatenationOperation co = new ConcatenationOperation(this.pool, mode, key, data))
+			{
+				return co.Execute();
+			}
+		}
 	}
 }
 

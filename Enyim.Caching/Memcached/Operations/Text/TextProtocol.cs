@@ -74,10 +74,10 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 		ulong IProtocolImplementation.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expiration)
 		{
-			IMutatorOperation op = mode == MutationMode.Increment 
-									? ((IMutatorOperation)new IncrementOperation(this.pool, key, delta)) 
+			IMutatorOperation op = mode == MutationMode.Increment
+									? ((IMutatorOperation)new IncrementOperation(this.pool, key, delta))
 									: ((IMutatorOperation)new DecrementOperation(this.pool, key, delta));
-			
+
 			return op.Execute() ? 0 : op.Result;
 		}
 
@@ -88,6 +88,31 @@ namespace Enyim.Caching.Memcached.Operations.Text
 				return d.Execute();
 			}
 		}
+
+		void IProtocolImplementation.FlushAll()
+		{
+			using (FlushOperation f = new FlushOperation(this.pool))
+			{
+				f.Execute();
+			}
+		}
+
+		#region IProtocolImplementation Members
+
+
+		bool IProtocolImplementation.Concatenate(ConcatenationMode mode, string key, ArraySegment<byte> data)
+		{
+			StoreCommand command = mode == ConcatenationMode.Append
+									? StoreCommand.Append
+									: StoreCommand.Prepend;
+
+			using (StoreOperation so = new StoreOperation(this.pool, command, key, data, 0))
+			{
+				return so.Execute();
+			}
+		}
+
+		#endregion
 	}
 
 }

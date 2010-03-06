@@ -42,15 +42,15 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			PooledSocket socket = this.Socket;
 			if (socket == null) return false;
 
-			BinaryRequest request = new BinaryRequest(this.mode == MutationMode.Increment ? OpCode.Increment : OpCode.Decrement) { Key = this.HashedKey };
+			BinaryRequest request = new BinaryRequest(this.mode == MutationMode.Increment ? OpCode.Increment : OpCode.Decrement);
+			request.Key = this.HashedKey;
+
 			this.UpdateExtra(request);
 
 			request.Write(this.Socket);
 
 			BinaryResponse response = new BinaryResponse();
-			response.Read(this.Socket);
-
-			bool retval = response.Success;
+			bool retval = response.Read(this.Socket);
 			if (retval)
 			{
 				ArraySegment<byte> data = response.Data;

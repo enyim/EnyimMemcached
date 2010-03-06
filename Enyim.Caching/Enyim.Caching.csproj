@@ -52,6 +52,9 @@
   <ItemGroup>
     <Compile Include="Configuration\ConfigurationHelper.cs" />
     <Compile Include="MemcachedClient2.cs" />
+    <Compile Include="Memcached\Enums.cs" />
+    <Compile Include="Memcached\Operations\Binary\ConcatenationOperation.cs" />
+    <Compile Include="Memcached\Operations\Binary\FlushOperation.cs" />
     <Compile Include="Memcached\Operations\Text\TextProtocol.cs" />
     <Compile Include="Memcached\MemcachedProtocol.cs" />
     <Compile Include="Memcached\Operations\Binary\BinaryProtocol.cs" />

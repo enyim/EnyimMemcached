@@ -22,13 +22,17 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		public uint Opaque;
 		public ulong CAS;
 
-		public bool Success;
-
 		public ArraySegment<byte> Extra;
 		public ArraySegment<byte> Data;
 
-		public unsafe void Read(PooledSocket socket)
+		public unsafe bool Read(PooledSocket socket)
 		{
+			if (!socket.IsAlive)
+			{
+				this.StatusCode = -1;
+				return false;
+			}
+
 			byte[] header = new byte[24];
 			socket.Read(header, 0, 24);
 
@@ -55,7 +59,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				this.CAS = BinaryConverter.DecodeUInt64(buffer, HEADER_CAS);
 			}
 
-			this.Success = this.StatusCode == 0;
+			return this.StatusCode == 0;
 		}
 	}
 }

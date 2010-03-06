@@ -10,23 +10,23 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			PooledSocket socket = this.Socket;
 			if (socket == null) return false;
 
-			BinaryRequest request = new BinaryRequest(OpCode.Get) { Key = this.HashedKey };
+			BinaryRequest request = new BinaryRequest(OpCode.Get);
+			request.Key = this.HashedKey;
 			request.Write(this.Socket);
 
 			BinaryResponse response = new BinaryResponse();
-			response.Read(this.Socket);
 
-			if (response.StatusCode != 0)
+			if (response.Read(this.Socket))
 			{
-				this.Socket.OwnerNode.PerfomanceCounters.LogGet(false);
-				return false;
+				int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
+				this.result = this.ServerPool.Transcoder.Deserialize(new CacheItem((ushort)flags, response.Data));
+				this.Socket.OwnerNode.PerfomanceCounters.LogGet(true);
+
+				return true;
 			}
 
-			int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
-			this.result = this.ServerPool.Transcoder.Deserialize(new CacheItem((ushort)flags, response.Data));
-			this.Socket.OwnerNode.PerfomanceCounters.LogGet(true);
-
-			return true;
+			this.Socket.OwnerNode.PerfomanceCounters.LogGet(false);
+			return false;
 		}
 
 		private object result;
