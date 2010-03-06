@@ -100,6 +100,16 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				return co.Execute();
 			}
 		}
+
+		ServerStats IProtocolImplementation.Stats()
+		{
+			using (StatsOperation so = new StatsOperation(this.pool))
+			{
+				so.Execute();
+
+				return so.Results;
+			}
+		}
 	}
 }
 

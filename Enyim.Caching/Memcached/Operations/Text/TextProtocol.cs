@@ -97,9 +97,6 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			}
 		}
 
-		#region IProtocolImplementation Members
-
-
 		bool IProtocolImplementation.Concatenate(ConcatenationMode mode, string key, ArraySegment<byte> data)
 		{
 			StoreCommand command = mode == ConcatenationMode.Append
@@ -112,9 +109,17 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			}
 		}
 
-		#endregion
-	}
 
+		ServerStats IProtocolImplementation.Stats()
+		{
+			using (StatsOperation so = new StatsOperation(this.pool))
+			{
+				so.Execute();
+
+				return so.Results;
+			}
+		}
+	}
 }
 
 #region [ License information          ]

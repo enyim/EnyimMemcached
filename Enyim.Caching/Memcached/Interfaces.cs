@@ -28,5 +28,6 @@ namespace Enyim.Caching.Memcached
 		bool Concatenate(ConcatenationMode mode, string key, ArraySegment<byte> data);
 
 		void FlushAll();
+		ServerStats Stats();
 	}
 }

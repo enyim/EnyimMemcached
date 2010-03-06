@@ -135,6 +135,11 @@ namespace Enyim.Caching
 			this.protocol.FlushAll();
 		}
 
+		public ServerStats Stats()
+		{
+			return this.protocol.Stats();
+		}
+
 		private const int MaxSeconds = 60 * 60 * 24 * 30;
 		private static readonly DateTime UnixEpoch = new DateTime(1971, 1, 1);
 
