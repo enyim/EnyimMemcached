@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Configuration;
 using System.ComponentModel;
-using System.Threading;
+using System.Configuration;
 
 namespace Enyim.Caching.Configuration
 {

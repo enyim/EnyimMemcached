@@ -55,7 +55,6 @@
     <Compile Include="Memcached\Operations\Text\TextProtocol.cs" />
     <Compile Include="Memcached\MemcachedProtocol.cs" />
     <Compile Include="Memcached\Operations\Binary\BinaryProtocol.cs" />
-    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="HashCodeCombiner.cs" />
     <Compile Include="InterlockedQueue.cs" />
     <Compile Include="Memcached\CommandNotSupportedException.cs" />

@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Net.Sockets;
+using System.Diagnostics;
 using System.Net;
-using System.IO;
 using System.Threading;
 using Enyim.Caching.Configuration;
-using System.Diagnostics;
 using Enyim.Collections;
 
 namespace Enyim.Caching.Memcached

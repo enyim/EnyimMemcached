@@ -1,6 +1,4 @@
 using System;
-using Enyim.Caching.Memcached;
-using Enyim.Caching.Memcached.Operations.Text;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {

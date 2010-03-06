@@ -1,5 +1,4 @@
 using System;
-using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {

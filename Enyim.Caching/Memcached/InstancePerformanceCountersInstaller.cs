@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Diagnostics;
 using System.ComponentModel;
 using System.Configuration.Install;
+using System.Diagnostics;
 
 namespace Enyim.Caching.Memcached
 {

@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Security.Cryptography;
-using System.IO;
-using System.Configuration;
-using Enyim.Caching.Configuration;
-using System.Net.Sockets;
-using System.Threading;
 using System.Collections.ObjectModel;
 using System.Net;
+using System.Threading;
+using Enyim.Caching.Configuration;
 
 namespace Enyim.Caching.Memcached
 {
