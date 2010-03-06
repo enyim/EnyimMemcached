@@ -26,7 +26,6 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				{
 					if (socket == null || !socket.IsAlive) continue;
 
-
 					try
 					{
 						socket.Write(requestData);
@@ -50,13 +49,9 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 						log.Error(e);
 					}
 				}
-
-				this.results = new ServerStats(retval);
-
-				return true;
 			}
 
-			//this.results = new ServerStats(retval);
+			this.results = new ServerStats(retval);
 
 			return true;
 		}
