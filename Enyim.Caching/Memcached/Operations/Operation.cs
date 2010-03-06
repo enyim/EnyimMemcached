@@ -5,7 +5,7 @@ namespace Enyim.Caching.Memcached.Operations
 	/// <summary>
 	/// Base class for implementing operations.
 	/// </summary>
-	internal abstract class Operation : IDisposable
+	internal abstract class Operation : IDisposable, IOperation
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(Operation));
 
@@ -18,11 +18,11 @@ namespace Enyim.Caching.Memcached.Operations
 			this.serverPool = serverPool;
 		}
 
-		public bool Execute2()
+		public bool Execute()
 		{
 			try
 			{
-				if (this.CheckDisposed(false))					return false;
+				if (this.CheckDisposed(false)) return false;
 
 				return this.ExecuteAction();
 			}
@@ -39,28 +39,6 @@ namespace Enyim.Caching.Memcached.Operations
 			return true;
 		}
 
-		public void Execute()
-		{
-			this.success = false;
-
-			try
-			{
-				if (this.CheckDisposed(false))
-					return;
-
-				this.success = this.ExecuteAction();
-			}
-			catch (NotSupportedException)
-			{
-				throw;
-			}
-			catch (Exception e)
-			{
-				// TODO generic catch-all does not seem to be a good idea now. Some errors (like command not supported by server) should be exposed while retaining the fire-and-forget behavior
-				log.Error(e);
-			}
-		}
-
 		protected ServerPool ServerPool
 		{
 			get { return this.serverPool; }
@@ -74,11 +52,6 @@ namespace Enyim.Caching.Memcached.Operations
 				throw new ObjectDisposedException("Operation");
 
 			return this.isDisposed;
-		}
-
-		public bool Success
-		{
-			get { return this.success; }
 		}
 
 		#region [ IDisposable                  ]

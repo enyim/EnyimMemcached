@@ -26,7 +26,7 @@ namespace Enyim.Caching.Memcached
 
 		private MemcachedNode(IPEndPoint endpoint, IMemcachedClientConfiguration clientConfig)
 		{
-			var ispc = clientConfig.SocketPool;
+			ISocketPoolConfiguration ispc = clientConfig.SocketPool;
 
 			this.endPoint = endpoint;
 			this.config = ispc;
@@ -459,7 +459,7 @@ namespace Enyim.Caching.Memcached
 
 			public MemcachedNode Get(IPEndPoint endpoint, IMemcachedClientConfiguration config)
 			{
-				var ispc = config.SocketPool;
+				ISocketPoolConfiguration ispc = config.SocketPool;
 
 				string cacheKey = String.Concat(endpoint.ToString(), "-",
 													ispc.ConnectionTimeout.Ticks, "-",

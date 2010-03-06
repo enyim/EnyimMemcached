@@ -4,7 +4,7 @@ namespace Enyim.Caching.Memcached
 {
 	internal interface IOperation
 	{
-		bool Execute2();
+		bool Execute();
 	}
 
 	internal interface IGetOperation : IOperation

@@ -40,9 +40,9 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			using (StoreOperation s = new StoreOperation(pool, (StoreCommand)mode, key, value, expires))
 			{
 				s.Cas = 0;
-				s.Execute();
 
-				return s.Success;
+
+				return s.Execute();
 			}
 		}
 
@@ -50,7 +50,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		{
 			using (GetOperation g = new GetOperation(this.pool, key))
 			{
-				var retval = g.Execute2();
+				bool retval = g.Execute();
 
 				value = retval ? g.Result : null;
 
@@ -78,14 +78,14 @@ namespace Enyim.Caching.Memcached.Operations.Text
 									? ((IMutatorOperation)new IncrementOperation(this.pool, key, delta)) 
 									: ((IMutatorOperation)new DecrementOperation(this.pool, key, delta));
 			
-			return op.Execute2() ? 0 : op.Result;
+			return op.Execute() ? 0 : op.Result;
 		}
 
 		bool IProtocolImplementation.Delete(string key)
 		{
-			using (var g = new Memcached.Operations.Text.DeleteOperation(this.pool, key))
+			using (DeleteOperation d = new DeleteOperation(this.pool, key))
 			{
-				return g.Execute2();
+				return d.Execute();
 			}
 		}
 	}

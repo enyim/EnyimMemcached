@@ -22,7 +22,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 		private unsafe void UpdateExtra(BinaryRequest request)
 		{
-			var extra = new byte[20];
+			byte[] extra = new byte[20];
 
 			fixed (byte* buffer = extra)
 			{
@@ -38,24 +38,23 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 		protected override bool ExecuteAction()
 		{
-			var socket = this.Socket;
+			PooledSocket socket = this.Socket;
 			if (socket == null) return false;
 
-			var request = new BinaryRequest(this.mode == MutationMode.Increment ? OpCode.Increment : OpCode.Decrement) { Key = this.HashedKey };
+			BinaryRequest request = new BinaryRequest(this.mode == MutationMode.Increment ? OpCode.Increment : OpCode.Decrement) { Key = this.HashedKey };
 			this.UpdateExtra(request);
 
 			request.Write(this.Socket);
 
-			var response = new BinaryResponse();
+			BinaryResponse response = new BinaryResponse();
 			response.Read(this.Socket);
 
-			var retval = response.Success;
+			bool retval = response.Success;
 			if (retval)
 			{
-				var data = response.Data;
+				ArraySegment<byte> data = response.Data;
 				if (data.Count != 8)
-					// temp hack to handle "Non-numeric server-side value for incr or decr" 
-					return false; // throw new InvalidOperationException("result must be 8 bytes, received: " + data.Count);
+					throw new InvalidOperationException("result must be 8 bytes, received: " + data.Count);
 
 				this.Result = BinaryConverter.DecodeUInt64(data.Array, data.Offset);
 			}

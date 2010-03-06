@@ -62,9 +62,7 @@ namespace Enyim.Caching
 		{
 			using (DeleteOperation d = new DeleteOperation(this.pool, key))
 			{
-				d.Execute();
-
-				return d.Success;
+				return d.Execute();
 			}
 		}
 
@@ -109,9 +107,7 @@ namespace Enyim.Caching
 		{
 			using (IncrementOperation i = new IncrementOperation(this.pool, key, amount))
 			{
-				i.Execute();
-
-				return i.Success ? (long)i.Result : -1;
+				return i.Execute() ? (long)i.Result : -1;
 			}
 		}
 
@@ -126,9 +122,9 @@ namespace Enyim.Caching
 		{
 			using (DecrementOperation d = new DecrementOperation(this.pool, key, amount))
 			{
-				d.Execute();
+				bool retval = d.Execute();
 
-				return d.Success ? (long)d.Result : -1;
+				return retval ? (long)d.Result : -1;
 			}
 		}
 
@@ -376,9 +372,7 @@ namespace Enyim.Caching
 
 			using (StoreOperation s = new StoreOperation(pool, mode, key, value, MemcachedClient2.GetExpiration(validFor, expiresAt)))
 			{
-				s.Execute();
-
-				return s.Success;
+				return s.Execute();
 			}
 		}
 
@@ -389,9 +383,8 @@ namespace Enyim.Caching
 			using (StoreOperation s = new StoreOperation(pool, mode, key, new ArraySegment<byte>(value, offset, length), MemcachedClient2.GetExpiration(validFor, expiresAt)))
 			{
 				s.Cas = casValue;
-				s.Execute();
 
-				return s.Success;
+				return s.Execute();
 			}
 		}
 		#endregion

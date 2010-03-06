@@ -25,7 +25,7 @@ namespace DemoApp
 			 MemcachedClientConfiguration config = new MemcachedClientConfiguration();
 			 config.Servers.Add(new IPEndPoint(IPAddress.Loopback, 11211));
 			//
-			 var mc = new MemcachedClient2(config);
+			 //var mc = new MemcachedClient2(config);
 
 
 			// simple multiget; please note that only 1.2.4 supports it (windows version is at 1.2.1)
@@ -51,14 +51,14 @@ namespace DemoApp
 			//ServerStats ms = mc.Stats();
 
 			// store a string in the cache
-			mc.Store(StoreMode.Set, "MyKey", "Hello World");
+			//mc.Store(StoreMode.Set, "MyKey", "Hello World");
 
 			// retrieve the item from the cache
-			Console.WriteLine(mc.Get("MyKey"));
+			//Console.WriteLine(mc.Get("MyKey"));
 
-			Console.WriteLine(mc.Increment("num1", 1, 10));
-			Console.WriteLine(mc.Increment("num1", 1, 10));
-			Console.WriteLine(mc.Decrement("num1", 1, 14));
+			//Console.WriteLine(mc.Increment("num1", 1, 10));
+			//Console.WriteLine(mc.Increment("num1", 1, 10));
+			//Console.WriteLine(mc.Decrement("num1", 1, 14));
 
 			//// store some other items
 			//mc.Store(StoreMode.Set, "D1", 1234L);

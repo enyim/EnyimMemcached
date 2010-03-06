@@ -19,7 +19,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 		protected override bool ExecuteAction()
 		{
-			var socket = this.Socket;
+			PooledSocket socket = this.Socket;
 			if (socket == null) return false;
 
 			OpCode op;
@@ -31,10 +31,10 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				default: throw new ArgumentOutOfRangeException("mode", mode + " is not supported");
 			}
 
-			var request = new BinaryRequest(op);
-			var extra = new byte[8];
+			BinaryRequest request = new BinaryRequest(op);
+			byte[] extra = new byte[8];
 
-			var item = this.ServerPool.Transcoder.Serialize(this.value);
+			CacheItem item = this.ServerPool.Transcoder.Serialize(this.value);
 
 			BinaryConverter.EncodeUInt32((uint)item.Flags, extra, 0);
 			BinaryConverter.EncodeUInt32(expires, extra, 4);
@@ -45,7 +45,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 			request.Write(this.Socket);
 
-			var response = new BinaryResponse();
+			BinaryResponse response = new BinaryResponse();
 			response.Read(this.Socket);
 
 			bool retval = response.StatusCode == 0;

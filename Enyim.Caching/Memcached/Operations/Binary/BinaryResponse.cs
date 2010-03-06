@@ -40,7 +40,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				int remaining = BinaryConverter.DecodeInt32(buffer, HEADER_BODY);
 				int extraLength = buffer[HEADER_EXTRA];
 
-				var data = new byte[remaining];
+				byte[] data = new byte[remaining];
 				socket.Read(data, 0, remaining);
 
 				this.Extra = new ArraySegment<byte>(data, 0, extraLength);

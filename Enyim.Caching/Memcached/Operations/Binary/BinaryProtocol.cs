@@ -35,9 +35,9 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 		private bool TryGet(string key, out object value)
 		{
-			using (var g = new Memcached.Operations.Binary.GetOperation(this.pool, key))
+			using (GetOperation g = new GetOperation(this.pool, key))
 			{
-				var retval = g.Execute2();
+				bool retval = g.Execute();
 				value = retval ? g.Result : null;
 
 				return retval;
@@ -49,9 +49,9 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			// TODO allow nulls?
 			if (value == null) return false;
 
-			using (var s = new Memcached.Operations.Binary.StoreOperation(pool, (StoreCommand)mode, key, value, expires))
+			using (StoreOperation s = new StoreOperation(pool, (StoreCommand)mode, key, value, expires))
 			{
-				return s.Execute2();
+				return s.Execute();
 			}
 		}
 
@@ -71,17 +71,17 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 		ulong IProtocolImplementation.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expiration)
 		{
-			using (var m = new Binary.MutatorOperation(this.pool, mode, key, defaultValue, delta, expiration))
+			using (MutatorOperation m = new MutatorOperation(this.pool, mode, key, defaultValue, delta, expiration))
 			{
-				return m.Execute2() ? m.Result : m.Result;
+				return m.Execute() ? m.Result : m.Result;
 			}
 		}
 
 		bool IProtocolImplementation.Delete(string key)
 		{
-			using (var g = new Memcached.Operations.Binary.DeleteOperation(this.pool, key))
+			using (DeleteOperation g = new DeleteOperation(this.pool, key))
 			{
-				return g.Execute2();
+				return g.Execute();
 			}
 		}
 	}

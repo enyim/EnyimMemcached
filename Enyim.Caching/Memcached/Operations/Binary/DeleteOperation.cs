@@ -7,16 +7,16 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 		protected override bool ExecuteAction()
 		{
-			var socket = this.Socket;
+			PooledSocket socket = this.Socket;
 			if (socket == null) return false;
 
-			var request = new BinaryRequest(OpCode.Delete) { Key = this.HashedKey };
+			BinaryRequest request = new BinaryRequest(OpCode.Delete) { Key = this.HashedKey };
 			request.Write(this.Socket);
 
-			var response = new BinaryResponse();
+			BinaryResponse response = new BinaryResponse();
 			response.Read(this.Socket);
 
-			var retval = response.Success;
+			bool retval = response.Success;
 
 			this.Socket.OwnerNode.PerfomanceCounters.LogDelete(retval);
 			return retval;

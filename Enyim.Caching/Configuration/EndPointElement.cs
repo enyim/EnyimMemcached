@@ -40,8 +40,8 @@ namespace Enyim.Caching.Configuration
 			{
 				if (this.endpoint == null)
 				{
-					var entry = System.Net.Dns.GetHostEntry(this.Address);
-					var list = entry.AddressList;
+					IPHostEntry entry = System.Net.Dns.GetHostEntry(this.Address);
+					IPAddress[] list = entry.AddressList;
 
 					if (list.Length == 0)
 						throw new ConfigurationErrorsException(String.Format("Could not resolve host '{0}'.", this.Address));
