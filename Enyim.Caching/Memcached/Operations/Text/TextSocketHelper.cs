@@ -63,28 +63,28 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 			int data;
 
-				while (true)
+			while (true)
+			{
+				data = socket.ReadByte();
+
+				if (data == 13)
 				{
-					data = socket.ReadByte();
-
-					if (data == 13)
-					{
-						gotR = true;
-						continue;
-					}
-
-					if (gotR)
-					{
-						if (data == 10)
-							break;
-
-						ms.WriteByte(13);
-
-						gotR = false;
-					}
-
-					ms.WriteByte((byte)data);
+					gotR = true;
+					continue;
 				}
+
+				if (gotR)
+				{
+					if (data == 10)
+						break;
+
+					ms.WriteByte(13);
+
+					gotR = false;
+				}
+
+				ms.WriteByte((byte)data);
+			}
 
 			string retval = Encoding.ASCII.GetString(ms.GetBuffer(), 0, (int)ms.Length);
 
@@ -93,5 +93,46 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 			return retval;
 		}
+
+		/// <summary>
+		/// Sends the command to the server. The trailing \r\n is automatically appended.
+		/// </summary>
+		/// <param name="value">The command to be sent to the server.</param>
+		public static void SendCommand(PooledSocket socket, string value)
+		{
+			if (log.IsDebugEnabled)
+				log.Debug("SendCommand: " + value);
+
+			// send the whole command with only one Write
+			// since Nagle is disabled on the socket this is more efficient than
+			// Write(command), Write("\r\n")
+			socket.Write(TextSocketHelper.GetCommandBuffer(value));
+		}
+
+		/// <summary>
+		/// Gets the bytes representing the specified command. returned buffer can be used to streamline multiple writes into one Write on the Socket
+		/// using the <see cref="M:Enyim.Caching.Memcached.PooledSocket.Write(IList&lt;ArraySegment&lt;byte&gt;&gt;)"/>
+		/// </summary>
+		/// <param name="value">The command to be converted.</param>
+		/// <returns>The buffer containing the bytes representing the command. The returned buffer will be terminated with 13, 10 (\r\n)</returns>
+		/// <remarks>The Nagle algorithm is disabled on the socket to speed things up, so it's recommended to convert a command into a buffer
+		/// and use the <see cref="M:Enyim.Caching.Memcached.PooledSocket.Write(IList&lt;ArraySegment&lt;byte&gt;&gt;)"/> to send the command and the additional buffers in one transaction.</remarks>
+		public unsafe static ArraySegment<byte> GetCommandBuffer(string value)
+		{
+			int valueLength = value.Length;
+			byte[] data = new byte[valueLength + 2];
+
+			fixed (byte* buffer = data)
+			fixed (char* chars = value)
+			{
+				Encoding.ASCII.GetBytes(chars, 0, buffer, valueLength);
+
+				buffer[valueLength] = 13;
+				buffer[valueLength + 1] = 10;
+			}
+
+			return new ArraySegment<byte>(data);
+		}
+
 	}
 }

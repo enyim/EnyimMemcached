@@ -61,7 +61,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			GetResponse retval = new GetResponse(parts[1], flags, cas, allData);
 
 			if (log.IsDebugEnabled)
-				log.DebugFormat("Received value. Data type: {0}, size: {1}.", retval.Item.Flag, retval.Item.Data.Count);
+				log.DebugFormat("Received value. Data type: {0}, size: {1}.", retval.Item.Flags, retval.Item.Data.Count);
 
 			return retval;
 		}

@@ -14,8 +14,6 @@ namespace Enyim.Caching.Memcached
 {
 	internal class ServerPool : IDisposable
 	{
-		internal static MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
-
 		// holds all dead servers which will be periodically rechecked and put back into the working servers if found alive
 		List<MemcachedNode> deadServers = new List<MemcachedNode>();
 		// holds all of the currently working servers
@@ -31,8 +29,6 @@ namespace Enyim.Caching.Memcached
 		private IMemcachedKeyTransformer keyTransformer;
 		private IMemcachedNodeLocator nodeLocator;
 		private ITranscoder transcoder;
-
-		public ServerPool() : this(ServerPool.DefaultSettings) { }
 
 		public ServerPool(IMemcachedClientConfiguration configuration)
 		{

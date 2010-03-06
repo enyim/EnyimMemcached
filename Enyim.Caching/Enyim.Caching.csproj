@@ -23,6 +23,7 @@
     <WarningLevel>4</WarningLevel>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CodeAnalysisRules>-Microsoft.Globalization#CA1301;-Microsoft.Globalization#CA1302;-Microsoft.Globalization#CA1306;-Microsoft.Globalization#CA1304;-Microsoft.Globalization#CA1305;-Microsoft.Globalization#CA2101;-Microsoft.Globalization#CA1300</CodeAnalysisRules>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -50,6 +51,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\ConfigurationHelper.cs" />
+    <Compile Include="MemcachedClient2.cs" />
+    <Compile Include="Memcached\Operations\Text\TextProtocol.cs" />
+    <Compile Include="Memcached\MemcachedProtocol.cs" />
+    <Compile Include="Memcached\Operations\Binary\BinaryProtocol.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="HashCodeCombiner.cs" />
     <Compile Include="InterlockedQueue.cs" />
     <Compile Include="Memcached\CommandNotSupportedException.cs" />
@@ -66,15 +72,25 @@
     <Compile Include="Memcached\InstancePerformanceCountersInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Memcached\Operations\Binary\BinaryRequest.cs" />
+    <Compile Include="Memcached\Operations\Binary\BinaryResponse.cs" />
+    <Compile Include="Memcached\Operations\Binary\BinaryConverter.cs" />
+    <Compile Include="Memcached\Operations\Binary\MutatorOperation.cs" />
+    <Compile Include="Memcached\Operations\Binary\DeleteOperation.cs" />
+    <Compile Include="Memcached\Operations\Binary\GetOperation.cs" />
+    <Compile Include="Memcached\Operations\Binary\OpCode.cs" />
+    <Compile Include="Memcached\Operations\Binary\StoreOperation.cs" />
+    <Compile Include="Memcached\Interfaces.cs" />
+    <Compile Include="Memcached\Operations\ItemOperation.cs" />
+    <Compile Include="Memcached\Operations\Operation.cs" />
+    <Compile Include="Memcached\Operations\StoreOperationBase.cs" />
     <Compile Include="Memcached\Operations\Text\DecrementOperation.cs" />
     <Compile Include="Memcached\Operations\Text\DeleteOperation.cs" />
     <Compile Include="Memcached\Operations\Text\FlushOperation.cs" />
     <Compile Include="Memcached\Operations\Text\GetHelper.cs" />
     <Compile Include="Memcached\Operations\Text\GetOperation.cs" />
     <Compile Include="Memcached\Operations\Text\IncrementOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\ItemOperation.cs" />
     <Compile Include="Memcached\Operations\Text\MultiGetOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\Operation.cs" />
     <Compile Include="Memcached\Operations\Text\TextSocketHelper.cs" />
     <Compile Include="Memcached\Operations\Text\StatsOperation.cs" />
     <Compile Include="Memcached\Operations\Text\StoreOperation.cs" />

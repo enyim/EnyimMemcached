@@ -36,7 +36,7 @@ namespace Enyim.Caching.Memcached
 		/// <summary>
 		/// Flags set for this instance.
 		/// </summary>
-		public ushort Flag
+		public ushort Flags
 		{
 			get { return this.flags; }
 			set { this.flags = value; }

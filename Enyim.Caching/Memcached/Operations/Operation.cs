@@ -1,10 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Security.Cryptography;
 
-namespace Enyim.Caching.Memcached.Operations.Text
+namespace Enyim.Caching.Memcached.Operations
 {
+	/// <summary>
+	/// Base class for implementing operations.
+	/// </summary>
 	internal abstract class Operation : IDisposable
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(Operation));
@@ -16,6 +16,27 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		protected Operation(ServerPool serverPool)
 		{
 			this.serverPool = serverPool;
+		}
+
+		public bool Execute2()
+		{
+			try
+			{
+				if (this.CheckDisposed(false))					return false;
+
+				return this.ExecuteAction();
+			}
+			catch (NotSupportedException)
+			{
+				throw;
+			}
+			catch (Exception e)
+			{
+				// TODO generic catch-all does not seem to be a good idea now. Some errors (like command not supported by server) should be exposed while retaining the fire-and-forget behavior
+				log.Error(e);
+			}
+
+			return true;
 		}
 
 		public void Execute()

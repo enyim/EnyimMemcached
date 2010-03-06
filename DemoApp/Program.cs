@@ -14,18 +14,18 @@ namespace DemoApp
 		{
 			// create a MemcachedClient
 			// in your application you can cache the client in a static variable or just recreate it every time
-			MemcachedClient mc = new MemcachedClient();
+			// MemcachedClient mc = new MemcachedClient();
 
 			// you can create another client using a different section from your app/web.config
 			// this client instance can have different pool settings, key transformer, etc.
 			// MemcachedClient mc2 = new MemcachedClient("memcached");
 
 			// or just initialize the client from code
+			
+			 MemcachedClientConfiguration config = new MemcachedClientConfiguration();
+			 config.Servers.Add(new IPEndPoint(IPAddress.Loopback, 11211));
 			//
-			// MemcachedClientConfiguration config = new MemcachedClientConfiguration();
-			// config.Servers.Add(new IPEndPoint(IPAddress.Loopback, 20002));
-			//
-			// MemcachedClient mc = new MemcachedClient(config);
+			 var mc = new MemcachedClient2(config);
 
 
 			// simple multiget; please note that only 1.2.4 supports it (windows version is at 1.2.1)
@@ -56,39 +56,43 @@ namespace DemoApp
 			// retrieve the item from the cache
 			Console.WriteLine(mc.Get("MyKey"));
 
-			// store some other items
-			mc.Store(StoreMode.Set, "D1", 1234L);
-			mc.Store(StoreMode.Set, "D2", DateTime.Now);
-			mc.Store(StoreMode.Set, "D3", true);
-			mc.Store(StoreMode.Set, "D4", new Product());
+			Console.WriteLine(mc.Increment("num1", 1, 10));
+			Console.WriteLine(mc.Increment("num1", 1, 10));
+			Console.WriteLine(mc.Decrement("num1", 1, 14));
 
-			mc.Store(StoreMode.Set, "D5", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+			//// store some other items
+			//mc.Store(StoreMode.Set, "D1", 1234L);
+			//mc.Store(StoreMode.Set, "D2", DateTime.Now);
+			//mc.Store(StoreMode.Set, "D3", true);
+			//mc.Store(StoreMode.Set, "D4", new Product());
+
+			//mc.Store(StoreMode.Set, "D5", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
 
 
-			//mc2.Store(StoreMode.Set, "D1", 1234L);
-			//mc2.Store(StoreMode.Set, "D2", DateTime.Now);
-			//mc2.Store(StoreMode.Set, "D3", true);
-			//mc2.Store(StoreMode.Set, "D4", new Product());
+			////mc2.Store(StoreMode.Set, "D1", 1234L);
+			////mc2.Store(StoreMode.Set, "D2", DateTime.Now);
+			////mc2.Store(StoreMode.Set, "D3", true);
+			////mc2.Store(StoreMode.Set, "D4", new Product());
 			
-			Console.WriteLine("D1: {0}", mc.Get("D1"));
-			Console.WriteLine("D2: {0}", mc.Get("D2"));
-			Console.WriteLine("D3: {0}", mc.Get("D3"));
-			Console.WriteLine("D4: {0}", mc.Get("D4"));
+			//Console.WriteLine("D1: {0}", mc.Get("D1"));
+			//Console.WriteLine("D2: {0}", mc.Get("D2"));
+			//Console.WriteLine("D3: {0}", mc.Get("D3"));
+			//Console.WriteLine("D4: {0}", mc.Get("D4"));
 
-			byte[] tmp = mc.Get<byte[]>("D5");
+			//byte[] tmp = mc.Get<byte[]>("D5");
 
-			// delete them from the cache
-			mc.Remove("D1");
-			mc.Remove("D2");
-			mc.Remove("D3");
-			mc.Remove("D4");
+			//// delete them from the cache
+			//mc.Remove("D1");
+			//mc.Remove("D2");
+			//mc.Remove("D3");
+			//mc.Remove("D4");
 
-			ServerStats stats = mc.Stats();
-			Console.WriteLine(stats.GetValue(ServerStats.All, StatItem.ConnectionCount));
-			Console.WriteLine(stats.GetValue(ServerStats.All, StatItem.GetCount));
+			//ServerStats stats = mc.Stats();
+			//Console.WriteLine(stats.GetValue(ServerStats.All, StatItem.ConnectionCount));
+			//Console.WriteLine(stats.GetValue(ServerStats.All, StatItem.GetCount));
 
-			// add an item which is valid for 10 mins
-			mc.Store(StoreMode.Set, "D4", new Product(), new TimeSpan(0, 10, 0));
+			//// add an item which is valid for 10 mins
+			//mc.Store(StoreMode.Set, "D4", new Product(), new TimeSpan(0, 10, 0));
 
 			Console.ReadLine();
 		}

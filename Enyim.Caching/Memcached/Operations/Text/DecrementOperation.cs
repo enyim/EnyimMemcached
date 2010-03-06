@@ -10,15 +10,15 @@ using System.Threading;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal sealed class DecrementOperation : ItemOperation
+	internal sealed class DecrementOperation : ItemOperation, IMutatorOperation
 	{
-		private uint amount;
-		private uint result;
+		private ulong delta;
+		private ulong result;
 
-		internal DecrementOperation(ServerPool pool, string key, uint amount)
+		internal DecrementOperation(ServerPool pool, string key, ulong delta)
 			: base(pool, key)
 		{
-			this.amount = amount;
+			this.delta = delta;
 		}
 
 		protected override bool ExecuteAction()
@@ -27,7 +27,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			if (socket == null)
 				return false;
 
-			socket.SendCommand(String.Concat("decr ", this.HashedKey, " ", this.amount.ToString(CultureInfo.InvariantCulture)));
+			TextSocketHelper.SendCommand(socket, String.Concat("decr ", this.HashedKey, " ", this.delta.ToString(CultureInfo.InvariantCulture)));
 
 			string response = TextSocketHelper.ReadResponse(socket);
 
@@ -35,10 +35,10 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			if (String.Compare(response, "NOT_FOUND", StringComparison.Ordinal) == 0)
 				return false;
 
-			return UInt32.TryParse(response, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite, CultureInfo.InvariantCulture, out this.result);
+			return UInt64.TryParse(response, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite, CultureInfo.InvariantCulture, out this.result);
 		}
 
-		public uint Result
+		public ulong Result
 		{
 			get { return this.result; }
 		}

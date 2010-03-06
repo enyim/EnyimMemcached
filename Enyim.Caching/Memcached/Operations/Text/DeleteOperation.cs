@@ -23,7 +23,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			if (socket == null)
 				return false;
 
-			socket.SendCommand("delete " + this.HashedKey);
+			TextSocketHelper.SendCommand(socket, "delete " + this.HashedKey);
 
 			bool retval = String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0;
 

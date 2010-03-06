@@ -1,0 +1,79 @@
+﻿using System;
+
+namespace Enyim.Caching.Memcached.Operations.Binary
+{
+	internal class StoreOperation : ItemOperation
+	{
+
+		private StoreCommand mode;
+		private object value;
+		private uint expires;
+
+		public StoreOperation(ServerPool pool, StoreCommand mode, string key, object value, uint expires) :
+			base(pool, key)
+		{
+			this.mode = mode;
+			this.value = value;
+			this.expires = expires;
+		}
+
+		protected override bool ExecuteAction()
+		{
+			var socket = this.Socket;
+			if (socket == null) return false;
+
+			OpCode op;
+			switch (this.mode)
+			{
+				case StoreCommand.Add: op = OpCode.Add; break;
+				case StoreCommand.Set: op = OpCode.Set; break;
+				case StoreCommand.Replace: op = OpCode.Replace; break;
+				default: throw new ArgumentOutOfRangeException("mode", mode + " is not supported");
+			}
+
+			var request = new BinaryRequest(op);
+			var extra = new byte[8];
+
+			var item = this.ServerPool.Transcoder.Serialize(this.value);
+
+			BinaryConverter.EncodeUInt32((uint)item.Flags, extra, 0);
+			BinaryConverter.EncodeUInt32(expires, extra, 4);
+
+			request.Extra = new ArraySegment<byte>(extra);
+			request.Data = item.Data;
+			request.Key = this.HashedKey;
+
+			request.Write(this.Socket);
+
+			var response = new BinaryResponse();
+			response.Read(this.Socket);
+
+			bool retval = response.StatusCode == 0;
+			this.Socket.OwnerNode.PerfomanceCounters.LogStore(mode, retval);
+
+			return retval;
+		}
+	}
+}
+
+#region [ License information          ]
+/* ************************************************************
+ *
+ * Copyright (c) Attila Kiskó, enyim.com
+ *
+ * This source code is subject to terms and conditions of 
+ * Microsoft Permissive License (Ms-PL).
+ * 
+ * A copy of the license can be found in the License.html
+ * file at the root of this distribution. If you can not 
+ * locate the License, please send an email to a@enyim.com
+ * 
+ * By using this source code in any fashion, you are 
+ * agreeing to be bound by the terms of the Microsoft 
+ * Permissive License.
+ *
+ * You must not remove this notice, or any other, from this
+ * software.
+ *
+ * ************************************************************/
+#endregion

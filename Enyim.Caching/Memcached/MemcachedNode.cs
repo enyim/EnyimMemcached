@@ -18,6 +18,7 @@ namespace Enyim.Caching.Memcached
 	public sealed class MemcachedNode : IDisposable
 	{
 		internal static readonly NodeFactory Factory = new NodeFactory();
+		private static readonly object SyncRoot = new Object();
 
 		private bool isDisposed;
 		private int deadTimeout = 2 * 60;
@@ -87,11 +88,10 @@ namespace Enyim.Caching.Memcached
 			if (diff.TotalSeconds < this.deadTimeout)
 				return false;
 
-			// it's (relatively) safe to lock on 'this' since 
 			// this codepath is (should be) called very rarely
 			// if you get here hundreds of times then you have bigger issues
 			// and try to make the memcached instaces more stable and/or increase the deadTimeout
-			lock (this)
+			lock (SyncRoot)
 			{
 				if (this.internalPoolImpl.IsAlive)
 					return true;
@@ -127,7 +127,7 @@ namespace Enyim.Caching.Memcached
 			// if someone uses a pooled item then 99% that an exception will be thrown
 			// somewhere. But since the dispose is mostly used when everyone else is finished
 			// this should not kill any kittens
-			lock (this)
+			lock (SyncRoot)
 			{
 				if (this.isDisposed)
 					return;

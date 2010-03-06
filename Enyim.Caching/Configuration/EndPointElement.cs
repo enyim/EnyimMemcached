@@ -69,6 +69,8 @@ namespace Enyim.Caching.Configuration
 		#region [ T:IPAddressValidator         ]
 		private class IPAddressValidator : ConfigurationValidatorBase
 		{
+			private IPAddressValidator() { }
+
 			public override bool CanValidate(Type type)
 			{
 				return (type == typeof(string)) || base.CanValidate(type);

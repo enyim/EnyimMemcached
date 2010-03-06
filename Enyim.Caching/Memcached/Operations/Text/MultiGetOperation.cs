@@ -66,7 +66,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 						continue;
 
 					sockets.Add(socket);
-					socket.SendCommand(String.Join(" ", command));
+					TextSocketHelper.SendCommand(socket, String.Join(" ", command));
 				}
 
 				Dictionary<string, object> retval = new Dictionary<string, object>(StringComparer.Ordinal);

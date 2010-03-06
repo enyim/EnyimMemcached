@@ -1,15 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Net.Sockets;
-using System.Net;
-using System.IO;
-using System.Security.Cryptography;
-using System.Globalization;
-using System.Threading;
-using Enyim.Caching.Memcached;
-using Enyim.Caching.Configuration;
 using System.Configuration;
+using Enyim.Caching.Configuration;
+using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Operations.Text;
 
 namespace Enyim.Caching
@@ -20,7 +13,7 @@ namespace Enyim.Caching
 	public sealed class MemcachedClient : IDisposable
 	{
 		/// <summary>
-		/// Represents a value whihc indicates that an item should never expire.
+		/// Represents a value which indicates that an item should never expire.
 		/// </summary>
 		public static readonly TimeSpan Infinite = TimeSpan.Zero;
 
@@ -31,7 +24,7 @@ namespace Enyim.Caching
 		/// </summary>
 		public MemcachedClient()
 		{
-			this.pool = new ServerPool();
+			this.pool = new ServerPool(MemcachedClient2.DefaultSettings);
 		}
 
 		/// <summary>
@@ -59,7 +52,7 @@ namespace Enyim.Caching
 
 			this.pool = new ServerPool(configuration);
 		}
-		
+
 		/// <summary>
 		/// Removes the specified item from the cache.
 		/// </summary>
@@ -379,10 +372,9 @@ namespace Enyim.Caching
 		#region [ Store                        ]
 		private static bool Store(ServerPool pool, StoreCommand mode, string key, object value, ulong casValue, TimeSpan validFor, DateTime expiresAt)
 		{
-			if (value == null)
-				return false;
+			if (value == null) return false;
 
-			using (StoreOperation s = new StoreOperation(pool, mode, key, value, casValue, validFor, expiresAt))
+			using (StoreOperation s = new StoreOperation(pool, mode, key, value, MemcachedClient2.GetExpiration(validFor, expiresAt)))
 			{
 				s.Execute();
 
@@ -392,11 +384,11 @@ namespace Enyim.Caching
 
 		private static bool Store(ServerPool pool, StoreCommand mode, string key, byte[] value, ulong casValue, int offset, int length, TimeSpan validFor, DateTime expiresAt)
 		{
-			if (value == null)
-				return false;
+			if (value == null) return false;
 
-			using (StoreOperation s = new StoreOperation(pool, mode, key, new ArraySegment<byte>(value, offset, length), casValue, validFor, expiresAt))
+			using (StoreOperation s = new StoreOperation(pool, mode, key, new ArraySegment<byte>(value, offset, length), MemcachedClient2.GetExpiration(validFor, expiresAt)))
 			{
+				s.Cas = casValue;
 				s.Execute();
 
 				return s.Success;
@@ -412,17 +404,15 @@ namespace Enyim.Caching
 		/// <summary>
 		/// Releases all resources allocated by this instance
 		/// </summary>
-		/// <remarks>Technically it's not really neccesary to call this, since the client does not create "really" disposable objects, so it's safe to assume that when the AppPool shuts down all resources will be released correctly and no handles or such will remain in the memory.</remarks>
+		/// <remarks>Technically it's not really neccesary to call this, since the client does not create "really" disposable objects, so it's safe to assume that when 
+		/// the AppPool shuts down all resources will be released correctly and no handles or such will remain in the memory.</remarks>
 		public void Dispose()
 		{
 			if (this.pool == null)
 				throw new ObjectDisposedException("MemcachedClient");
 
-			lock (this)
-			{
-				((IDisposable)this.pool).Dispose();
-				this.pool = null;
-			}
+			((IDisposable)this.pool).Dispose();
+			this.pool = null;
 		}
 	}
 }

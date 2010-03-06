@@ -31,7 +31,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 					try
 					{
-						socket.SendCommand("stats");
+						TextSocketHelper.SendCommand(socket, "stats");
 
 						Dictionary<string, string> serverData = new Dictionary<string, string>(StringComparer.Ordinal);
 

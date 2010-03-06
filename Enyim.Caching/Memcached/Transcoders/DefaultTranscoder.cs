@@ -140,7 +140,7 @@ namespace Enyim.Caching.Memcached
 
 		object ITranscoder.Deserialize(CacheItem item)
 		{
-			if (item.Flag == RawDataFlag)
+			if (item.Flags == RawDataFlag)
 			{
 				ArraySegment<byte> tmp = item.Data;
 
@@ -155,7 +155,7 @@ namespace Enyim.Caching.Memcached
 				return retval;
 			}
 
-			TypeCode code = (TypeCode)(item.Flag & 0x00ff);
+			TypeCode code = (TypeCode)(item.Flags & 0x00ff);
 			
 			if (code == TypeCode.Empty)
 				return null;

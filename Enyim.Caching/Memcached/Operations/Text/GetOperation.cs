@@ -33,20 +33,20 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			if (socket == null)
 				return false;
 
-			socket.SendCommand("get " + this.HashedKey);
+			TextSocketHelper.SendCommand(socket, "get " + this.HashedKey);
 
-			GetResponse r = GetHelper.ReadItem(this.Socket);
+			GetResponse r = GetHelper.ReadItem(socket);
 
 			if (r == null)
 			{
-				this.Socket.OwnerNode.PerfomanceCounters.LogGet(false);
+				socket.OwnerNode.PerfomanceCounters.LogGet(false);
 			}
 			else
 			{
 				this.result = this.ServerPool.Transcoder.Deserialize(r.Item);
-				GetHelper.FinishCurrent(this.Socket);
+				GetHelper.FinishCurrent(socket);
 
-				this.Socket.OwnerNode.PerfomanceCounters.LogGet(true);
+				socket.OwnerNode.PerfomanceCounters.LogGet(true);
 			}
 
 			return true;

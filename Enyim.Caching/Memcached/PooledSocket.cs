@@ -131,44 +131,6 @@ namespace Enyim.Caching.Memcached
 		}
 
 		/// <summary>
-		/// Sends the command to the server. The trailing \r\n is automatically appended.
-		/// </summary>
-		/// <param name="value">The command to be sent to the server.</param>
-		public void SendCommand(string value)
-		{
-			this.CheckDisposed();
-
-			if (log.IsDebugEnabled)
-				log.Debug("SendCommand: " + value);
-
-			// send the whole command with only one Write
-			// since Nagle is disabled on the socket this is more efficient than
-			// Write(command), Write("\r\n")
-			this.Write(PooledSocket.GetCommandBuffer(value));
-		}
-
-		/// <summary>
-		/// Gets the bytes representing the specified command. returned buffer can be used to streamline multiple writes into one Write on the Socket
-		/// using the <see cref="M:Enyim.Caching.Memcached.PooledSocket.Write(IList&lt;ArraySegment&lt;byte&gt;&gt;)"/>
-		/// </summary>
-		/// <param name="value">The command to be converted.</param>
-		/// <returns>The buffer containing the bytes representing the command. The returned buffer will be terminated with 13, 10 (\r\n)</returns>
-		/// <remarks>The Nagle algorithm is disabled on the socket to speed things up, so it's recommended to convert a command into a buffer
-		/// and use the <see cref="M:Enyim.Caching.Memcached.PooledSocket.Write(IList&lt;ArraySegment&lt;byte&gt;&gt;)"/> to send the command and the additional buffers in one transaction.</remarks>
-		public static ArraySegment<byte> GetCommandBuffer(string value)
-		{
-			int valueLength = value.Length;
-			byte[] data = new byte[valueLength + 2];
-
-			Encoding.ASCII.GetBytes(value, 0, valueLength, data, 0);
-
-			data[valueLength] = 13;
-			data[valueLength + 1] = 10;
-
-			return new ArraySegment<byte>(data);
-		}
-
-		/// <summary>
 		/// Reads the next byte from the server's response.
 		/// </summary>
 		/// <remarks>This method blocks and will not return until the value is read.</remarks>
@@ -250,6 +212,11 @@ namespace Enyim.Caching.Memcached
 
 				ThrowHelper.ThrowSocketWriteError(this.endpoint, status);
 			}
+		}
+
+		public bool Poll(int microSeconds, SelectMode mode)
+		{
+			return this.socket.Poll(microSeconds, mode);
 		}
 
 		public void Write(IList<ArraySegment<byte>> buffers)

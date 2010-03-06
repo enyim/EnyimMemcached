@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Net.Sockets;
-using System.Net;
-using System.IO;
-using System.Security.Cryptography;
-using System.Globalization;
-using System.Threading;
-using System.Text.RegularExpressions;
 using System.Diagnostics;
 
-namespace Enyim.Caching.Memcached.Operations.Text
+namespace Enyim.Caching.Memcached.Operations
 {
+	/// <summary>
+	/// Base class for implementing operations working with keyed items. Handles server selection based on item key.
+	/// </summary>
 	internal abstract class ItemOperation : Operation
 	{
 		private string key;
@@ -22,11 +16,8 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		protected ItemOperation(ServerPool pool, string key)
 			: base(pool)
 		{
-			if (key == null)
-				throw new ArgumentNullException("key", "Item key must be specified.");
-
-			if (key.Length == 0)
-				throw new ArgumentException("Item key must be specified.", "key");
+			if (key == null) throw new ArgumentNullException("key", "Item key must be specified.");
+			if (key.Length == 0) throw new ArgumentException("Item key must be specified.", "key");
 
 			this.key = key;
 		}
@@ -36,8 +27,10 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			get { return this.key; }
 		}
 
+		public ulong Cas { get; set; }
+
 		/// <summary>
-		/// Gets the hashed bersion of the key which should be used as key in communication with memcached
+		/// Gets the hashed version of the key which should be used as key in communication with memcached
 		/// </summary>
 		protected string HashedKey
 		{
@@ -46,7 +39,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 				if (this.hashedKey == null)
 				{
 					string tmp = this.ServerPool.KeyTransformer.Transform(this.key);
-					Debug.Assert(!String.IsNullOrEmpty(tmp),  this.ServerPool.KeyTransformer + " just returned an empty key.");
+					Debug.Assert(!String.IsNullOrEmpty(tmp), this.ServerPool.KeyTransformer + " just returned an empty key.");
 
 					this.hashedKey = tmp;
 				}
@@ -61,15 +54,13 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			{
 				if (this.socket == null)
 				{
-					// get a connection to the server which belongs to "key"
+					// get a connection to the server which the "key" belongs to
 					PooledSocket ps = this.ServerPool.Acquire(this.key);
 
 					// null was returned, so our server is dead and no one could replace it
 					// (probably all of our servers are down)
 					if (ps == null)
-					{
 						return null;
-					}
 
 					this.socket = ps;
 				}

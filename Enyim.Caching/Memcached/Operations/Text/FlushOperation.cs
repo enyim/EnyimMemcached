@@ -16,7 +16,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 				{
 					if (socket != null)
 					{
-						socket.SendCommand("flush_all");
+						TextSocketHelper.SendCommand(socket, "flush_all");
 						TextSocketHelper.ReadResponse(socket); // No-op the response to avoid data hanging around.
 					}
 				}

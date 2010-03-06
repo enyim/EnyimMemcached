@@ -14,44 +14,17 @@ namespace Enyim.Caching.Memcached.Operations.Text
 {
 	internal class StoreOperation : ItemOperation
 	{
-		private const int MaxSeconds = 60 * 60 * 24 * 30;
-
 		private static readonly ArraySegment<byte> DataTerminator = new ArraySegment<byte>(new byte[2] { (byte)'\r', (byte)'\n' });
-		private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1);
-
 		private StoreCommand mode;
 		private object value;
+		private uint expires;
 
-		private long expires;
-		private ulong casValue;
-
-		internal StoreOperation(ServerPool pool, StoreCommand mode, string key, object value, ulong casValue, TimeSpan validFor, DateTime expiresAt)
+		internal StoreOperation(ServerPool pool, StoreCommand mode, string key, object value, uint expires)
 			: base(pool, key)
 		{
 			this.mode = mode;
 			this.value = value;
-			this.casValue = casValue;
-
-			this.expires = GetExpiration(validFor, expiresAt);
-		}
-
-		private static long GetExpiration(TimeSpan validFor, DateTime expiresAt)
-		{
-			if (validFor >= TimeSpan.Zero && expiresAt > DateTime.MinValue)
-				throw new ArgumentException("You cannot specify both validFor and expiresAt.");
-
-			if (expiresAt > DateTime.MinValue)
-			{
-				if (expiresAt < UnixEpoch)
-					throw new ArgumentOutOfRangeException("expiresAt", "expiresAt must be >= 1970/1/1");
-
-				return (long)(expiresAt.ToUniversalTime() - UnixEpoch).TotalSeconds;
-			}
-
-			if (validFor.TotalSeconds >= MaxSeconds || validFor < TimeSpan.Zero)
-				throw new ArgumentOutOfRangeException("validFor", "validFor must be < 30 days && >= 0");
-
-			return (long)validFor.TotalSeconds;
+			this.expires = expires;
 		}
 
 		protected override bool ExecuteAction()
@@ -61,14 +34,13 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 			CacheItem item = this.ServerPool.Transcoder.Serialize(this.value);
 
-			return this.Store(item.Flag, item.Data);
-		}
+			ushort flag = item.Flags;
+			ArraySegment<byte> data = item.Data;
 
-		private bool Store(ushort flag, ArraySegment<byte> data)
-		{
-			StringBuilder sb = new StringBuilder(100);
+			// todo adjust the size to fit a request using a fnv hashed key
+			StringBuilder sb = new StringBuilder(128);
 
-			switch (this.mode)
+			switch (mode)
 			{
 				case StoreCommand.Add:
 					sb.Append("add ");
@@ -100,22 +72,22 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			sb.Append(" ");
 			sb.Append(flag.ToString(CultureInfo.InvariantCulture));
 			sb.Append(" ");
-			sb.Append(this.expires.ToString(CultureInfo.InvariantCulture));
+			sb.Append(expires.ToString(CultureInfo.InvariantCulture));
 			sb.Append(" ");
 			sb.Append(Convert.ToString(data.Count - data.Offset, CultureInfo.InvariantCulture));
 
 			if (mode == StoreCommand.CheckAndSet)
 			{
 				sb.Append(" ");
-				sb.Append(Convert.ToString(this.casValue, CultureInfo.InvariantCulture));
+				sb.Append(Convert.ToString(this.Cas, CultureInfo.InvariantCulture));
 			}
 
-			ArraySegment<byte> commandBuffer = PooledSocket.GetCommandBuffer(sb.ToString());
+			ArraySegment<byte> commandBuffer = TextSocketHelper.GetCommandBuffer(sb.ToString());
 
 			this.Socket.Write(new ArraySegment<byte>[] { commandBuffer, data, StoreOperation.DataTerminator });
 
 			bool retval = String.Compare(TextSocketHelper.ReadResponse(this.Socket), "STORED", StringComparison.Ordinal) == 0;
-			this.Socket.OwnerNode.PerfomanceCounters.LogStore(this.mode, retval);
+			this.Socket.OwnerNode.PerfomanceCounters.LogStore(mode, retval);
 
 			return retval;
 		}

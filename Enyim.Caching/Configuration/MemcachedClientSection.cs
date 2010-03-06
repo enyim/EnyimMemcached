@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Configuration;
-using System.Web.Configuration;
 using System.ComponentModel;
-using Enyim.Caching;
-using System.Collections.ObjectModel;
+using System.Configuration;
 using System.Net;
+using System.Web.Configuration;
+using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Configuration
 {
@@ -87,6 +85,17 @@ namespace Enyim.Caching.Configuration
 				throw new InvalidOperationException("The " + this.SectionInformation.SectionName + " section cannot be defined below the application level.");
 			}
 		}
+
+		/// <summary>
+		/// Gets or sets the type of the communication between client and server.
+		/// </summary>
+		[ConfigurationProperty("protocol", IsRequired = false, DefaultValue = MemcachedProtocol.Text)]
+		public MemcachedProtocol Protocol
+		{
+			get { return (MemcachedProtocol)base["protocol"]; }
+			set { base["protocol"] = value; }
+		}
+
 
 		#region [ IMemcachedClientConfiguration]
 		IList<IPEndPoint> IMemcachedClientConfiguration.Servers

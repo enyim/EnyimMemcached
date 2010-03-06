@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Net;
 using Enyim.Caching.Memcached;
 
@@ -16,6 +15,7 @@ namespace Enyim.Caching.Configuration
 		private Type keyTransformer;
 		private Type nodeLocator;
 		private Type transcoder;
+		private MemcachedProtocol protocol;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
@@ -26,6 +26,7 @@ namespace Enyim.Caching.Configuration
 			this.socketPool = new _SocketPoolConfig();
 
 			this.EnablePerformanceCounters = false;
+			this.Protocol = MemcachedProtocol.Text;
 		}
 
 		/// <summary>
@@ -92,6 +93,15 @@ namespace Enyim.Caching.Configuration
 		/// <remarks>This is set to false by default so the application using this library will work even if teh performance counters are not installed.</remarks>
 		public bool EnablePerformanceCounters { get; set; }
 
+		/// <summary>
+		/// Gets or sets the type of the communication between client and server.
+		/// </summary>
+		public MemcachedProtocol Protocol
+		{
+			get { return this.protocol; }
+			set { this.protocol = value; }
+		}
+
 		#region [ IMemcachedClientConfiguration]
 
 		IList<System.Net.IPEndPoint> IMemcachedClientConfiguration.Servers
@@ -126,6 +136,12 @@ namespace Enyim.Caching.Configuration
 		{
 			get { return this.EnablePerformanceCounters; }
 			set { this.EnablePerformanceCounters = value; }
+		}
+
+		MemcachedProtocol IMemcachedClientConfiguration.Protocol
+		{
+			get { return this.protocol; }
+			set { this.protocol = value; }
 		}
 		#endregion
 		#region [ T:SocketPoolConfig           ]

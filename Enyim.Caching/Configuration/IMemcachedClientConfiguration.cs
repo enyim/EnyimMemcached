@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Net;
-using System.Collections.ObjectModel;
+using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Configuration
 {
@@ -14,51 +13,37 @@ namespace Enyim.Caching.Configuration
 		/// <summary>
 		/// Gets a list of <see cref="T:IPEndPoint"/> each representing a Memcached server in the pool.
 		/// </summary>
-		IList<IPEndPoint> Servers
-		{
-			get;
-		}
+		IList<IPEndPoint> Servers { get; }
 
 		/// <summary>
 		/// Gets the configuration of the socket pool.
 		/// </summary>
-		ISocketPoolConfiguration SocketPool
-		{
-			get;
-		}
+		ISocketPoolConfiguration SocketPool { get; }
 
 		/// <summary>
 		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
 		/// </summary>
-		Type KeyTransformer
-		{
-			get;
-			set;
-		}
+		Type KeyTransformer { get; set; }
 
 		/// <summary>
 		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
 		/// </summary>
-		Type NodeLocator
-		{
-			get;
-			set;
-		}
+		Type NodeLocator { get; set; }
 
 		/// <summary>
 		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
 		/// </summary>
-		Type Transcoder
-		{
-			get;
-			set;
-		}
+		Type Transcoder { get; set; }
 
-		bool EnablePerformanceCounters
-		{
-			get;
-			set;
-		}
+		/// <summary>
+		/// Gets or sets a value indicating whether the client reports its activity to perfmon.
+		/// </summary>
+		bool EnablePerformanceCounters { get; set; }
+
+		/// <summary>
+		/// Gets or sets the type of the communication between client and server.
+		/// </summary>
+		MemcachedProtocol Protocol { get; set; }
 	}
 }
 

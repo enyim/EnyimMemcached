@@ -18,7 +18,7 @@ namespace Enyim.Caching.Memcached
 		/// <summary>
 		/// Store the data, but only if the server does not already hold data for a given key
 		/// </summary>
-		Add,
+		Add = 1,
 		/// <summary>
 		/// Store the data, but only if the server does already hold data for a given key
 		/// </summary>
@@ -34,7 +34,7 @@ namespace Enyim.Caching.Memcached
 		/// <summary>
 		/// Store the data, but only if the server does not already hold data for a given key
 		/// </summary>
-		Add,
+		Add = 1,
 		/// <summary>
 		/// Store the data, but only if the server does already hold data for a given key
 		/// </summary>
