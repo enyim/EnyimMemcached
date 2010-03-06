@@ -8,6 +8,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		private ulong delta;
 		private uint expires;
 		private MutationMode mode;
+		private ulong result;
 
 		public MutatorOperation(ServerPool pool, MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
 			: base(pool, key)
@@ -56,12 +57,15 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				if (data.Count != 8)
 					throw new InvalidOperationException("result must be 8 bytes, received: " + data.Count);
 
-				this.Result = BinaryConverter.DecodeUInt64(data.Array, data.Offset);
+				this.result = BinaryConverter.DecodeUInt64(data.Array, data.Offset);
 			}
 
 			return retval;
 		}
 
-		public ulong Result { get; private set; }
+		public ulong Result
+		{
+			get { return this.result; }
+		}
 	}
 }

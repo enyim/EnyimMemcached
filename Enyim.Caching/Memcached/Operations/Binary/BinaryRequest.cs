@@ -99,8 +99,8 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			return retval;
 		}
 
-		public ArraySegment<byte> Extra { get; set; }
-		public ArraySegment<byte> Data { get; set; }
+		public ArraySegment<byte> Extra;
+		public ArraySegment<byte> Data;
 
 		public void Write(PooledSocket socket)
 		{

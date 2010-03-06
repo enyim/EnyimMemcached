@@ -16,6 +16,7 @@ namespace Enyim.Caching.Configuration
 		private Type nodeLocator;
 		private Type transcoder;
 		private MemcachedProtocol protocol;
+		private bool enablePerformanceCounters;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
@@ -91,7 +92,11 @@ namespace Enyim.Caching.Configuration
 		/// Gets or sets a value indicating whether operation statistics are created using Windows Performance Counters.
 		/// </summary>
 		/// <remarks>This is set to false by default so the application using this library will work even if teh performance counters are not installed.</remarks>
-		public bool EnablePerformanceCounters { get; set; }
+		public bool EnablePerformanceCounters
+		{
+			get { return this.enablePerformanceCounters; }
+			set { this.enablePerformanceCounters = value; }
+		}
 
 		/// <summary>
 		/// Gets or sets the type of the communication between client and server.

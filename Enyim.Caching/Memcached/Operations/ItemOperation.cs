@@ -10,6 +10,7 @@ namespace Enyim.Caching.Memcached.Operations
 	{
 		private string key;
 		private string hashedKey;
+		private ulong cas;
 
 		private PooledSocket socket;
 
@@ -27,7 +28,11 @@ namespace Enyim.Caching.Memcached.Operations
 			get { return this.key; }
 		}
 
-		public ulong Cas { get; set; }
+		public ulong Cas
+		{
+			get { return this.cas; }
+			set { this.cas = value; }
+		}
 
 		/// <summary>
 		/// Gets the hashed version of the key which should be used as key in communication with memcached

@@ -23,6 +23,7 @@ namespace Enyim.Caching.Memcached
 		private IPEndPoint endPoint;
 		private ISocketPoolConfiguration config;
 		private InternalPoolImpl internalPoolImpl;
+		private IPerformanceCounters perfomanceCounters;
 
 		private MemcachedNode(IPEndPoint endpoint, IMemcachedClientConfiguration clientConfig)
 		{
@@ -37,12 +38,15 @@ namespace Enyim.Caching.Memcached
 				throw new InvalidOperationException("deadTimeout must be >= TimeSpan.Zero");
 
 			if (clientConfig.EnablePerformanceCounters)
-				this.PerfomanceCounters = new InstancePerformanceCounters(this);
+				this.perfomanceCounters = new InstancePerformanceCounters(this);
 			else
-				this.PerfomanceCounters = new NullPerformanceCounter();
+				this.perfomanceCounters = new NullPerformanceCounter();
 		}
 
-		internal IPerformanceCounters PerfomanceCounters { get; private set; }
+		internal IPerformanceCounters PerfomanceCounters
+		{
+			get { return this.perfomanceCounters; }
+		}
 
 		/// <summary>
 		/// Gets the <see cref="T:IPEndPoint"/> of this instance
@@ -134,8 +138,8 @@ namespace Enyim.Caching.Memcached
 				this.internalPoolImpl.Dispose();
 				this.internalPoolImpl = null;
 
-				this.PerfomanceCounters.Dispose();
-				this.PerfomanceCounters = null;
+				this.perfomanceCounters.Dispose();
+				this.perfomanceCounters = null;
 			}
 		}
 
