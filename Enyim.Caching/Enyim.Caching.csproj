@@ -57,7 +57,6 @@
     <Compile Include="Memcached\Operations\Binary\FlushOperation.cs" />
     <Compile Include="Memcached\Operations\Binary\StatsOperation.cs" />
     <Compile Include="Memcached\Operations\Text\TextProtocol.cs" />
-    <Compile Include="Memcached\MemcachedProtocol.cs" />
     <Compile Include="Memcached\Operations\Binary\BinaryProtocol.cs" />
     <Compile Include="HashCodeCombiner.cs" />
     <Compile Include="InterlockedQueue.cs" />
@@ -86,7 +85,6 @@
     <Compile Include="Memcached\Interfaces.cs" />
     <Compile Include="Memcached\Operations\ItemOperation.cs" />
     <Compile Include="Memcached\Operations\Operation.cs" />
-    <Compile Include="Memcached\Operations\StoreOperationBase.cs" />
     <Compile Include="Memcached\Operations\Text\DecrementOperation.cs" />
     <Compile Include="Memcached\Operations\Text\DeleteOperation.cs" />
     <Compile Include="Memcached\Operations\Text\FlushOperation.cs" />
