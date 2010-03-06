@@ -10,7 +10,7 @@ using System.Threading;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO.Compression;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Operations.Text
 {
 	internal class GetOperation : ItemOperation
 	{

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Operations.Text
 {
 	internal sealed class FlushOperation : Operation
 	{
@@ -12,12 +12,13 @@ namespace Enyim.Caching.Memcached
 		{
 			foreach (MemcachedNode server in this.ServerPool.WorkingServers)
 			{
-				using (PooledSocket ps = server.Acquire())
+				using (PooledSocket socket = server.Acquire())
 				{
-                    if (ps != null) {
-                        ps.SendCommand("flush_all");
-                        ps.ReadResponse(); // No-op the response to avoid data hanging around.
-                    }
+					if (socket != null)
+					{
+						socket.SendCommand("flush_all");
+						TextSocketHelper.ReadResponse(socket); // No-op the response to avoid data hanging around.
+					}
 				}
 			}
 

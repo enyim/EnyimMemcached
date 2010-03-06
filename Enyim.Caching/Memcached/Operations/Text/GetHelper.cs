@@ -5,7 +5,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System.Globalization;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Operations.Text
 {
 	internal static class GetHelper
 	{
@@ -13,7 +13,7 @@ namespace Enyim.Caching.Memcached
 
 		public static void FinishCurrent(PooledSocket socket)
 		{
-			string response = socket.ReadResponse();
+			string response = TextSocketHelper.ReadResponse(socket);
 
 			if (String.Compare(response, "END", StringComparison.Ordinal) != 0)
 				throw new MemcachedClientException("No END was received.");
@@ -21,7 +21,7 @@ namespace Enyim.Caching.Memcached
 
 		public static GetResponse ReadItem(PooledSocket socket)
 		{
-			string description = socket.ReadResponse();
+			string description = TextSocketHelper.ReadResponse(socket);
 
 			if (String.Compare(description, "END", StringComparison.Ordinal) == 0)
 				return null;

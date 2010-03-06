@@ -10,7 +10,7 @@ using System.Threading;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Operations.Text
 {
 	internal abstract class ItemOperation : Operation
 	{

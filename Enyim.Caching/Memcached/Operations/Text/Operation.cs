@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Operations.Text
 {
 	internal abstract class Operation : IDisposable
 	{

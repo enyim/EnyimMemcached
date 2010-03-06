@@ -8,7 +8,7 @@ using System.Security.Cryptography;
 using System.Globalization;
 using System.Threading;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Operations.Text
 {
 	internal sealed class DeleteOperation : ItemOperation
 	{
@@ -25,7 +25,7 @@ namespace Enyim.Caching.Memcached
 
 			socket.SendCommand("delete " + this.HashedKey);
 
-			bool retval = String.Compare(socket.ReadResponse(), "DELETED", StringComparison.Ordinal) == 0;
+			bool retval = String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0;
 
 			this.Socket.OwnerNode.PerfomanceCounters.LogDelete(retval);
 

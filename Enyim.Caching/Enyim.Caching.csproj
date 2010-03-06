@@ -75,6 +75,7 @@
     <Compile Include="Memcached\Operations\Text\ItemOperation.cs" />
     <Compile Include="Memcached\Operations\Text\MultiGetOperation.cs" />
     <Compile Include="Memcached\Operations\Text\Operation.cs" />
+    <Compile Include="Memcached\Operations\Text\TextSocketHelper.cs" />
     <Compile Include="Memcached\Operations\Text\StatsOperation.cs" />
     <Compile Include="Memcached\Operations\Text\StoreOperation.cs" />
     <Compile Include="Memcached\SingleNodeLocator.cs" />

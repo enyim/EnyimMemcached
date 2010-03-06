@@ -8,7 +8,7 @@ using System.Security.Cryptography;
 using System.Globalization;
 using System.Threading;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Operations.Text
 {
 	internal sealed class DecrementOperation : ItemOperation
 	{
@@ -29,7 +29,7 @@ namespace Enyim.Caching.Memcached
 
 			socket.SendCommand(String.Concat("decr ", this.HashedKey, " ", this.amount.ToString(CultureInfo.InvariantCulture)));
 
-			string response = socket.ReadResponse();
+			string response = TextSocketHelper.ReadResponse(socket);
 
 			//maybe we should throw an exception when the item is not found?
 			if (String.Compare(response, "NOT_FOUND", StringComparison.Ordinal) == 0)

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Net;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Operations.Text
 {
 	internal sealed class StatsOperation : Operation
 	{
@@ -24,20 +24,20 @@ namespace Enyim.Caching.Memcached
 
 			foreach (MemcachedNode server in this.ServerPool.WorkingServers)
 			{
-				using (PooledSocket ps = server.Acquire())
+				using (PooledSocket socket = server.Acquire())
 				{
-					if (ps == null)
+					if (socket == null)
 						continue;
 
 					try
 					{
-						ps.SendCommand("stats");
+						socket.SendCommand("stats");
 
 						Dictionary<string, string> serverData = new Dictionary<string, string>(StringComparer.Ordinal);
 
 						while (true)
 						{
-							string line = ps.ReadResponse();
+							string line = TextSocketHelper.ReadResponse(socket);
 
 							// stat values are terminated by END
 							if (String.Compare(line, "END", StringComparison.Ordinal) == 0)

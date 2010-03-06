@@ -10,6 +10,7 @@ using System.Threading;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Configuration;
 using System.Configuration;
+using Enyim.Caching.Memcached.Operations.Text;
 
 namespace Enyim.Caching
 {

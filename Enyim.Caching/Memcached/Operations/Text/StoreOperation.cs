@@ -10,7 +10,7 @@ using System.Threading;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO.Compression;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Operations.Text
 {
 	internal class StoreOperation : ItemOperation
 	{
@@ -114,7 +114,7 @@ namespace Enyim.Caching.Memcached
 
 			this.Socket.Write(new ArraySegment<byte>[] { commandBuffer, data, StoreOperation.DataTerminator });
 
-			bool retval = String.Compare(this.Socket.ReadResponse(), "STORED", StringComparison.Ordinal) == 0;
+			bool retval = String.Compare(TextSocketHelper.ReadResponse(this.Socket), "STORED", StringComparison.Ordinal) == 0;
 			this.Socket.OwnerNode.PerfomanceCounters.LogStore(this.mode, retval);
 
 			return retval;

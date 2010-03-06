@@ -14,12 +14,6 @@ namespace Enyim.Caching.Memcached
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(PooledSocket));
 
-		private const int ErrorResponseLength = 13;
-
-		private const string GenericErrorResponse = "ERROR";
-		private const string ClientErrorResponse = "CLIENT_ERROR ";
-		private const string ServerErrorResponse = "SERVER_ERROR ";
-
 		private bool isAlive = true;
 		private Socket socket;
 		private Action<PooledSocket> cleanupCallback;
@@ -77,24 +71,8 @@ namespace Enyim.Caching.Memcached
 				log.DebugFormat("Socket {0} was reset", this.InstanceId);
 		}
 
-		//private int threadId = -1;
-
-		//private void LockToThread()
-		//{
-		//    if (this.threadId > -1)
-		//        throw new InvalidOperationException("We are already bound to thread #" + this.threadId);
-
-		//    this.threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
-		//}
-
-		//private void CheckThread()
-		//{
-		//    if (this.threadId != System.Threading.Thread.CurrentThread.ManagedThreadId)
-		//        throw new InvalidOperationException(String.Format("Thread id differs: {0} vs {1}", this.threadId, System.Threading.Thread.CurrentThread.ManagedThreadId));
-		//}
-
 		/// <summary>
-		/// The ID of theis instance. Used by the <see cref="T:MemcachedServer"/> to identify the instance in its inner lists.
+		/// The ID of this instance. Used by the <see cref="T:MemcachedServer"/> to identify the instance in its inner lists.
 		/// </summary>
 		public readonly Guid InstanceId = Guid.NewGuid();
 
@@ -153,66 +131,12 @@ namespace Enyim.Caching.Memcached
 		}
 
 		/// <summary>
-		/// Reads a line from the socket. A line is terninated by \r\n.
-		/// </summary>
-		/// <returns></returns>
-		private string ReadLine()
-		{
-			MemoryStream ms = new MemoryStream(50);
-
-			bool gotR = false;
-			byte[] buffer = new byte[1];
-
-			int data;
-
-			try
-			{
-				while (true)
-				{
-					data = this.inputStream.ReadByte();
-
-					if (data == 13)
-					{
-						gotR = true;
-						continue;
-					}
-
-					if (gotR)
-					{
-						if (data == 10)
-							break;
-
-						ms.WriteByte(13);
-
-						gotR = false;
-					}
-
-					ms.WriteByte((byte)data);
-				}
-			}
-			catch (IOException)
-			{
-				this.isAlive = false;
-
-				throw;
-			}
-
-			string retval = Encoding.ASCII.GetString(ms.GetBuffer(), 0, (int)ms.Length);
-
-			if (log.IsDebugEnabled)
-				log.Debug("ReadLine: " + retval);
-
-			return retval;
-		}
-
-		/// <summary>
 		/// Sends the command to the server. The trailing \r\n is automatically appended.
 		/// </summary>
 		/// <param name="value">The command to be sent to the server.</param>
 		public void SendCommand(string value)
 		{
 			this.CheckDisposed();
-			//this.CheckThread();
 
 			if (log.IsDebugEnabled)
 				log.Debug("SendCommand: " + value);
@@ -245,6 +169,29 @@ namespace Enyim.Caching.Memcached
 		}
 
 		/// <summary>
+		/// Reads the next byte from the server's response.
+		/// </summary>
+		/// <remarks>This method blocks and will not return until the value is read.</remarks>
+		public int ReadByte()
+		{
+			this.CheckDisposed();
+
+			if (log.IsDebugEnabled)
+				log.DebugFormat("ReadByte called");
+
+			try
+			{
+				return this.inputStream.ReadByte();
+			}
+			catch (IOException)
+			{
+				this.isAlive = false;
+
+				throw;
+			}
+		}
+
+		/// <summary>
 		/// Reads data from the server into the specified buffer.
 		/// </summary>
 		/// <param name="buffer">An array of <see cref="T:System.Byte"/> that is the storage location for the received data.</param>
@@ -254,7 +201,6 @@ namespace Enyim.Caching.Memcached
 		public void Read(byte[] buffer, int offset, int count)
 		{
 			this.CheckDisposed();
-			//this.CheckThread();
 
 			if (log.IsDebugEnabled)
 				log.DebugFormat("Reading {0} bytes into buffer starting at {1}", count, offset);
@@ -290,7 +236,6 @@ namespace Enyim.Caching.Memcached
 		public void Write(byte[] data, int offset, int length)
 		{
 			this.CheckDisposed();
-			//this.CheckThread();
 
 			if (log.IsDebugEnabled)
 				log.DebugFormat("Writing {0} bytes from buffer starting at {1}", length, offset);
@@ -310,7 +255,6 @@ namespace Enyim.Caching.Memcached
 		public void Write(IList<ArraySegment<byte>> buffers)
 		{
 			this.CheckDisposed();
-			//this.CheckThread();
 
 			if (log.IsDebugEnabled)
 				log.DebugFormat("Writing {0} buffer(s)", buffers.Count);
@@ -325,44 +269,6 @@ namespace Enyim.Caching.Memcached
 
 				ThrowHelper.ThrowSocketWriteError(this.endpoint, status);
 			}
-		}
-
-		/// <summary>
-		/// Reads the response of the server.
-		/// </summary>
-		/// <returns>The data sent by the memcached server.</returns>
-		/// <exception cref="T:System.InvalidOperationException">The server did not sent a response or an empty line was returned.</exception>
-		/// <exception cref="T:Enyim.Caching.Memcached.MemcachedException">The server did not specified any reason just returned the string ERROR. - or - The server returned a SERVER_ERROR, in this case the Message of the exception is the message returned by the server.</exception>
-		/// <exception cref="T:Enyim.Caching.Memcached.MemcachedClientException">The server did not recognize the request sent by the client. The Message of the exception is the message returned by the server.</exception>
-		public string ReadResponse()
-		{
-			this.CheckDisposed();
-			//this.CheckThread();
-
-			string response = this.ReadLine();
-
-			if (log.IsDebugEnabled)
-				log.Debug("Received response: " + response);
-
-			if (String.IsNullOrEmpty(response))
-				throw new MemcachedClientException("Empty response received.");
-
-			if (String.Compare(response, GenericErrorResponse, StringComparison.Ordinal) == 0)
-				throw new NotSupportedException("Operation is not supported by the server or the request was malformed. If the latter please report the bug to the developers.");
-
-			if (response.Length >= ErrorResponseLength)
-			{
-				if (String.Compare(response, 0, ClientErrorResponse, 0, ErrorResponseLength, StringComparison.Ordinal) == 0)
-				{
-					throw new MemcachedClientException(response.Remove(0, ErrorResponseLength));
-				}
-				else if (String.Compare(response, 0, ServerErrorResponse, 0, ErrorResponseLength, StringComparison.Ordinal) == 0)
-				{
-					throw new MemcachedException(response.Remove(0, ErrorResponseLength));
-				}
-			}
-
-			return response;
 		}
 
 		#region [ BasicNetworkStream           ]
