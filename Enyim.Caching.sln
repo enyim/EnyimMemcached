@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemcachedTest", "MemcachedT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoApp", "DemoApp\DemoApp.csproj", "{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Northscale.Store", "NorthScale.Memcached\Northscale.Store.csproj", "{D2011829-3079-457B-8F91-99627B7B4BE7}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = Enyim.Caching1.vsmdi
@@ -34,6 +36,10 @@ Global
 		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2011829-3079-457B-8F91-99627B7B4BE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2011829-3079-457B-8F91-99627B7B4BE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2011829-3079-457B-8F91-99627B7B4BE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2011829-3079-457B-8F91-99627B7B4BE7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

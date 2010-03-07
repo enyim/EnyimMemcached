@@ -48,14 +48,50 @@ namespace Enyim.Caching
 			this.Initialize(configuration);
 		}
 
+		private static ISaslAuthenticationProvider GetProvider(IMemcachedClientConfiguration configuration)
+		{
+			// create&initialize the authenticator, if any
+			// we'll use this single instance everywhere, so it must be thread safe
+			IAuthenticationConfiguration auth = configuration.Authentication;
+			if (auth != null)
+			{
+				Type t = auth.Type;
+				var provider = (t == null) ? null : Enyim.Reflection.FastActivator.CreateInstance(t) as ISaslAuthenticationProvider;
+
+				if (provider != null)
+				{
+					provider.Initialize(auth.Parameters);
+					return provider;
+				}
+			}
+
+			return null;
+		}
+
 		private void Initialize(IMemcachedClientConfiguration configuration)
 		{
+			ISaslAuthenticationProvider provider = GetProvider(configuration);
+
+			// we'll pass ourselves as the authenticator, and we'll forward all auth calls to the protocol
+			// this way we'll avoid that the pool and the protocol reference each other
+			ServerPool pool = new ServerPool(configuration);
+
 			switch (configuration.Protocol)
 			{
-				case MemcachedProtocol.Binary: this.protocol = new Enyim.Caching.Memcached.Operations.Binary.BinaryProtocol(new ServerPool(configuration)); break;
-				case MemcachedProtocol.Text: this.protocol = new Enyim.Caching.Memcached.Operations.Text.TextProtocol(new ServerPool(configuration)); break;
+				case MemcachedProtocol.Binary:
+					this.protocol = new Enyim.Caching.Memcached.Operations.Binary.BinaryProtocol(pool, provider);
+					break;
+
+				case MemcachedProtocol.Text:
+					// authentication is not supported for the text protocol
+					this.protocol = new Enyim.Caching.Memcached.Operations.Text.TextProtocol(pool);
+					break;
+
 				default: throw new ArgumentOutOfRangeException("Unknown protocol: " + configuration.Protocol);
 			}
+
+			// everything is initialized, start the pool
+			pool.Start();
 		}
 
 		public object Get(string key)

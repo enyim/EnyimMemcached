@@ -21,11 +21,18 @@ namespace DemoApp
 			// MemcachedClient mc2 = new MemcachedClient("memcached");
 
 			// or just initialize the client from code
-			
-			 MemcachedClientConfiguration config = new MemcachedClientConfiguration();
-			 config.Servers.Add(new IPEndPoint(IPAddress.Loopback, 11211));
-			//
-			 //var mc = new MemcachedClient2(config);
+
+			MemcachedClientConfiguration config = new MemcachedClientConfiguration();
+			config.Servers.Add(new IPEndPoint(IPAddress.Loopback, 11211));
+			config.Protocol = MemcachedProtocol.Binary;
+			config.Authentication.Type = typeof(PlainTextAuthenticator);
+			config.Authentication.Parameters["userName"] = "demo";
+			config.Authentication.Parameters["password"] = "demo";
+
+			var mc = new MemcachedClient2(config);
+
+			for(var i = 0; i< 100; i++)
+			mc.Store(StoreMode.Set, "Hello", "World");
 
 
 			// simple multiget; please note that only 1.2.4 supports it (windows version is at 1.2.1)
@@ -73,7 +80,7 @@ namespace DemoApp
 			////mc2.Store(StoreMode.Set, "D2", DateTime.Now);
 			////mc2.Store(StoreMode.Set, "D3", true);
 			////mc2.Store(StoreMode.Set, "D4", new Product());
-			
+
 			//Console.WriteLine("D1: {0}", mc.Get("D1"));
 			//Console.WriteLine("D2: {0}", mc.Get("D2"));
 			//Console.WriteLine("D3: {0}", mc.Get("D3"));

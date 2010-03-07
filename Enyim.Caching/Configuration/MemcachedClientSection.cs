@@ -33,6 +33,16 @@ namespace Enyim.Caching.Configuration
 		}
 
 		/// <summary>
+		/// Gets or sets the configuration of the authenticator.
+		/// </summary>
+		[ConfigurationProperty("authentication", IsRequired = false)]
+		public AuthenticationElement Authentication
+		{
+			get { return (AuthenticationElement)base["authentication"]; }
+			set { base["authentication"] = value; }
+		}
+
+		/// <summary>
 		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
 		/// </summary>
 		[ConfigurationProperty("keyTransformer", IsRequired = false), TypeConverter(typeof(TypeNameConverter)), InterfaceValidator(typeof(Enyim.Caching.Memcached.IMemcachedKeyTransformer))]
@@ -96,7 +106,6 @@ namespace Enyim.Caching.Configuration
 			set { base["protocol"] = value; }
 		}
 
-
 		#region [ IMemcachedClientConfiguration]
 		IList<IPEndPoint> IMemcachedClientConfiguration.Servers
 		{
@@ -125,6 +134,24 @@ namespace Enyim.Caching.Configuration
 			get { return this.Transcoder; }
 			set { this.Transcoder = value; }
 		}
+
+		IAuthenticationConfiguration IMemcachedClientConfiguration.Authentication
+		{
+			get { return this.Authentication; }
+		}
+
+		bool IMemcachedClientConfiguration.EnablePerformanceCounters
+		{
+			get { return this.EnablePerformanceCounters; }
+			set { this.EnablePerformanceCounters = value; }
+		}
+
+		MemcachedProtocol IMemcachedClientConfiguration.Protocol
+		{
+			get { return this.Protocol; }
+			set { this.Protocol = value; }
+		}
+
 		#endregion
 	}
 }

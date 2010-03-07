@@ -14,7 +14,7 @@ namespace Enyim.Caching.Memcached
 	[DebuggerDisplay("{{MemcachedNode [ Address: {EndPoint}, IsAlive = {IsAlive}  ]}}")]
 	public sealed class MemcachedNode : IDisposable
 	{
-		internal static readonly NodeFactory Factory = new NodeFactory();
+		//internal static readonly NodeFactory Factory = new NodeFactory();
 		private static readonly object SyncRoot = new Object();
 
 		private bool isDisposed;
@@ -25,13 +25,13 @@ namespace Enyim.Caching.Memcached
 		private InternalPoolImpl internalPoolImpl;
 		private IPerformanceCounters perfomanceCounters;
 
-		private MemcachedNode(IPEndPoint endpoint, IMemcachedClientConfiguration clientConfig)
+		internal MemcachedNode(IPEndPoint endpoint, IMemcachedClientConfiguration clientConfig, Action<PooledSocket> socketConnected)
 		{
 			ISocketPoolConfiguration ispc = clientConfig.SocketPool;
 
 			this.endPoint = endpoint;
 			this.config = ispc;
-			this.internalPoolImpl = new InternalPoolImpl(this, ispc);
+			this.SocketConnected = socketConnected;
 
 			this.deadTimeout = (int)ispc.DeadTimeout.TotalSeconds;
 			if (this.deadTimeout < 0)
@@ -41,6 +41,8 @@ namespace Enyim.Caching.Memcached
 				this.perfomanceCounters = new InstancePerformanceCounters(this);
 			else
 				this.perfomanceCounters = new NullPerformanceCounter();
+
+			this.internalPoolImpl = new InternalPoolImpl(this, ispc);
 		}
 
 		internal IPerformanceCounters PerfomanceCounters
@@ -102,7 +104,6 @@ namespace Enyim.Caching.Memcached
 				catch { }
 
 				this.internalPoolImpl = new InternalPoolImpl(this, this.config);
-
 			}
 
 			return true;
@@ -147,6 +148,8 @@ namespace Enyim.Caching.Memcached
 		{
 			this.Dispose();
 		}
+
+		internal Action<PooledSocket> SocketConnected;
 
 		#region [ InternalPoolImpl             ]
 		private class InternalPoolImpl : IDisposable
@@ -222,7 +225,10 @@ namespace Enyim.Caching.Memcached
 			{
 				PooledSocket retval = new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, this.ReleaseSocket);
 				retval.OwnerNode = this.ownerNode;
-				retval.Reset();
+
+				Action<PooledSocket> evt = this.ownerNode.SocketConnected;
+				if (evt != null)
+					evt(retval);
 
 				return retval;
 			}
@@ -256,7 +262,8 @@ namespace Enyim.Caching.Memcached
 
 				// every release signals the event, so even if the pool becomes full in the meantime
 				// the WaitOne will succeed, and more items will be in the pool than allowed,
-				// so reset the event when an item is inserted
+				// thus  we need to reset the event when an item is inserted
+				// TODO is going over the cap an issue?
 				this.itemReleasedEvent.Reset();
 
 				PooledSocket retval = null;
@@ -289,6 +296,8 @@ namespace Enyim.Caching.Memcached
 					// free item pool is empty
 					if (log.IsDebugEnabled)
 						log.Debug("Could not get a socket from the pool.");
+
+					// TODO rewrite this to SpinWait and Intrlocked (maybe we need to port back the SpinWait from 4.0)
 
 					// we are not allowed to create more, so wait for an item to be released back into the pool
 					if (this.workingCount >= this.maxItems)
@@ -452,57 +461,57 @@ namespace Enyim.Caching.Memcached
 		}
 		#endregion
 		#region [ NodeFactory                  ]
-		internal sealed class NodeFactory
-		{
-			private Dictionary<string, MemcachedNode> nodeCache = new Dictionary<string, MemcachedNode>(StringComparer.OrdinalIgnoreCase);
+		//internal sealed class NodeFactory
+		//{
+		//    private Dictionary<string, MemcachedNode> nodeCache = new Dictionary<string, MemcachedNode>(StringComparer.OrdinalIgnoreCase);
 
-			internal NodeFactory()
-			{
-				AppDomain.CurrentDomain.DomainUnload += DestroyPool;
-			}
+		//    internal NodeFactory()
+		//    {
+		//        AppDomain.CurrentDomain.DomainUnload += DestroyPool;
+		//    }
 
-			public MemcachedNode Get(IPEndPoint endpoint, IMemcachedClientConfiguration config)
-			{
-				ISocketPoolConfiguration ispc = config.SocketPool;
+		//    public MemcachedNode Get(IPEndPoint endpoint, IMemcachedClientConfiguration config, IMemcachedAuthenticator authenticator)
+		//    {
+		//        ISocketPoolConfiguration ispc = config.SocketPool;
 
-				string cacheKey = String.Concat(endpoint.ToString(), "-",
-													ispc.ConnectionTimeout.Ticks, "-",
-													ispc.DeadTimeout.Ticks, "-",
-													ispc.MaxPoolSize, "-",
-													ispc.MinPoolSize, "-",
-													ispc.ReceiveTimeout.Ticks);
+		//        string cacheKey = String.Concat(endpoint.ToString(), "-",
+		//                                            ispc.ConnectionTimeout.Ticks, "-",
+		//                                            ispc.DeadTimeout.Ticks, "-",
+		//                                            ispc.MaxPoolSize, "-",
+		//                                            ispc.MinPoolSize, "-",
+		//                                            ispc.ReceiveTimeout.Ticks);
 
-				MemcachedNode node;
+		//        MemcachedNode node;
 
-				if (!nodeCache.TryGetValue(cacheKey, out node))
-				{
-					lock (nodeCache)
-					{
-						if (!nodeCache.TryGetValue(cacheKey, out node))
-						{
-							node = new MemcachedNode(endpoint, config);
+		//        if (!nodeCache.TryGetValue(cacheKey, out node))
+		//        {
+		//            lock (nodeCache)
+		//            {
+		//                if (!nodeCache.TryGetValue(cacheKey, out node))
+		//                {
+		//                    node = new MemcachedNode(endpoint, config);
 
-							nodeCache[cacheKey] = node;
-						}
-					}
-				}
+		//                    nodeCache[cacheKey] = node;
+		//                }
+		//            }
+		//        }
 
-				return node;
-			}
+		//        return node;
+		//    }
 
-			private void DestroyPool(object sender, EventArgs e)
-			{
-				lock (this.nodeCache)
-				{
-					foreach (MemcachedNode node in this.nodeCache.Values)
-					{
-						node.Dispose();
-					}
+		//    private void DestroyPool(object sender, EventArgs e)
+		//    {
+		//        lock (this.nodeCache)
+		//        {
+		//            foreach (MemcachedNode node in this.nodeCache.Values)
+		//            {
+		//                node.Dispose();
+		//            }
 
-					this.nodeCache.Clear();
-				}
-			}
-		}
+		//            this.nodeCache.Clear();
+		//        }
+		//    }
+		//}
 		#endregion
 	}
 }

@@ -12,6 +12,7 @@ namespace Enyim.Caching.Configuration
 	{
 		private List<IPEndPoint> servers;
 		private ISocketPoolConfiguration socketPool;
+		private IAuthenticationConfiguration authentication;
 		private Type keyTransformer;
 		private Type nodeLocator;
 		private Type transcoder;
@@ -25,6 +26,7 @@ namespace Enyim.Caching.Configuration
 		{
 			this.servers = new List<IPEndPoint>();
 			this.socketPool = new _SocketPoolConfig();
+			this.authentication = new _AuthenticationConfig();
 
 			this.EnablePerformanceCounters = false;
 			this.Protocol = MemcachedProtocol.Text;
@@ -44,6 +46,14 @@ namespace Enyim.Caching.Configuration
 		public ISocketPoolConfiguration SocketPool
 		{
 			get { return this.socketPool; }
+		}
+
+		/// <summary>
+		/// Gets the authentication settings.
+		/// </summary>
+		public IAuthenticationConfiguration Authentication
+		{
+			get { return this.authentication; }
 		}
 
 		/// <summary>
@@ -119,6 +129,11 @@ namespace Enyim.Caching.Configuration
 			get { return this.SocketPool; }
 		}
 
+		IAuthenticationConfiguration IMemcachedClientConfiguration.Authentication
+		{
+			get { return this.authentication; }
+		}
+
 		Type IMemcachedClientConfiguration.KeyTransformer
 		{
 			get { return this.KeyTransformer; }
@@ -149,7 +164,7 @@ namespace Enyim.Caching.Configuration
 			set { this.protocol = value; }
 		}
 		#endregion
-		#region [ T:SocketPoolConfig           ]
+		#region [ T:_SocketPoolConfig          ]
 		private class _SocketPoolConfig : ISocketPoolConfiguration
 		{
 			private int minPoolSize = 10;
@@ -218,6 +233,30 @@ namespace Enyim.Caching.Configuration
 				}
 			}
 		}
+		#endregion
+		#region [ T:_AuthenticationConfig      ]
+
+		private class _AuthenticationConfig : IAuthenticationConfiguration
+		{
+			private Type authenticator;
+			private Dictionary<string, object> parameters;
+
+			Type IAuthenticationConfiguration.Type
+			{
+				get { return this.authenticator; }
+				set
+				{
+					ConfigurationHelper.CheckForInterface(value, typeof(ISaslAuthenticationProvider));
+					this.authenticator = value;
+				}
+			}
+
+			Dictionary<string, object> IAuthenticationConfiguration.Parameters
+			{
+				get { return this.parameters ?? (this.parameters = new Dictionary<string, object>()); }
+			}
+		}
+
 		#endregion
 	}
 }

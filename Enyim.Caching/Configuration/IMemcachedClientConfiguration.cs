@@ -21,6 +21,11 @@ namespace Enyim.Caching.Configuration
 		ISocketPoolConfiguration SocketPool { get; }
 
 		/// <summary>
+		/// Gets the authentication settings.
+		/// </summary>
+		IAuthenticationConfiguration Authentication { get; }
+
+		/// <summary>
 		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
 		/// </summary>
 		Type KeyTransformer { get; set; }

@@ -40,16 +40,32 @@ namespace Enyim.Caching.Memcached
 			// create the item transcoder instance
 			t = this.configuration.Transcoder;
 			this.transcoder = (t == null) ? new DefaultTranscoder() : (ITranscoder)Enyim.Reflection.FastActivator.CreateInstance(t);
-			
+		}
+
+		public event Action<PooledSocket> SocketConnected;
+
+		/// <summary>
+		/// This will start the pool: initializes the nodelocator, warms up the socket pools, etc.
+		/// </summary>
+		public void Start()
+		{
 			// initialize the server list
-			
-			foreach (IPEndPoint ip in configuration.Servers)
+			foreach (IPEndPoint ip in this.configuration.Servers)
 			{
-				this.workingServers.Add(MemcachedNode.Factory.Get(ip, configuration));
+				MemcachedNode node = new MemcachedNode(ip, this.configuration, this.OnSocketConnected);
+				
+				this.workingServers.Add(node);
 			}
 
 			// (re)creates the locator
 			this.RebuildIndexes();
+		}
+
+		private void OnSocketConnected(PooledSocket socket)
+		{
+			Action<PooledSocket> evt = this.SocketConnected;
+			if (evt != null)
+				evt(socket);
 		}
 
 		private void RebuildIndexes()
@@ -206,7 +222,7 @@ namespace Enyim.Caching.Memcached
 					{
 						if (this.publicWorkingServers == null)
 						{
-							this.publicWorkingServers = new ReadOnlyCollection<MemcachedNode>(this.workingServers.FindAll(delegate(MemcachedNode node) { return true; }));
+							this.publicWorkingServers = new ReadOnlyCollection<MemcachedNode>(this.workingServers.ToArray());
 						}
 					}
 					finally
@@ -258,8 +274,9 @@ namespace Enyim.Caching.Memcached
 			{
 				rwl.UpgradeToWriterLock(Timeout.Infinite);
 
-				//this.deadServers.ForEach(delegate(MemcachedNode node) { node.Dispose(); });
-				//this.workingServers.ForEach(delegate(MemcachedNode node) { node.Dispose(); });
+				// dispose the nodes (they'll kill conenctions, etc.)
+				this.deadServers.ForEach(delegate(MemcachedNode node) { node.Dispose(); });
+				this.workingServers.ForEach(delegate(MemcachedNode node) { node.Dispose(); });
 
 				this.deadServers.Clear();
 				this.workingServers.Clear();

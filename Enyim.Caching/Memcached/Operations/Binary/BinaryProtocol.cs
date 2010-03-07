@@ -8,15 +8,32 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 	internal class BinaryProtocol : IProtocolImplementation
 	{
 		private ServerPool pool;
+		private SaslAuthenticator authenticator;
 
-		public BinaryProtocol(ServerPool pool)
+		public BinaryProtocol(ServerPool pool, ISaslAuthenticationProvider provider)
 		{
 			this.pool = pool;
+			if (provider != null)
+			{
+				this.authenticator = new SaslAuthenticator(provider);
+				this.pool.SocketConnected += this.OnSocketConnected;
+			}
 		}
 
 		void IDisposable.Dispose()
 		{
+			if (this.pool != null)
+			{
+				this.pool.SocketConnected -= this.OnSocketConnected;
+				this.pool = null;
+			}
+
 			this.Dispose();
+		}
+
+		private void OnSocketConnected(PooledSocket socket)
+		{
+			this.authenticator.Authenticate(socket);
 		}
 
 		/// <summary>
