@@ -43,12 +43,12 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			request.Data = item.Data;
 			request.Key = this.HashedKey;
 
-			request.Write(this.Socket);
+			request.Write(socket);
 
 			BinaryResponse response = new BinaryResponse();
-			bool retval = response.Read(this.Socket);
+			bool retval = response.Read(socket);
 
-			this.Socket.OwnerNode.PerfomanceCounters.LogStore(mode, retval);
+			socket.OwnerNode.PerfomanceCounters.LogStore(mode, retval);
 
 			return retval;
 		}

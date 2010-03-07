@@ -54,11 +54,11 @@
     <Compile Include="Configuration\AuthenticationElement.cs" />
     <Compile Include="Configuration\IAuthenticationConfiguration.cs" />
     <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs" />
-    <Compile Include="Memcached\IAuthenticationProvider.cs" />
+    <Compile Include="Memcached\ISaslAuthenticationProvider.cs" />
     <Compile Include="MemcachedClient2.cs" />
     <Compile Include="Memcached\Enums.cs" />
     <Compile Include="Memcached\Operations\Binary\ConcatenationOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\SaslAuth.cs" />
+    <Compile Include="Memcached\Operations\Binary\SaslAuthenticator.cs" />
     <Compile Include="Memcached\Operations\Binary\FlushOperation.cs" />
     <Compile Include="Memcached\Operations\Binary\StatsOperation.cs" />
     <Compile Include="Memcached\Operations\Text\TextProtocol.cs" />

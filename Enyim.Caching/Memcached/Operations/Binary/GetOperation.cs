@@ -12,20 +12,20 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 			BinaryRequest request = new BinaryRequest(OpCode.Get);
 			request.Key = this.HashedKey;
-			request.Write(this.Socket);
+			request.Write(socket);
 
 			BinaryResponse response = new BinaryResponse();
 
-			if (response.Read(this.Socket))
+			if (response.Read(socket))
 			{
 				int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
 				this.result = this.ServerPool.Transcoder.Deserialize(new CacheItem((ushort)flags, response.Data));
-				this.Socket.OwnerNode.PerfomanceCounters.LogGet(true);
+				socket.OwnerNode.PerfomanceCounters.LogGet(true);
 
 				return true;
 			}
 
-			this.Socket.OwnerNode.PerfomanceCounters.LogGet(false);
+			socket.OwnerNode.PerfomanceCounters.LogGet(false);
 			return false;
 		}
 

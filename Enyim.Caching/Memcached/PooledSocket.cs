@@ -45,6 +45,11 @@ namespace Enyim.Caching.Memcached
 			internal set { this.ownerNode = value; }
 		}
 
+		public int Available
+		{
+			get { return this.socket.Available; }
+		}
+
 		public void Reset()
 		{
 			//this.LockToThread();

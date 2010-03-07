@@ -19,7 +19,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 			bool retval = String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0;
 
-			this.Socket.OwnerNode.PerfomanceCounters.LogDelete(retval);
+			socket.OwnerNode.PerfomanceCounters.LogDelete(retval);
 
 			return retval;
 		}

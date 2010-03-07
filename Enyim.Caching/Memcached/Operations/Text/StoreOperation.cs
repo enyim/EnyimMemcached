@@ -21,7 +21,8 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 		protected override bool ExecuteAction()
 		{
-			if (this.Socket == null)
+			PooledSocket socket = this.Socket;
+			if (socket == null)
 				return false;
 
 			CacheItem item = this.ServerPool.Transcoder.Serialize(this.value);
@@ -76,10 +77,10 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 			ArraySegment<byte> commandBuffer = TextSocketHelper.GetCommandBuffer(sb.ToString());
 
-			this.Socket.Write(new ArraySegment<byte>[] { commandBuffer, data, StoreOperation.DataTerminator });
+			socket.Write(new ArraySegment<byte>[] { commandBuffer, data, StoreOperation.DataTerminator });
 
-			bool retval = String.Compare(TextSocketHelper.ReadResponse(this.Socket), "STORED", StringComparison.Ordinal) == 0;
-			this.Socket.OwnerNode.PerfomanceCounters.LogStore(mode, retval);
+			bool retval = String.Compare(TextSocketHelper.ReadResponse(socket), "STORED", StringComparison.Ordinal) == 0;
+			socket.OwnerNode.PerfomanceCounters.LogStore(mode, retval);
 
 			return retval;
 		}

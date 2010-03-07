@@ -7,15 +7,22 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 {
 	internal class SaslAuthenticator 
 	{
+		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(SaslAuthenticator));
+
 		private ISaslAuthenticationProvider provider;
 
 		public SaslAuthenticator(ISaslAuthenticationProvider provider)
 		{
+			if (provider == null) throw new ArgumentNullException("provider");
+
 			this.provider = provider;
 		}
 
 		public bool Authenticate(PooledSocket socket)
 		{
+			if (log.IsDebugEnabled)
+				log.DebugFormat("Authenticating socket {0} using provider {1}", socket.InstanceId, this.provider.GetType());
+
 			// create a Sasl Start command
 			BinaryRequest request = new BinaryRequest(OpCode.SaslStart);
 			request.Key = this.provider.Type;
@@ -42,8 +49,13 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 					request.Write(socket);
 				}
 				else
+				{
+					if (log.IsDebugEnabled)
+						log.DebugFormat("Authentication failed, return code: 0x{0:x}", response.StatusCode);
+
 					// invalid credentials or other error
 					return false;
+				}
 			}
 
 			return true;

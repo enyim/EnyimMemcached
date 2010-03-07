@@ -7,6 +7,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 {
 	internal class BinaryRequest
 	{
+		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(BinaryRequest));
 		private static int InstanceCounter;
 
 		public OpCode Operation;
@@ -104,7 +105,27 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 		public void Write(PooledSocket socket)
 		{
-			socket.Write(this.CreateBuffer());
+			IList<ArraySegment<byte>> buffer = this.CreateBuffer();
+
+			if (log.IsDebugEnabled)
+			{
+				log.Debug("Sending binary request");
+				ArraySegment<byte> header = buffer[0];
+
+				StringBuilder sb = new StringBuilder(128).AppendLine();
+
+				for (int i = 0; i < header.Count; i++)
+				{
+					byte value = header.Array[i + header.Offset];
+					sb.Append(value < 16 ? "0x0" : "0x").Append(value.ToString("X"));
+
+					if (i % 4 == 3) sb.AppendLine(); else sb.Append(" ");
+				}
+
+				log.Debug(sb.ToString());
+			}
+
+			socket.Write(buffer);
 		}
 	}
 }

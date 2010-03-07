@@ -47,10 +47,10 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 			this.UpdateExtra(request);
 
-			request.Write(this.Socket);
+			request.Write(socket);
 
 			BinaryResponse response = new BinaryResponse();
-			bool retval = response.Read(this.Socket);
+			bool retval = response.Read(socket);
 			if (retval)
 			{
 				ArraySegment<byte> data = response.Data;

@@ -12,13 +12,13 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 			BinaryRequest request = new BinaryRequest(OpCode.Delete);
 			request.Key = this.HashedKey;
-			request.Write(this.Socket);
+			request.Write(socket);
 
 			BinaryResponse response = new BinaryResponse();
 
-			bool retval = response.Read(this.Socket);
+			bool retval = response.Read(socket);
 
-			this.Socket.OwnerNode.PerfomanceCounters.LogDelete(retval);
+			socket.OwnerNode.PerfomanceCounters.LogDelete(retval);
 			return retval;
 		}
 	}

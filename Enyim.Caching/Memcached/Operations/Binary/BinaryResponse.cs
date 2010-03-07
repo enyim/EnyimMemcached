@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
 	internal class BinaryResponse
 	{
+		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(BinaryResponse));
+
 		private const byte MAGIC_VALUE = 0x81;
 		private const int HEADER_OPCODE = 1;
 		private const int HEADER_KEY = 2; // 2-3
@@ -35,6 +38,25 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 			byte[] header = new byte[24];
 			socket.Read(header, 0, 24);
+
+			if (log.IsDebugEnabled)
+			{
+				log.Debug("Received binary response");
+
+				StringBuilder sb = new StringBuilder(128).AppendLine();
+
+				for (int i = 0; i < header.Length; i++)
+				{
+					byte value = header[i];
+					sb.Append(value < 16 ? "0x0" : "0x").Append(value.ToString("X"));
+
+					if (i % 4 == 3) sb.AppendLine(); else sb.Append(" ");
+				}
+
+				log.Debug(sb.ToString());
+			}
+
+
 
 			fixed (byte* buffer = header)
 			{

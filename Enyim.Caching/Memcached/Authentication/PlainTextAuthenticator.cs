@@ -5,7 +5,7 @@ using System.Text;
 namespace Enyim.Caching.Memcached
 {
 	/// <summary>
-	/// Implements the default plain text ("PLAIN") Memcached authentication.
+	/// Implements the default plain text ("PLAIN") Memcached authentication. It expects "userName" and "password" parameters during initalization.
 	/// </summary>
 	public sealed class PlainTextAuthenticator : ISaslAuthenticationProvider
 	{
