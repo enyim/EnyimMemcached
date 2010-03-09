@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		private Dictionary<string, object> result;
 		private Dictionary<string, ulong> casValues;
 
-		public MultiGetOperation(ServerPool pool, IEnumerable<string> keys)
+		public MultiGetOperation(IServerPool pool, IEnumerable<string> keys)
 			: base(pool)
 		{
 			this.keys = keys;
@@ -38,7 +38,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			}
 
 			// map each key to the appropriate server in the pool
-			IDictionary<MemcachedNode, IList<string>> splitKeys = this.ServerPool.SplitKeys(this.keys);
+			IDictionary<MemcachedNode, IList<string>> splitKeys = null; // this.ServerPool.SplitKeys(this.keys);
 
 			// we'll open 1 socket for each server
 			List<PooledSocket> sockets = new List<PooledSocket>();

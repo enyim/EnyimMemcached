@@ -2,7 +2,7 @@ using System;
 
 namespace Enyim.Caching.Configuration
 {
-	internal static class ConfigurationHelper
+	public static class ConfigurationHelper
 	{
 		public static void CheckForInterface(Type type, Type interfaceType)
 		{

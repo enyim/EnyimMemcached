@@ -41,11 +41,6 @@ namespace Enyim.Caching.Configuration
 		Type Transcoder { get; set; }
 
 		/// <summary>
-		/// Gets or sets a value indicating whether the client reports its activity to perfmon.
-		/// </summary>
-		bool EnablePerformanceCounters { get; set; }
-
-		/// <summary>
 		/// Gets or sets the type of the communication between client and server.
 		/// </summary>
 		MemcachedProtocol Protocol { get; set; }

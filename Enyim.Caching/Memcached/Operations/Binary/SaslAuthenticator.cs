@@ -5,13 +5,13 @@ using System.Net;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
-	internal class SaslAuthenticator 
+	internal class BinaryAuthenticator : IAuthenticator
 	{
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(SaslAuthenticator));
+		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(BinaryAuthenticator));
 
 		private ISaslAuthenticationProvider provider;
 
-		public SaslAuthenticator(ISaslAuthenticationProvider provider)
+		public BinaryAuthenticator(ISaslAuthenticationProvider provider)
 		{
 			if (provider == null) throw new ArgumentNullException("provider");
 
@@ -59,6 +59,11 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			}
 
 			return true;
+		}
+
+		bool IAuthenticator.Authenticate(PooledSocket socket)
+		{
+			return this.Authenticate(socket);
 		}
 	}
 }

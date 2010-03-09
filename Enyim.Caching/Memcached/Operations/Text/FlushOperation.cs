@@ -3,11 +3,11 @@ namespace Enyim.Caching.Memcached.Operations.Text
 {
 	internal sealed class FlushOperation : Operation
 	{
-		public FlushOperation(ServerPool pool) : base(pool) { }
+		public FlushOperation(IServerPool pool) : base(pool) { }
 
 		protected override bool ExecuteAction()
 		{
-			foreach (MemcachedNode server in this.ServerPool.WorkingServers)
+			foreach (MemcachedNode server in this.ServerPool.GetServers())
 			{
 				using (PooledSocket socket = server.Acquire())
 				{

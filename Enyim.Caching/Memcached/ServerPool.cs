@@ -7,7 +7,7 @@ using Enyim.Caching.Configuration;
 
 namespace Enyim.Caching.Memcached
 {
-	internal class ServerPool : IDisposable
+	public class DefaultServerPool : IDisposable, IServerPool
 	{
 		// holds all dead servers which will be periodically rechecked and put back into the working servers if found alive
 		List<MemcachedNode> deadServers = new List<MemcachedNode>();
@@ -25,7 +25,12 @@ namespace Enyim.Caching.Memcached
 		private IMemcachedNodeLocator nodeLocator;
 		private ITranscoder transcoder;
 
-		public ServerPool(IMemcachedClientConfiguration configuration)
+		public IEnumerable<MemcachedNode> GetServers()
+		{
+			return this.WorkingServers;
+		}
+
+		public DefaultServerPool(IMemcachedClientConfiguration configuration)
 		{
 			if (configuration == null)
 				throw new ArgumentNullException("configuration", "Invalid or missing pool configuration. Check if the enyim.com/memcached section or your custom section presents in the app/web.config.");
@@ -42,7 +47,7 @@ namespace Enyim.Caching.Memcached
 			this.transcoder = (t == null) ? new DefaultTranscoder() : (ITranscoder)Enyim.Reflection.FastActivator.CreateInstance(t);
 		}
 
-		public event Action<PooledSocket> SocketConnected;
+		//public event Action<PooledSocket> SocketConnected;
 
 		/// <summary>
 		/// This will start the pool: initializes the nodelocator, warms up the socket pools, etc.
@@ -52,20 +57,13 @@ namespace Enyim.Caching.Memcached
 			// initialize the server list
 			foreach (IPEndPoint ip in this.configuration.Servers)
 			{
-				MemcachedNode node = new MemcachedNode(ip, this.configuration, this.OnSocketConnected);
-				
+				MemcachedNode node = new MemcachedNode(ip, this.configuration.SocketPool, this.Authenticator);
+
 				this.workingServers.Add(node);
 			}
 
-			// (re)creates the locator
+			// initializes the locator
 			this.RebuildIndexes();
-		}
-
-		private void OnSocketConnected(PooledSocket socket)
-		{
-			Action<PooledSocket> evt = this.SocketConnected;
-			if (evt != null)
-				evt(socket);
 		}
 
 		private void RebuildIndexes()
@@ -76,7 +74,7 @@ namespace Enyim.Caching.Memcached
 			{
 				Type ltype = this.configuration.NodeLocator;
 
-				IMemcachedNodeLocator l =  ltype == null ? new DefaultNodeLocator() : (IMemcachedNodeLocator)Enyim.Reflection.FastActivator.CreateInstance(ltype);
+				IMemcachedNodeLocator l = ltype == null ? new DefaultNodeLocator() : (IMemcachedNodeLocator)Enyim.Reflection.FastActivator.CreateInstance(ltype);
 				l.Initialize(this.workingServers);
 
 				this.nodeLocator = l;
@@ -263,23 +261,28 @@ namespace Enyim.Caching.Memcached
 		{
 			ReaderWriterLock rwl = this.serverAccessLock;
 
-			if (rwl == null)
+			if (Interlocked.CompareExchange(ref this.serverAccessLock, null, rwl) == null)
 				return;
 
 			GC.SuppressFinalize(this);
-
-			this.serverAccessLock = null;
 
 			try
 			{
 				rwl.UpgradeToWriterLock(Timeout.Infinite);
 
+				Action<MemcachedNode> cleanupNode = node =>
+				{
+					//node.SocketConnected -= this.OnSocketConnected;
+					node.Dispose();
+				};
+
 				// dispose the nodes (they'll kill conenctions, etc.)
-				this.deadServers.ForEach(delegate(MemcachedNode node) { node.Dispose(); });
-				this.workingServers.ForEach(delegate(MemcachedNode node) { node.Dispose(); });
+				this.deadServers.ForEach(cleanupNode);
+				this.workingServers.ForEach(cleanupNode);
 
 				this.deadServers.Clear();
 				this.workingServers.Clear();
+
 				this.nodeLocator = null;
 
 				this.isAliveTimer.Dispose();
@@ -291,6 +294,48 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 		#endregion
+
+		#region IServerPool Members
+
+		IMemcachedKeyTransformer IServerPool.KeyTransformer
+		{
+			get { return this.KeyTransformer; }
+		}
+
+		ITranscoder IServerPool.Transcoder
+		{
+			get { return this.Transcoder; }
+		}
+
+		//IAuthenticator IServerPool.Authenticator
+		//{
+		//    get { return this.authenticator; }
+		//}
+
+		PooledSocket IServerPool.Acquire(string key)
+		{
+			return this.Acquire(key);
+		}
+
+		IEnumerable<MemcachedNode> IServerPool.GetServers()
+		{
+			return this.GetServers();
+		}
+
+		void IServerPool.Start()
+		{
+			this.Start();
+		}
+
+		//event Action<PooledSocket> IServerPool.SocketConnected
+		//{
+		//    add { this.SocketConnected += value; }
+		//    remove { this.SocketConnected -= value; }
+		//}
+
+		#endregion
+
+		public IAuthenticator Authenticator { get; set; }
 	}
 }
 

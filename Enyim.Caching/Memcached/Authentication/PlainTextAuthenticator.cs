@@ -11,6 +11,12 @@ namespace Enyim.Caching.Memcached
 	{
 		private byte[] authData;
 
+		public PlainTextAuthenticator() { }
+		public PlainTextAuthenticator(string userName, string password) 
+		{
+			this.authData = CreateAuthData(userName, password);
+		}
+
 		string ISaslAuthenticationProvider.Type
 		{
 			get { return "PLAIN"; }
@@ -21,7 +27,7 @@ namespace Enyim.Caching.Memcached
 			string userName = (string)parameters["userName"];
 			string password = (string)parameters["password"];
 
-			this.authData = System.Text.Encoding.UTF8.GetBytes("memcached\0" + userName + "\0" + password);
+			this.authData = CreateAuthData(userName, password);
 		}
 
 		byte[] ISaslAuthenticationProvider.Authenticate()
@@ -32,6 +38,11 @@ namespace Enyim.Caching.Memcached
 		byte[] ISaslAuthenticationProvider.Continue(byte[] data)
 		{
 			return null;
+		}
+
+		private static byte[] CreateAuthData(string userName, string password)
+		{
+			return System.Text.Encoding.UTF8.GetBytes("memcached\0" + userName + "\0" + password);
 		}
 	}
 }

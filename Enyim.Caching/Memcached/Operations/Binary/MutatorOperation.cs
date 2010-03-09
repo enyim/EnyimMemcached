@@ -10,7 +10,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		private MutationMode mode;
 		private ulong result;
 
-		public MutatorOperation(ServerPool pool, MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+		public MutatorOperation(IServerPool pool, MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
 			: base(pool, key)
 		{
 			if (delta < 0) throw new ArgumentOutOfRangeException("delta", "delta must be >= 1");

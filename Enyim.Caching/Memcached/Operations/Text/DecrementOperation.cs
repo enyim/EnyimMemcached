@@ -3,12 +3,12 @@ using System.Globalization;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal sealed class DecrementOperation : ItemOperation, IMutatorOperation
+	internal sealed class DecrementOperation : ItemOperation
 	{
 		private ulong delta;
 		private ulong result;
 
-		internal DecrementOperation(ServerPool pool, string key, ulong delta)
+		internal DecrementOperation(IServerPool pool, string key, ulong delta)
 			: base(pool, key)
 		{
 			this.delta = delta;

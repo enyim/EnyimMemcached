@@ -9,13 +9,14 @@ namespace Enyim.Caching.Memcached
 	/// </summary>
 	public sealed class DefaultNodeLocator : IMemcachedNodeLocator
 	{
-		private const int ServerAddressMutations = 100;
+		private const int ServerAddressMutations = 160;
 
 		// holds all server keys for mapping an item key to the server consistently
 		private uint[] keys;
 		// used to lookup a server based on its key
 		private Dictionary<uint, MemcachedNode> servers = new Dictionary<uint, MemcachedNode>(new UIntEqualityComparer());
 		private bool isInitialized;
+		private object initLock = new Object();
 
 		void IMemcachedNodeLocator.Initialize(IList<MemcachedNode> nodes)
 		{
@@ -23,7 +24,7 @@ namespace Enyim.Caching.Memcached
 				throw new InvalidOperationException("Instance is already initialized.");
 
 			// locking on this is rude but easy
-			lock (this)
+			lock (this.initLock)
 			{
 				if (this.isInitialized)
 					throw new InvalidOperationException("Instance is already initialized.");

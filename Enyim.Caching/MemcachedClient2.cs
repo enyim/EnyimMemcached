@@ -8,11 +8,11 @@ namespace Enyim.Caching
 	/// <summary>
 	/// Memcached client.
 	/// </summary>
-	public sealed class MemcachedClient2 : IDisposable
+	public class MemcachedClient2 : IDisposable
 	{
 		internal static MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
 
-		private IProtocolImplementation protocol;
+		private IProtocolImplementation protImpl;
 
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the default configuration section (enyim/memcached).
@@ -48,6 +48,15 @@ namespace Enyim.Caching
 			this.Initialize(configuration);
 		}
 
+
+		public MemcachedClient2(IServerPool pool, ISaslAuthenticationProvider provider, MemcachedProtocol protocol)
+		{
+			if (pool == null)
+				throw new ArgumentNullException("pool");
+
+			this.Initialize(pool, provider, protocol);
+		}
+
 		private static ISaslAuthenticationProvider GetProvider(IMemcachedClientConfiguration configuration)
 		{
 			// create&initialize the authenticator, if any
@@ -71,24 +80,32 @@ namespace Enyim.Caching
 		private void Initialize(IMemcachedClientConfiguration configuration)
 		{
 			ISaslAuthenticationProvider provider = GetProvider(configuration);
+			IServerPool pool = new DefaultServerPool(configuration);
 
-			// we'll pass ourselves as the authenticator, and we'll forward all auth calls to the protocol
-			// this way we'll avoid that the pool and the protocol reference each other
-			ServerPool pool = new ServerPool(configuration);
+			this.Initialize(pool, provider, configuration.Protocol);
+		}
 
-			switch (configuration.Protocol)
+		private void Initialize(IServerPool pool, ISaslAuthenticationProvider provider, MemcachedProtocol protocol)
+		{
+			IProtocolImplementation protImpl;
+
+			switch (protocol)
 			{
 				case MemcachedProtocol.Binary:
-					this.protocol = new Enyim.Caching.Memcached.Operations.Binary.BinaryProtocol(pool, provider);
+					protImpl = new Enyim.Caching.Memcached.Operations.Binary.BinaryProtocol(pool);
 					break;
 
 				case MemcachedProtocol.Text:
-					// authentication is not supported for the text protocol
-					this.protocol = new Enyim.Caching.Memcached.Operations.Text.TextProtocol(pool);
+					protImpl = new Enyim.Caching.Memcached.Operations.Text.TextProtocol(pool);
 					break;
 
-				default: throw new ArgumentOutOfRangeException("Unknown protocol: " + configuration.Protocol);
+				default: throw new ArgumentOutOfRangeException("Unknown protocol: " + protocol);
 			}
+
+			if (provider != null)
+				pool.Authenticator = protImpl.CreateAuthenticator(provider);
+
+			this.protImpl = protImpl;
 
 			// everything is initialized, start the pool
 			pool.Start();
@@ -96,7 +113,7 @@ namespace Enyim.Caching
 
 		public object Get(string key)
 		{
-			return this.protocol.Get(key);
+			return this.protImpl.Get(key);
 		}
 
 		public T Get<T>(string key)
@@ -108,78 +125,79 @@ namespace Enyim.Caching
 
 		public bool TryGet(string key, out object value)
 		{
-			return this.protocol.TryGet(key, out value);
+			return this.protImpl.TryGet(key, out value);
 		}
 
 		public bool Store(StoreMode mode, string key, object value)
 		{
-			return this.protocol.Store(mode, key, value, 0);
+			return this.protImpl.Store(mode, key, value, 0);
 		}
 
 		public bool Store(StoreMode mode, string key, object value, TimeSpan validFor)
 		{
-			return this.protocol.Store(mode, key, value, MemcachedClient2.GetExpiration(validFor, null));
+			return this.protImpl.Store(mode, key, value, MemcachedClient2.GetExpiration(validFor, null));
 		}
 
 		public bool Store(StoreMode mode, string key, object value, DateTime expiresAt)
 		{
-			return this.protocol.Store(mode, key, value, MemcachedClient2.GetExpiration(null, expiresAt));
+			return this.protImpl.Store(mode, key, value, MemcachedClient2.GetExpiration(null, expiresAt));
 		}
 
 		public ulong Increment(string key, ulong defaultValue, ulong delta)
 		{
-			return this.protocol.Mutate(MutationMode.Increment, key, defaultValue, delta, 0);
+			return this.protImpl.Mutate(MutationMode.Increment, key, defaultValue, delta, 0);
 		}
 
 		public ulong Increment(string key, ulong defaultValue, ulong step, TimeSpan validFor)
 		{
-			return this.protocol.Mutate(MutationMode.Increment, key, defaultValue, step, MemcachedClient2.GetExpiration(validFor, null));
+			return this.protImpl.Mutate(MutationMode.Increment, key, defaultValue, step, MemcachedClient2.GetExpiration(validFor, null));
 		}
 
 		public ulong Increment(string key, ulong defaultValue, ulong step, DateTime expiresAt)
 		{
-			return this.protocol.Mutate(MutationMode.Increment, key, defaultValue, step, MemcachedClient2.GetExpiration(null, expiresAt));
+			return this.protImpl.Mutate(MutationMode.Increment, key, defaultValue, step, MemcachedClient2.GetExpiration(null, expiresAt));
 		}
 
 		public ulong Decrement(string key, ulong defaultValue, ulong delta)
 		{
-			return this.protocol.Mutate(MutationMode.Decrement, key, defaultValue, delta, 0);
+			return this.protImpl.Mutate(MutationMode.Decrement, key, defaultValue, delta, 0);
 		}
 
 		public ulong Decrement(string key, ulong defaultValue, ulong step, TimeSpan validFor)
 		{
-			return this.protocol.Mutate(MutationMode.Decrement, key, defaultValue, step, MemcachedClient2.GetExpiration(validFor, null));
+			return this.protImpl.Mutate(MutationMode.Decrement, key, defaultValue, step, MemcachedClient2.GetExpiration(validFor, null));
 		}
 
 		public ulong Decrement(string key, ulong defaultValue, ulong step, DateTime expiresAt)
 		{
-			return this.protocol.Mutate(MutationMode.Decrement, key, defaultValue, step, MemcachedClient2.GetExpiration(null, expiresAt));
+			return this.protImpl.Mutate(MutationMode.Decrement, key, defaultValue, step, MemcachedClient2.GetExpiration(null, expiresAt));
 		}
 
 		public bool Append(string key, ArraySegment<byte> data)
 		{
-			return this.protocol.Concatenate(ConcatenationMode.Append, key, data);
+			return this.protImpl.Concatenate(ConcatenationMode.Append, key, data);
 		}
 
 		public bool Prepend(string key, ArraySegment<byte> data)
 		{
-			return this.protocol.Concatenate(ConcatenationMode.Prepend, key, data);
+			return this.protImpl.Concatenate(ConcatenationMode.Prepend, key, data);
 		}
 
 		public void FlushAll()
 		{
-			this.protocol.FlushAll();
+			this.protImpl.FlushAll();
 		}
 
 		public ServerStats Stats()
 		{
-			return this.protocol.Stats();
+			return this.protImpl.Stats();
 		}
 
+		#region [ Expiration helper            ]
 		private const int MaxSeconds = 60 * 60 * 24 * 30;
 		private static readonly DateTime UnixEpoch = new DateTime(1971, 1, 1);
 
-		public static uint GetExpiration(TimeSpan? validFor, DateTime? expiresAt)
+		private static uint GetExpiration(TimeSpan? validFor, DateTime? expiresAt)
 		{
 			if (validFor != null && expiresAt != null)
 				throw new ArgumentException("You cannot specify both validFor and expiresAt.");
@@ -201,7 +219,7 @@ namespace Enyim.Caching
 
 			return (uint)ts.TotalSeconds;
 		}
-
+		#endregion
 		#region [ IDisposable                  ]
 		void IDisposable.Dispose()
 		{
@@ -215,18 +233,18 @@ namespace Enyim.Caching
 		/// the AppPool shuts down all resources will be released correctly and no handles or such will remain in the memory.</remarks>
 		public void Dispose()
 		{
-			if (this.protocol == null)
+			if (this.protImpl == null)
 				throw new ObjectDisposedException("MemcachedClient");
 
 			GC.SuppressFinalize(this);
 
 			try
 			{
-				this.protocol.Dispose();
+				this.protImpl.Dispose();
 			}
 			finally
 			{
-				this.protocol = null;
+				this.protImpl = null;
 			}
 		}
 		#endregion

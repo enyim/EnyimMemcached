@@ -23,7 +23,9 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		public unsafe IList<ArraySegment<byte>> CreateBuffer()
 		{
 			// key size 
-			int keyLength = this.Key == null ? 0 : this.Key.Length;
+			byte[] keyData = BinaryConverter.EncodeKey(this.Key);
+			int keyLength = keyData == null ? 0 : keyData.Length;
+
 			if (keyLength > 0xffff) throw new InvalidOperationException("KeyTooLong");
 
 			// extra size
@@ -94,7 +96,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			if (extraLength > 0) retval.Add(extras);
 
 			// NOTE key must be already encoded and should not contain any invalid characters whihc are not allowed by the protocol
-			if (keyLength > 0) retval.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(this.Key)));
+			if (keyLength > 0) retval.Add(new ArraySegment<byte>(keyData));
 			if (bodyLength > 0) retval.Add(body);
 
 			return retval;

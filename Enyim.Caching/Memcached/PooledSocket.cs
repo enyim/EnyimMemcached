@@ -10,7 +10,7 @@ using System.Threading;
 namespace Enyim.Caching.Memcached
 {
 	[DebuggerDisplay("[ Address: {endpoint}, IsAlive = {IsAlive} ]")]
-	internal class PooledSocket : IDisposable
+	public class PooledSocket : IDisposable
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(PooledSocket));
 
@@ -90,7 +90,7 @@ namespace Enyim.Caching.Memcached
 		/// Releases all resources used by this instance and shuts down the inner <see cref="T:Socket"/>. This instance will not be usable anymore.
 		/// </summary>
 		/// <remarks>Use the IDisposable.Dispose method if you want to release this instance back into the pool.</remarks>
-		public void Destroy()
+		public void Destroy() // TODO this should be a Dispose() override
 		{
 			this.Dispose(true);
 		}
@@ -217,11 +217,6 @@ namespace Enyim.Caching.Memcached
 
 				ThrowHelper.ThrowSocketWriteError(this.endpoint, status);
 			}
-		}
-
-		public bool Poll(int microSeconds, SelectMode mode)
-		{
-			return this.socket.Poll(microSeconds, mode);
 		}
 
 		public void Write(IList<ArraySegment<byte>> buffers)

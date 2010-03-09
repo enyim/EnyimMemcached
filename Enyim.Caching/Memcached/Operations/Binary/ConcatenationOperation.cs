@@ -9,7 +9,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		private ArraySegment<byte> data;
 		private ConcatenationMode mode;
 
-		public ConcatenationOperation(ServerPool pool, ConcatenationMode mode, string key, ArraySegment<byte> data)
+		public ConcatenationOperation(IServerPool pool, ConcatenationMode mode, string key, ArraySegment<byte> data)
 			: base(pool, key)
 		{
 			this.data = data;

@@ -10,6 +10,7 @@ namespace Enyim.Caching.Memcached
 	{
 		private MemcachedNode node;
 		private bool isInitialized;
+		private object initLock = new Object();
 
 		void IMemcachedNodeLocator.Initialize(IList<MemcachedNode> nodes)
 		{
@@ -17,7 +18,7 @@ namespace Enyim.Caching.Memcached
 				throw new InvalidOperationException("Instance is already initialized.");
 
 			// locking on this is rude but easy
-			lock (this)
+			lock (initLock)
 			{
 				if (this.isInitialized)
 					throw new InvalidOperationException("Instance is already initialized.");

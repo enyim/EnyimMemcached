@@ -7,9 +7,9 @@ namespace Enyim.Caching.Memcached.Operations.Text
 	/// </summary>
 	internal sealed class TextProtocol : IProtocolImplementation
 	{
-		private ServerPool pool;
+		private IServerPool pool;
 
-		public TextProtocol(ServerPool pool)
+		public TextProtocol(IServerPool pool)
 		{
 			this.pool = pool;
 		}
@@ -74,11 +74,18 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 		ulong IProtocolImplementation.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expiration)
 		{
-			IMutatorOperation op = mode == MutationMode.Increment
-									? ((IMutatorOperation)new IncrementOperation(this.pool, key, delta))
-									: ((IMutatorOperation)new DecrementOperation(this.pool, key, delta));
+			if (mode == MutationMode.Increment)
+			{
+				IncrementOperation op = new IncrementOperation(this.pool, key, delta);
+			
+				return op.Execute() ? 0 : op.Result;
+			}
+			else
+			{
+				DecrementOperation op = new DecrementOperation(this.pool, key, delta);
 
-			return op.Execute() ? 0 : op.Result;
+				return op.Execute() ? 0 : op.Result;
+			}
 		}
 
 		bool IProtocolImplementation.Delete(string key)
@@ -118,6 +125,11 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 				return so.Results;
 			}
+		}
+
+		IAuthenticator IProtocolImplementation.CreateAuthenticator(ISaslAuthenticationProvider provider)
+		{
+			return null;
 		}
 	}
 }

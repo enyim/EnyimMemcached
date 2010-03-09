@@ -1,33 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
 
-namespace Enyim.Caching.Memcached.Operations.Binary
+namespace Enyim.Caching.Memcached
 {
-	internal class FlushOperation : Operation
+	internal interface IProtocolImplementation : IDisposable
 	{
-		public FlushOperation(IServerPool pool) : base(pool) { }
+		object Get(string key);
+		bool TryGet(string key, out object value);
 
-		protected override bool ExecuteAction()
-		{
-			IList<ArraySegment<byte>> request = null;
+		bool Store(StoreMode mode, string key, object value, uint expiration);
+		bool Delete(string key);
+		ulong Mutate(MutationMode mode, string key, ulong startValue, ulong step, uint expiration);
+		bool Concatenate(ConcatenationMode mode, string key, ArraySegment<byte> data);
 
-			foreach (MemcachedNode server in this.ServerPool.GetServers())
-			{
-				if (request == null)
-				{
-					BinaryRequest bq = new BinaryRequest(OpCode.FlushQ);
-					request = bq.CreateBuffer();
-				}
+		void FlushAll();
+		ServerStats Stats();
 
-				using (PooledSocket socket = server.Acquire())
-				{
-					if (socket != null)
-						socket.Write(request);
-				}
-			}
-
-			return true;
-		}
+		IAuthenticator CreateAuthenticator(ISaslAuthenticationProvider provider);
 	}
 }
 

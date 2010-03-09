@@ -4,7 +4,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 {
 	internal sealed class DeleteOperation : ItemOperation
 	{
-		internal DeleteOperation(ServerPool pool, string key)
+		internal DeleteOperation(IServerPool pool, string key)
 			: base(pool, key)
 		{
 		}
@@ -17,11 +17,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 			TextSocketHelper.SendCommand(socket, "delete " + this.HashedKey);
 
-			bool retval = String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0;
-
-			socket.OwnerNode.PerfomanceCounters.LogDelete(retval);
-
-			return retval;
+			return String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0;
 		}
 	}
 }

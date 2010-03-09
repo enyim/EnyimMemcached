@@ -5,7 +5,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 	{
 		private object result;
 
-		internal GetOperation(ServerPool pool, string key)
+		internal GetOperation(IServerPool pool, string key)
 			: base(pool, key)
 		{
 		}
@@ -26,17 +26,10 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 			GetResponse r = GetHelper.ReadItem(socket);
 
-			if (r == null)
-			{
-				socket.OwnerNode.PerfomanceCounters.LogGet(false);
-			}
-			else
-			{
-				this.result = this.ServerPool.Transcoder.Deserialize(r.Item);
-				GetHelper.FinishCurrent(socket);
+			if (r == null) return false;
 
-				socket.OwnerNode.PerfomanceCounters.LogGet(true);
-			}
+			this.result = this.ServerPool.Transcoder.Deserialize(r.Item);
+			GetHelper.FinishCurrent(socket);
 
 			return true;
 		}

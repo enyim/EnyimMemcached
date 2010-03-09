@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 		private ServerStats results;
 
-		public StatsOperation(ServerPool pool) : base(pool) { }
+		public StatsOperation(IServerPool pool) : base(pool) { }
 
 		protected override bool ExecuteAction()
 		{
@@ -20,7 +20,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			BinaryRequest request = new BinaryRequest(OpCode.Stat);
 			IList<ArraySegment<byte>> requestData = request.CreateBuffer();
 
-			foreach (MemcachedNode server in this.ServerPool.WorkingServers)
+			foreach (MemcachedNode server in this.ServerPool.GetServers())
 			{
 				using (PooledSocket socket = server.Acquire())
 				{
@@ -37,8 +37,8 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 						{
 							ArraySegment<byte> data = response.Data;
 
-							string key = Encoding.ASCII.GetString(data.Array, data.Offset, response.KeyLength);
-							string value = Encoding.ASCII.GetString(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
+							string key = BinaryConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
+							string value = BinaryConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
 							serverData[key] = value;
 						}
 

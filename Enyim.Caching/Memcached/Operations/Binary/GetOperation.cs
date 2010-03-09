@@ -3,7 +3,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 {
 	internal class GetOperation : ItemOperation
 	{
-		public GetOperation(ServerPool pool, string key) : base(pool, key) { }
+		public GetOperation(IServerPool pool, string key) : base(pool, key) { }
 
 		protected override bool ExecuteAction()
 		{
@@ -20,12 +20,10 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			{
 				int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
 				this.result = this.ServerPool.Transcoder.Deserialize(new CacheItem((ushort)flags, response.Data));
-				socket.OwnerNode.PerfomanceCounters.LogGet(true);
 
 				return true;
 			}
 
-			socket.OwnerNode.PerfomanceCounters.LogGet(false);
 			return false;
 		}
 

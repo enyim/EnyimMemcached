@@ -5,49 +5,37 @@ using System.Net;
 using System.Threading;
 using Enyim.Caching.Configuration;
 using Enyim.Collections;
+using System.Security;
 
 namespace Enyim.Caching.Memcached
 {
 	/// <summary>
 	/// Represents a Memcached node in the pool.
 	/// </summary>
-	[DebuggerDisplay("{{MemcachedNode [ Address: {EndPoint}, IsAlive = {IsAlive}  ]}}")]
+	[DebuggerDisplay("{{MemcachedNode [ Address: {EndPoint}, IsAlive = {IsAlive} ]}}")]
 	public sealed class MemcachedNode : IDisposable
 	{
-		//internal static readonly NodeFactory Factory = new NodeFactory();
 		private static readonly object SyncRoot = new Object();
 
 		private bool isDisposed;
-		private int deadTimeout = 2 * 60;
+		private double deadTimeout = 2 * 60;
 
 		private IPEndPoint endPoint;
 		private ISocketPoolConfiguration config;
 		private InternalPoolImpl internalPoolImpl;
-		private IPerformanceCounters perfomanceCounters;
+		private IAuthenticator authenticator;
 
-		internal MemcachedNode(IPEndPoint endpoint, IMemcachedClientConfiguration clientConfig, Action<PooledSocket> socketConnected)
+		public MemcachedNode(IPEndPoint endpoint, ISocketPoolConfiguration socketPoolConfig, IAuthenticator authenticator)
 		{
-			ISocketPoolConfiguration ispc = clientConfig.SocketPool;
-
 			this.endPoint = endpoint;
-			this.config = ispc;
-			this.SocketConnected = socketConnected;
+			this.config = socketPoolConfig;
 
-			this.deadTimeout = (int)ispc.DeadTimeout.TotalSeconds;
+			this.deadTimeout = socketPoolConfig.DeadTimeout.TotalSeconds;
 			if (this.deadTimeout < 0)
 				throw new InvalidOperationException("deadTimeout must be >= TimeSpan.Zero");
 
-			if (clientConfig.EnablePerformanceCounters)
-				this.perfomanceCounters = new InstancePerformanceCounters(this);
-			else
-				this.perfomanceCounters = new NullPerformanceCounter();
-
-			this.internalPoolImpl = new InternalPoolImpl(this, ispc);
-		}
-
-		internal IPerformanceCounters PerfomanceCounters
-		{
-			get { return this.perfomanceCounters; }
+			this.authenticator = authenticator;
+			this.internalPoolImpl = new InternalPoolImpl(this, socketPoolConfig);
 		}
 
 		/// <summary>
@@ -63,7 +51,7 @@ namespace Enyim.Caching.Memcached
 		/// <para>To get real-time information and update the cached state, use the <see cref="M:Ping"/> method.</para>
 		/// </summary>
 		/// <remarks>Used by the <see cref="T:ServerPool"/> to quickly check if the server's state is valid.</remarks>
-		internal bool IsAlive
+		public bool IsAlive
 		{
 			get { return this.internalPoolImpl.IsAlive; }
 		}
@@ -113,7 +101,7 @@ namespace Enyim.Caching.Memcached
 		/// Acquires a new item from the pool
 		/// </summary>
 		/// <returns>An <see cref="T:PooledSocket"/> instance which is connected to the memcached server, or <value>null</value> if the pool is dead.</returns>
-		internal PooledSocket Acquire()
+		public PooledSocket Acquire()
 		{
 			return this.internalPoolImpl.Acquire();
 		}
@@ -138,9 +126,6 @@ namespace Enyim.Caching.Memcached
 
 				this.internalPoolImpl.Dispose();
 				this.internalPoolImpl = null;
-
-				this.perfomanceCounters.Dispose();
-				this.perfomanceCounters = null;
 			}
 		}
 
@@ -148,8 +133,6 @@ namespace Enyim.Caching.Memcached
 		{
 			this.Dispose();
 		}
-
-		internal Action<PooledSocket> SocketConnected;
 
 		#region [ InternalPoolImpl             ]
 		private class InternalPoolImpl : IDisposable
@@ -174,6 +157,9 @@ namespace Enyim.Caching.Memcached
 			private IPEndPoint endPoint;
 			private ISocketPoolConfiguration config;
 
+			private bool firstTime = true;
+			private object initLock = new Object();
+
 			internal InternalPoolImpl(MemcachedNode ownerNode, ISocketPoolConfiguration config)
 			{
 				this.ownerNode = ownerNode;
@@ -194,7 +180,9 @@ namespace Enyim.Caching.Memcached
 				this.freeItems = new InterlockedQueue<PooledSocket>();
 
 				this.itemReleasedEvent = new AutoResetEvent(false);
-				this.InitPool();
+
+				// this will be called lazily by Acquire -> faster startup (first connection will be slower tho)
+				//this.InitPool();
 			}
 
 			private void InitPool()
@@ -226,9 +214,9 @@ namespace Enyim.Caching.Memcached
 				PooledSocket retval = new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, this.ReleaseSocket);
 				retval.OwnerNode = this.ownerNode;
 
-				Action<PooledSocket> evt = this.ownerNode.SocketConnected;
-				if (evt != null)
-					evt(retval);
+				if (this.ownerNode.authenticator != null)
+					if (!this.ownerNode.authenticator.Authenticate(retval))
+						throw new SecurityException("auth failed: " + this.endPoint);
 
 				return retval;
 			}
@@ -252,6 +240,18 @@ namespace Enyim.Caching.Memcached
 				if (log.IsDebugEnabled)
 					log.Debug("Acquiring stream from pool.");
 
+				// lazy-init of the pool
+				if (firstTime)
+					lock (this.initLock)
+						if (firstTime)
+						{
+							if (log.IsDebugEnabled)
+								log.Debug("FirstTime == true, intializing the pool.");
+
+							this.InitPool();
+							this.firstTime = false;
+						}
+
 				if (!this.IsAlive)
 				{
 					if (log.IsDebugEnabled)
@@ -264,6 +264,7 @@ namespace Enyim.Caching.Memcached
 				// the WaitOne will succeed, and more items will be in the pool than allowed,
 				// thus  we need to reset the event when an item is inserted
 				// TODO is going over the cap an issue?
+				// TODO there is a race condition with AutoResetEvent, we should use something else, like a spinlock
 				this.itemReleasedEvent.Reset();
 
 				PooledSocket retval = null;

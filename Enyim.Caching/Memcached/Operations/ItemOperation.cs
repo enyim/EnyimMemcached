@@ -14,7 +14,7 @@ namespace Enyim.Caching.Memcached.Operations
 
 		private PooledSocket socket;
 
-		protected ItemOperation(ServerPool pool, string key)
+		protected ItemOperation(IServerPool pool, string key)
 			: base(pool)
 		{
 			if (key == null) throw new ArgumentNullException("key", "Item key must be specified.");

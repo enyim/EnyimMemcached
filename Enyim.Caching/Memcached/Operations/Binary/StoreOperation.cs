@@ -9,7 +9,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		private object value;
 		private uint expires;
 
-		public StoreOperation(ServerPool pool, StoreCommand mode, string key, object value, uint expires) :
+		public StoreOperation(IServerPool pool, StoreCommand mode, string key, object value, uint expires) :
 			base(pool, key)
 		{
 			this.mode = mode;
@@ -25,9 +25,9 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			OpCode op;
 			switch (this.mode)
 			{
-				case StoreCommand.Add: op = OpCode.Add; break;
-				case StoreCommand.Set: op = OpCode.Set; break;
-				case StoreCommand.Replace: op = OpCode.Replace; break;
+				case StoreCommand.Add: op = OpCode.AddQ; break;
+				case StoreCommand.Set: op = OpCode.SetQ; break;
+				case StoreCommand.Replace: op = OpCode.ReplaceQ; break;
 				default: throw new ArgumentOutOfRangeException("mode", mode + " is not supported");
 			}
 
@@ -45,12 +45,13 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 			request.Write(socket);
 
+			// TEST
+			// no response means success for the quiet commands
+			if (socket.Available == 0) return true;
+
 			BinaryResponse response = new BinaryResponse();
-			bool retval = response.Read(socket);
 
-			socket.OwnerNode.PerfomanceCounters.LogStore(mode, retval);
-
-			return retval;
+			return response.Read(socket);
 		}
 	}
 }

@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		private object value;
 		private uint expires;
 
-		internal StoreOperation(ServerPool pool, StoreCommand mode, string key, object value, uint expires)
+		internal StoreOperation(IServerPool pool, StoreCommand mode, string key, object value, uint expires)
 			: base(pool, key)
 		{
 			this.mode = mode;
@@ -79,10 +79,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 			socket.Write(new ArraySegment<byte>[] { commandBuffer, data, StoreOperation.DataTerminator });
 
-			bool retval = String.Compare(TextSocketHelper.ReadResponse(socket), "STORED", StringComparison.Ordinal) == 0;
-			socket.OwnerNode.PerfomanceCounters.LogStore(mode, retval);
-
-			return retval;
+			return String.Compare(TextSocketHelper.ReadResponse(socket), "STORED", StringComparison.Ordinal) == 0;
 		}
 	}
 }

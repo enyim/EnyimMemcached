@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
@@ -81,6 +82,27 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			ptr[5] = (byte)(value >> 16);
 			ptr[6] = (byte)(value >> 8);
 			ptr[7] = (byte)(value & 255);
+		}
+
+		public static byte[] EncodeKey(string key)
+		{
+			if (String.IsNullOrEmpty(key)) return null;
+
+			return Encoding.UTF8.GetBytes(key);
+		}
+
+		public static string DecodeKey(byte[] data)
+		{
+			if (data == null || data.Length == 0) return null;
+
+			return Encoding.UTF8.GetString(data);
+		}
+
+		public static string DecodeKey(byte[] data, int index, int count)
+		{
+			if (data == null || data.Length == 0 || count == 0) return null;
+
+			return Encoding.UTF8.GetString(data, index, count);
 		}
 	}
 }

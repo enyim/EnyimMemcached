@@ -3,7 +3,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 {
 	internal class DeleteOperation : ItemOperation
 	{
-		public DeleteOperation(ServerPool pool, string key) : base(pool, key) { }
+		public DeleteOperation(IServerPool pool, string key) : base(pool, key) { }
 
 		protected override bool ExecuteAction()
 		{
@@ -16,10 +16,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 			BinaryResponse response = new BinaryResponse();
 
-			bool retval = response.Read(socket);
-
-			socket.OwnerNode.PerfomanceCounters.LogDelete(retval);
-			return retval;
+			return response.Read(socket);
 		}
 	}
 }

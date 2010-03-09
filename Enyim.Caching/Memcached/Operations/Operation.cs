@@ -5,14 +5,14 @@ namespace Enyim.Caching.Memcached.Operations
 	/// <summary>
 	/// Base class for implementing operations.
 	/// </summary>
-	internal abstract class Operation : IDisposable, IOperation
+	internal abstract class Operation : IDisposable
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(Operation));
 
 		private bool isDisposed;
-		private ServerPool serverPool;
+		private IServerPool serverPool;
 
-		protected Operation(ServerPool serverPool)
+		protected Operation(IServerPool serverPool)
 		{
 			this.serverPool = serverPool;
 		}
@@ -38,7 +38,7 @@ namespace Enyim.Caching.Memcached.Operations
 			return true;
 		}
 
-		protected ServerPool ServerPool
+		protected IServerPool ServerPool
 		{
 			get { return this.serverPool; }
 		}

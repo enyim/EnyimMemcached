@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Enyim.Caching</RootNamespace>
     <AssemblyName>Enyim.Caching</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkSubset>
     </TargetFrameworkSubset>
   </PropertyGroup>
@@ -45,15 +45,23 @@
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Configuration\AuthenticationConfiguration.cs" />
     <Compile Include="Configuration\ConfigurationHelper.cs" />
     <Compile Include="Configuration\AuthenticationElement.cs" />
     <Compile Include="Configuration\IAuthenticationConfiguration.cs" />
+    <Compile Include="Configuration\SocketPoolConfiguration.cs" />
     <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs" />
+    <Compile Include="Memcached\IAuthenticator.cs" />
+    <Compile Include="Memcached\IServerPool.cs" />
+    <Compile Include="Memcached\IProtocolImplementation.cs" />
     <Compile Include="Memcached\ISaslAuthenticationProvider.cs" />
     <Compile Include="MemcachedClient2.cs" />
     <Compile Include="Memcached\Enums.cs" />
@@ -75,10 +83,6 @@
     <Compile Include="Memcached\KeyTransformers\SHA1KeyTransformer.cs" />
     <Compile Include="Memcached\KeyTransformers\TigerHashKeyTransformer.cs" />
     <Compile Include="Memcached\MemcachedNode.cs" />
-    <Compile Include="Memcached\InstancePerformanceCounters.cs" />
-    <Compile Include="Memcached\InstancePerformanceCountersInstaller.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="Memcached\Operations\Binary\BinaryRequest.cs" />
     <Compile Include="Memcached\Operations\Binary\BinaryResponse.cs" />
     <Compile Include="Memcached\Operations\Binary\BinaryConverter.cs" />
@@ -87,7 +91,6 @@
     <Compile Include="Memcached\Operations\Binary\GetOperation.cs" />
     <Compile Include="Memcached\Operations\Binary\OpCode.cs" />
     <Compile Include="Memcached\Operations\Binary\StoreOperation.cs" />
-    <Compile Include="Memcached\Interfaces.cs" />
     <Compile Include="Memcached\Operations\ItemOperation.cs" />
     <Compile Include="Memcached\Operations\Operation.cs" />
     <Compile Include="Memcached\Operations\Text\DecrementOperation.cs" />
