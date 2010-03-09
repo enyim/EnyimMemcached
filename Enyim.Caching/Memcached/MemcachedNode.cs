@@ -177,8 +177,7 @@ namespace Enyim.Caching.Memcached
 				if (this.config.ConnectionTimeout < TimeSpan.Zero)
 					throw new InvalidOperationException("connectionTimeout must be >= TimeSpan.Zero", null);
 
-				this.semaphore = new Semaphore(minItems, maxItems, "PoolSemaphore-" + ownerNode.EndPoint);
-
+				this.semaphore = new Semaphore(minItems, maxItems);
 				this.freeItems = new InterlockedQueue<PooledSocket>();
 			}
 
