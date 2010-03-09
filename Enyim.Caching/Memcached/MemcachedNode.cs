@@ -100,8 +100,7 @@ namespace Enyim.Caching.Memcached
 				try { this.internalPoolImpl.Dispose(); }
 				catch { }
 
-				this.internalPoolImpl = new InternalPoolImpl(this, this.config);
-
+				Interlocked.Exchange(ref this.internalPoolImpl, new InternalPoolImpl(this, this.config));
 			}
 
 			return true;
@@ -166,9 +165,9 @@ namespace Enyim.Caching.Memcached
 			private int workingCount = 0;
 
 			private MemcachedNode ownerNode;
-			private AutoResetEvent itemReleasedEvent;
 			private IPEndPoint endPoint;
 			private ISocketPoolConfiguration config;
+			private Semaphore semaphore;
 
 			internal InternalPoolImpl(MemcachedNode ownerNode, ISocketPoolConfiguration config)
 			{
@@ -187,9 +186,10 @@ namespace Enyim.Caching.Memcached
 				if (this.config.ConnectionTimeout < TimeSpan.Zero)
 					throw new InvalidOperationException("connectionTimeout must be >= TimeSpan.Zero", null);
 
+				this.semaphore = new Semaphore(minItems, maxItems, "PoolSemaphore-" + ownerNode.EndPoint);
+
 				this.freeItems = new InterlockedQueue<PooledSocket>();
 
-				this.itemReleasedEvent = new AutoResetEvent(false);
 				this.InitPool();
 			}
 
@@ -204,7 +204,7 @@ namespace Enyim.Caching.Memcached
 							this.freeItems.Enqueue(this.CreateSocket());
 
 							// cannot connect to the server
-							if (!this.IsAlive)
+							if (!this.isAlive)
 								break;
 						}
 					}
@@ -242,36 +242,45 @@ namespace Enyim.Caching.Memcached
 			/// <returns>An <see cref="T:PooledSocket"/> instance which is connected to the memcached server, or <value>null</value> if the pool is dead.</returns>
 			public PooledSocket Acquire()
 			{
-				if (log.IsDebugEnabled)
-					log.Debug("Acquiring stream from pool.");
+				if (log.IsDebugEnabled) log.Debug("Acquiring stream from pool.");
 
-				if (!this.IsAlive)
+				if (!this.isAlive)
 				{
-					if (log.IsDebugEnabled)
-						log.Debug("Pool is dead, returning null.");
+					if (log.IsDebugEnabled) log.Debug("Pool is dead, returning null.");
 
 					return null;
 				}
 
-				// every release signals the event, so even if the pool becomes full in the meantime
-				// the WaitOne will succeed, and more items will be in the pool than allowed,
-				// so reset the event when an item is inserted
-				this.itemReleasedEvent.Reset();
-
 				PooledSocket retval = null;
+
+				if (!this.semaphore.WaitOne(this.config.ConnectionTimeout))
+				{
+					if (log.IsDebugEnabled) log.Debug("Pool is full, timeouting.");
+
+					// everyone is so busy
+					throw new TimeoutException();
+				}
+
+				// maye we died while waiting
+				if (!this.isAlive)
+				{
+					if (log.IsDebugEnabled) log.Debug("Pool is dead, returning null.");
+
+					return null;
+				}
 
 				// do we have free items?
 				if (this.freeItems.Dequeue(out retval))
 				{
+					#region [ get it from the pool         ]
 					try
 					{
 						retval.Reset();
 
-						if (log.IsDebugEnabled)
-							log.Debug("Socket was reset. " + retval.InstanceId);
-
+						if (log.IsDebugEnabled) log.Debug("Socket was reset. " + retval.InstanceId);
+#if DEBUG
 						Interlocked.Increment(ref this.workingCount);
-
+#endif
 						return retval;
 					}
 					catch (Exception e)
@@ -282,59 +291,36 @@ namespace Enyim.Caching.Memcached
 
 						return null;
 					}
+					#endregion
 				}
-				else
+
+				// free item pool is empty
+				if (log.IsDebugEnabled) log.Debug("Could not get a socket from the pool, Creating a new item.");
+
+				try
 				{
-					// free item pool is empty
-					if (log.IsDebugEnabled)
-						log.Debug("Could not get a socket from the pool.");
+					// okay, create the new item
+					retval = this.CreateSocket();
+#if DEBUG
+					Interlocked.Increment(ref this.workingCount);
+#endif
+				}
+				catch (Exception e)
+				{
+					log.Error("Failed to create socket.", e);
+					this.MarkAsDead();
 
-					// we are not allowed to create more, so wait for an item to be released back into the pool
-					if (this.workingCount >= this.maxItems)
-					{
-						if (log.IsDebugEnabled)
-							log.Debug("Pool is full, wait for a release.");
-
-						// wait on the event
-						if (!itemReleasedEvent.WaitOne(this.config.ConnectionTimeout, false))
-						{
-							if (log.IsDebugEnabled)
-								log.Debug("Pool is still full, timeouting.");
-
-							// everyone is working
-							throw new TimeoutException();
-						}
-					}
-
-					if (log.IsDebugEnabled)
-						log.Debug("Creating a new item.");
-
-					try
-					{
-						// okay, create the new item
-						retval = this.CreateSocket();
-
-						Interlocked.Increment(ref this.workingCount);
-					}
-					catch (Exception e)
-					{
-						log.Error("Failed to create socket.", e);
-						this.MarkAsDead();
-
-						return null;
-					}
+					return null;
 				}
 
-				if (log.IsDebugEnabled)
-					log.Debug("Done.");
+				if (log.IsDebugEnabled) log.Debug("Done.");
 
 				return retval;
 			}
 
 			private void MarkAsDead()
 			{
-				if (log.IsWarnEnabled)
-					log.WarnFormat("Marking pool {0} as dead", this.endPoint);
+				if (log.IsWarnEnabled) log.WarnFormat("Marking pool {0} as dead", this.endPoint);
 
 				this.isAlive = false;
 				this.markedAsDeadUtc = DateTime.UtcNow;
@@ -359,13 +345,11 @@ namespace Enyim.Caching.Memcached
 					{
 						// mark the item as free
 						this.freeItems.Enqueue(socket);
-
-						// there can be a race condition (see the count check in acquire)
-						// not sure what to do about it
+#if DEBUG
 						Interlocked.Decrement(ref this.workingCount);
-
+#endif
 						// signal the event so if someone is waiting for it can reuse this item
-						this.itemReleasedEvent.Set();
+						this.semaphore.Release();
 					}
 					else
 					{
@@ -398,13 +382,8 @@ namespace Enyim.Caching.Memcached
 				{
 					this.CheckDisposed();
 
+					this.isAlive = false;
 					this.isDisposed = true;
-
-					using (this.itemReleasedEvent)
-						this.itemReleasedEvent.Reset();
-
-					this.itemReleasedEvent = null;
-					this.ownerNode = null;
 
 					PooledSocket ps;
 
@@ -418,6 +397,9 @@ namespace Enyim.Caching.Memcached
 						catch { }
 					}
 
+					this.ownerNode = null;
+					this.semaphore.Close();
+					this.semaphore = null;
 					this.freeItems = null;
 				}
 			}
