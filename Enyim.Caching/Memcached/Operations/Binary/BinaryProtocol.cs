@@ -77,7 +77,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			}
 		}
 
-		bool IProtocolImplementation.Delete(string key)
+		bool IProtocolImplementation.Remove(string key)
 		{
 			using (DeleteOperation g = new DeleteOperation(this.pool, key))
 			{

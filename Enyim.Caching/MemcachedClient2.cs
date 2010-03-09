@@ -193,6 +193,11 @@ namespace Enyim.Caching
 			return this.protImpl.Stats();
 		}
 
+		public bool Remove(string key)
+		{
+			return this.protImpl.Remove(key);
+		}
+
 		#region [ Expiration helper            ]
 		private const int MaxSeconds = 60 * 60 * 24 * 30;
 		private static readonly DateTime UnixEpoch = new DateTime(1971, 1, 1);

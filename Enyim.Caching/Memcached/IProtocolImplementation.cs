@@ -8,7 +8,7 @@ namespace Enyim.Caching.Memcached
 		bool TryGet(string key, out object value);
 
 		bool Store(StoreMode mode, string key, object value, uint expiration);
-		bool Delete(string key);
+		bool Remove(string key);
 		ulong Mutate(MutationMode mode, string key, ulong startValue, ulong step, uint expiration);
 		bool Concatenate(ConcatenationMode mode, string key, ArraySegment<byte> data);
 

@@ -88,7 +88,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			}
 		}
 
-		bool IProtocolImplementation.Delete(string key)
+		bool IProtocolImplementation.Remove(string key)
 		{
 			using (DeleteOperation d = new DeleteOperation(this.pool, key))
 			{
