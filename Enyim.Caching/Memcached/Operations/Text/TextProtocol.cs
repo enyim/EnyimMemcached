@@ -74,6 +74,9 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 		ulong IProtocolImplementation.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expiration)
 		{
+			if (expiration != 0)
+				throw new NotSupportedException("Mutators with expiration are not supported by the text protocol.");
+
 			if (mode == MutationMode.Increment)
 			{
 				IncrementOperation op = new IncrementOperation(this.pool, key, delta);

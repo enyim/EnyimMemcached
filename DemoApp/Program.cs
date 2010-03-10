@@ -29,7 +29,7 @@ namespace DemoApp
 			config.Authentication.Parameters["userName"] = "demo";
 			config.Authentication.Parameters["password"] = "demo";
 
-			var mc = new MemcachedClient2(config);
+			var mc = new MemcachedClient(config);
 
 			for(var i = 0; i< 100; i++)
 			mc.Store(StoreMode.Set, "Hello", "World");

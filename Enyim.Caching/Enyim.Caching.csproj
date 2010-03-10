@@ -63,7 +63,6 @@
     <Compile Include="Memcached\IServerPool.cs" />
     <Compile Include="Memcached\IProtocolImplementation.cs" />
     <Compile Include="Memcached\ISaslAuthenticationProvider.cs" />
-    <Compile Include="MemcachedClient2.cs" />
     <Compile Include="Memcached\Enums.cs" />
     <Compile Include="Memcached\Operations\Binary\ConcatenationOperation.cs" />
     <Compile Include="Memcached\Operations\Binary\SaslAuthenticator.cs" />
