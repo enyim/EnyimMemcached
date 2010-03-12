@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached
 {
@@ -6,6 +7,7 @@ namespace Enyim.Caching.Memcached
 	{
 		object Get(string key);
 		bool TryGet(string key, out object value);
+		IDictionary<string, object> Get(IEnumerable<string> keys);
 
 		bool Store(StoreMode mode, string key, object value, uint expiration);
 		bool Remove(string key);

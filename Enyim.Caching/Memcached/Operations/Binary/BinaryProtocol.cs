@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
@@ -115,6 +116,19 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		{
 			return new BinaryAuthenticator(provider);
 		}
+
+		#region IProtocolImplementation Members
+
+
+		System.Collections.Generic.IDictionary<string, object> IProtocolImplementation.Get(System.Collections.Generic.IEnumerable<string> keys)
+		{
+			using (var mg = new MultiGetOperation(this.pool, keys))
+			{
+				return mg.Execute() ? mg.Result : new Dictionary<string, object>();
+			}
+		}
+
+		#endregion
 	}
 }
 

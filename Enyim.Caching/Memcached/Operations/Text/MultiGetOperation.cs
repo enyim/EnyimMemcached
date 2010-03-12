@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
@@ -38,34 +40,30 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			}
 
 			// map each key to the appropriate server in the pool
-			IDictionary<MemcachedNode, IList<string>> splitKeys = null; // this.ServerPool.SplitKeys(this.keys);
+			IMemcachedNodeLocator locator = this.ServerPool.NodeLocator;
+			IDictionary<MemcachedNode, List<string>> splitKeys = this.SplitKeys(this.keys);
 
 			// we'll open 1 socket for each server
 			List<PooledSocket> sockets = new List<PooledSocket>();
-			
+
 			try
 			{
-				string[] command;
-
 				// send a 'gets' to each server
-				foreach (KeyValuePair<MemcachedNode, IList<string>> kp in splitKeys)
+				foreach (var de in splitKeys)
 				{
+					PooledSocket socket = de.Key.Acquire();
+					if (socket == null) continue;
+					sockets.Add(socket);
+
 					// gets <keys>
 					//
 					// keys: key key key key
-					command = new string[kp.Value.Count + 1];
-					command[0] = "gets";
-					kp.Value.CopyTo(command, 1);
+					StringBuilder commandBuilder = new StringBuilder("gets");
 
-					for (int i = 1; i < command.Length; i++)
-						command[i] = realToHashed[command[i]];
+					foreach (var item in de.Value)
+						commandBuilder.Append(" ").Append(realToHashed[item]);
 
-					PooledSocket socket = kp.Key.Acquire();
-					if (socket == null)
-						continue;
-
-					sockets.Add(socket);
-					TextSocketHelper.SendCommand(socket, String.Join(" ", command));
+					TextSocketHelper.SendCommand(socket, commandBuilder.ToString());
 				}
 
 				Dictionary<string, object> retval = new Dictionary<string, object>(StringComparer.Ordinal);
@@ -113,7 +111,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		{
 			get { return this.result; }
 		}
-	
+
 		public IDictionary<string, ulong> CasValues
 		{
 			get { return this.casValues; }

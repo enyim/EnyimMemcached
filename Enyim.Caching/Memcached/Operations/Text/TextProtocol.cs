@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
@@ -72,6 +73,14 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			return retval;
 		}
 
+		IDictionary<string, object> IProtocolImplementation.Get(System.Collections.Generic.IEnumerable<string> keys)
+		{
+			using (MultiGetOperation mgo = new MultiGetOperation(this.pool, keys))
+			{
+				return mgo.Execute() ? mgo.Result : new Dictionary<string, object>();
+			}
+		}
+
 		ulong IProtocolImplementation.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expiration)
 		{
 			if (expiration != 0)
@@ -80,7 +89,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			if (mode == MutationMode.Increment)
 			{
 				IncrementOperation op = new IncrementOperation(this.pool, key, delta);
-			
+
 				return op.Execute() ? 0 : op.Result;
 			}
 			else

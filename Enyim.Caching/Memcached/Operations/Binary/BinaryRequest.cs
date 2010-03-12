@@ -13,11 +13,14 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		public OpCode Operation;
 		public string Key;
 		public ulong Cas;
-		public int SessionId;
+		public readonly int CorrelationId;
 
 		public BinaryRequest(OpCode operation)
 		{
 			this.Operation = operation;
+
+			// session id
+			this.CorrelationId = Interlocked.Increment(ref InstanceCounter);
 		}
 
 		public unsafe IList<ArraySegment<byte>> CreateBuffer()
@@ -65,13 +68,10 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				buffer[0x0a] = (byte)(totalLength >> 8);
 				buffer[0x0b] = (byte)(totalLength & 255);
 
-				// session id
-				this.SessionId = Interlocked.Increment(ref InstanceCounter);
-
-				buffer[0x0c] = (byte)(this.SessionId >> 24);
-				buffer[0x0d] = (byte)(this.SessionId >> 16);
-				buffer[0x0e] = (byte)(this.SessionId >> 8);
-				buffer[0x0f] = (byte)(this.SessionId & 255);
+				buffer[0x0c] = (byte)(this.CorrelationId >> 24);
+				buffer[0x0d] = (byte)(this.CorrelationId >> 16);
+				buffer[0x0e] = (byte)(this.CorrelationId >> 8);
+				buffer[0x0f] = (byte)(this.CorrelationId & 255);
 
 				ulong cas = this.Cas;
 				// CAS

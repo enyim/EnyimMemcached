@@ -329,7 +329,7 @@ namespace Enyim.Caching
 		/// <returns>a Dictionary holding all items indexed by their key.</returns>
 		public IDictionary<string, object> Get(IEnumerable<string> keys)
 		{
-			throw new NotImplementedException();
+			return this.protImpl.Get(keys);
 		}
 
 		#region [ Expiration helper            ]

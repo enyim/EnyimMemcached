@@ -65,6 +65,7 @@
     <Compile Include="Memcached\ISaslAuthenticationProvider.cs" />
     <Compile Include="Memcached\Enums.cs" />
     <Compile Include="Memcached\Operations\Binary\ConcatenationOperation.cs" />
+    <Compile Include="Memcached\Operations\Binary\MultiGetOperation.cs" />
     <Compile Include="Memcached\Operations\Binary\SaslAuthenticator.cs" />
     <Compile Include="Memcached\Operations\Binary\FlushOperation.cs" />
     <Compile Include="Memcached\Operations\Binary\StatsOperation.cs" />
@@ -134,7 +135,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Memcached.cd" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="License.html" />

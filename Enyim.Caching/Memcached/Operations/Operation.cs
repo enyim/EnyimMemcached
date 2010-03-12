@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Operations
 {
@@ -51,6 +52,34 @@ namespace Enyim.Caching.Memcached.Operations
 				throw new ObjectDisposedException("Operation");
 
 			return this.isDisposed;
+		}
+
+		/// <summary>
+		/// Maps each key in the list to a MemcachedNode
+		/// </summary>
+		/// <param name="keys"></param>
+		/// <returns></returns>
+		protected Dictionary<MemcachedNode, List<string>> SplitKeys(IEnumerable<string> keys)
+		{
+			var retval = new Dictionary<MemcachedNode, List<string>>(MemcachedNode.Comparer.Instance);
+			var kt = this.serverPool.KeyTransformer;
+			var locator = this.serverPool.NodeLocator;
+
+			foreach (var key in keys)
+			{
+				var node = locator.Locate(kt.Transform(key));
+				if (node != null)
+				{
+					List<string> list;
+
+					if (!retval.TryGetValue(node, out list))
+						retval[node] = list = new List<string>();
+
+					list.Add(key);
+				}
+			}
+
+			return retval;
 		}
 
 		#region [ IDisposable                  ]
