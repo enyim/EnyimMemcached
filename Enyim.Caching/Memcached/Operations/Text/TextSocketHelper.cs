@@ -58,7 +58,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			MemoryStream ms = new MemoryStream(50);
 
 			bool gotR = false;
-			byte[] buffer = new byte[1];
+			//byte[] buffer = new byte[1];
 
 			int data;
 
@@ -124,7 +124,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			fixed (byte* buffer = data)
 			fixed (char* chars = value)
 			{
-				Encoding.ASCII.GetBytes(chars, 0, buffer, valueLength);
+				Encoding.ASCII.GetBytes(chars, valueLength, buffer, valueLength);
 
 				buffer[valueLength] = 13;
 				buffer[valueLength + 1] = 10;

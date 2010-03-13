@@ -38,7 +38,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 			byte[] header = new byte[24];
 			socket.Read(header, 0, 24);
-
+#if DEBUG
 			if (log.IsDebugEnabled)
 			{
 				log.Debug("Received binary response");
@@ -55,7 +55,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 				log.Debug(sb.ToString());
 			}
-
+#endif
 
 
 			fixed (byte* buffer = header)

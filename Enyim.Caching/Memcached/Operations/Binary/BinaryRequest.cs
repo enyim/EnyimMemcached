@@ -108,7 +108,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		public void Write(PooledSocket socket)
 		{
 			IList<ArraySegment<byte>> buffer = this.CreateBuffer();
-
+#if DEBUG
 			if (log.IsDebugEnabled)
 			{
 				log.Debug("Sending binary request");
@@ -126,7 +126,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 				log.Debug(sb.ToString());
 			}
-
+#endif
 			socket.Write(buffer);
 		}
 	}

@@ -143,9 +143,6 @@ namespace Enyim.Caching.Memcached
 		{
 			this.CheckDisposed();
 
-			if (log.IsDebugEnabled)
-				log.DebugFormat("ReadByte called");
-
 			try
 			{
 				return this.inputStream.ReadByte();
@@ -168,9 +165,6 @@ namespace Enyim.Caching.Memcached
 		public void Read(byte[] buffer, int offset, int count)
 		{
 			this.CheckDisposed();
-
-			if (log.IsDebugEnabled)
-				log.DebugFormat("Reading {0} bytes into buffer starting at {1}", count, offset);
 
 			int read = 0;
 			int shouldRead = count;
@@ -204,9 +198,6 @@ namespace Enyim.Caching.Memcached
 		{
 			this.CheckDisposed();
 
-			if (log.IsDebugEnabled)
-				log.DebugFormat("Writing {0} bytes from buffer starting at {1}", length, offset);
-
 			SocketError status;
 
 			this.socket.Send(data, offset, length, SocketFlags.None, out status);
@@ -222,9 +213,6 @@ namespace Enyim.Caching.Memcached
 		public void Write(IList<ArraySegment<byte>> buffers)
 		{
 			this.CheckDisposed();
-
-			if (log.IsDebugEnabled)
-				log.DebugFormat("Writing {0} buffer(s)", buffers.Count);
 
 			SocketError status;
 
