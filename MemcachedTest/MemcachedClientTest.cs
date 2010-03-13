@@ -125,6 +125,15 @@ namespace MemcachedTest
 		}
 
 		[TestMethod]
+		public void GetObjectFailTest()
+		{
+			// this shuould return null
+			TestData td = new MemcachedClient().Get<TestData>(TestObjectKey + "None");
+
+			Assert.IsNull(td, "Expected null, got something else.");
+		}
+
+		[TestMethod]
 		public void DeleteObjectTest()
 		{
 			MemcachedClient mc = new MemcachedClient();
