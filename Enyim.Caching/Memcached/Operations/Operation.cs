@@ -59,9 +59,9 @@ namespace Enyim.Caching.Memcached.Operations
 		/// </summary>
 		/// <param name="keys"></param>
 		/// <returns></returns>
-		protected Dictionary<MemcachedNode, List<string>> SplitKeys(IEnumerable<string> keys)
+		protected Dictionary<IMemcachedNode, List<string>> SplitKeys(IEnumerable<string> keys)
 		{
-			var retval = new Dictionary<MemcachedNode, List<string>>(MemcachedNode.Comparer.Instance);
+			var retval = new Dictionary<IMemcachedNode, List<string>>(MemcachedNode.Comparer.Instance);
 			var kt = this.serverPool.KeyTransformer;
 			var locator = this.serverPool.NodeLocator;
 

@@ -20,7 +20,7 @@ namespace Enyim.Caching.Memcached
 		private IPEndPoint endpoint;
 
 		private BufferedStream inputStream;
-		private MemcachedNode ownerNode;
+		private IMemcachedNode ownerNode;
 
 		internal PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, Action<PooledSocket> cleanupCallback)
 		{
@@ -39,7 +39,7 @@ namespace Enyim.Caching.Memcached
 			this.inputStream = new BufferedStream(new BasicNetworkStream(this.socket));
 		}
 
-		public MemcachedNode OwnerNode
+		public IMemcachedNode OwnerNode
 		{
 			get { return this.ownerNode; }
 			internal set { this.ownerNode = value; }

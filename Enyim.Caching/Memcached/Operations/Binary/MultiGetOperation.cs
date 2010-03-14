@@ -74,11 +74,11 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		private class MGetSession : IDisposable
 		{
 			private IServerPool pool;
-			private MemcachedNode node;
+			private IMemcachedNode node;
 			private List<string> keys;
 			private PooledSocket socket;
 
-			public MGetSession(IServerPool pool, MemcachedNode node, List<string> keys)
+			public MGetSession(IServerPool pool, IMemcachedNode node, List<string> keys)
 			{
 				this.pool = pool;
 				this.node = node;

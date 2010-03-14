@@ -10,11 +10,11 @@ namespace Enyim.Caching.Memcached
 	public class DefaultServerPool : IDisposable, IServerPool
 	{
 		// holds all dead servers which will be periodically rechecked and put back into the working servers if found alive
-		List<MemcachedNode> deadServers = new List<MemcachedNode>();
+		List<IMemcachedNode> deadServers = new List<IMemcachedNode>();
 		// holds all of the currently working servers
-		List<MemcachedNode> workingServers = new List<MemcachedNode>();
+		List<IMemcachedNode> workingServers = new List<IMemcachedNode>();
 
-		private ReadOnlyCollection<MemcachedNode> publicWorkingServers;
+		private ReadOnlyCollection<IMemcachedNode> publicWorkingServers;
 
 		// used to synchronize read/write accesses on the server lists
 		private ReaderWriterLock serverAccessLock = new ReaderWriterLock();
@@ -25,7 +25,7 @@ namespace Enyim.Caching.Memcached
 		private IMemcachedNodeLocator nodeLocator;
 		private ITranscoder transcoder;
 
-		public IEnumerable<MemcachedNode> GetServers()
+		public IEnumerable<IMemcachedNode> GetServers()
 		{
 			return this.WorkingServers;
 		}
@@ -100,13 +100,13 @@ namespace Enyim.Caching.Memcached
 				if (this.deadServers.Count == 0)
 					return;
 
-				List<MemcachedNode> resurrectList = this.deadServers.FindAll(delegate(MemcachedNode node) { return node.Ping(); });
+				List<IMemcachedNode> resurrectList = this.deadServers.FindAll(delegate(IMemcachedNode node) { return node.Ping(); });
 
 				if (resurrectList.Count > 0)
 				{
 					this.serverAccessLock.UpgradeToWriterLock(Timeout.Infinite);
 
-					resurrectList.ForEach(delegate(MemcachedNode node)
+					resurrectList.ForEach(delegate(IMemcachedNode node)
 					{
 						// maybe it got removed while we were waiting for the writer lock upgrade?
 						if (this.deadServers.Remove(node))
@@ -128,7 +128,7 @@ namespace Enyim.Caching.Memcached
 		///  - recreates the locator based on the new list of still functioning servers
 		/// </summary>
 		/// <param name="node"></param>
-		private void MarkAsDead(MemcachedNode node)
+		private void MarkAsDead(IMemcachedNode node)
 		{
 			this.serverAccessLock.UpgradeToWriterLock(Timeout.Infinite);
 
@@ -172,13 +172,13 @@ namespace Enyim.Caching.Memcached
 		/// </summary>
 		/// <param name="itemKey"></param>
 		/// <returns></returns>
-		private MemcachedNode LocateNode(string itemKey)
+		private IMemcachedNode LocateNode(string itemKey)
 		{
 			this.serverAccessLock.AcquireReaderLock(Timeout.Infinite);
 
 			try
 			{
-				MemcachedNode node = this.NodeLocator.Locate(itemKey);
+				IMemcachedNode node = this.NodeLocator.Locate(itemKey);
 				if (node == null)
 					return null;
 
@@ -200,7 +200,7 @@ namespace Enyim.Caching.Memcached
 			if (this.serverAccessLock == null)
 				throw new ObjectDisposedException("ServerPool");
 
-			MemcachedNode server = this.LocateNode(itemKey);
+			IMemcachedNode server = this.LocateNode(itemKey);
 
 			if (server == null)
 				return null;
@@ -208,7 +208,7 @@ namespace Enyim.Caching.Memcached
 			return server.Acquire();
 		}
 
-		public ReadOnlyCollection<MemcachedNode> WorkingServers
+		public ReadOnlyCollection<IMemcachedNode> WorkingServers
 		{
 			get
 			{
@@ -220,7 +220,7 @@ namespace Enyim.Caching.Memcached
 					{
 						if (this.publicWorkingServers == null)
 						{
-							this.publicWorkingServers = new ReadOnlyCollection<MemcachedNode>(this.workingServers.ToArray());
+							this.publicWorkingServers = new ReadOnlyCollection<IMemcachedNode>(this.workingServers.ToArray());
 						}
 					}
 					finally
@@ -233,12 +233,12 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public IDictionary<MemcachedNode, IList<string>> SplitKeys(IEnumerable<string> keys)
+		public IDictionary<IMemcachedNode, IList<string>> SplitKeys(IEnumerable<string> keys)
 		{
-			Dictionary<MemcachedNode, IList<string>> keysByNode = new Dictionary<MemcachedNode, IList<string>>(MemcachedNode.Comparer.Instance);
+			Dictionary<IMemcachedNode, IList<string>> keysByNode = new Dictionary<IMemcachedNode, IList<string>>(MemcachedNode.Comparer.Instance);
 
 			IList<string> nodeKeys;
-			MemcachedNode node;
+			IMemcachedNode node;
 
 			foreach (string key in keys)
 			{
@@ -270,7 +270,7 @@ namespace Enyim.Caching.Memcached
 			{
 				rwl.UpgradeToWriterLock(Timeout.Infinite);
 
-				Action<MemcachedNode> cleanupNode = node =>
+				Action<IMemcachedNode> cleanupNode = node =>
 				{
 					//node.SocketConnected -= this.OnSocketConnected;
 					node.Dispose();
@@ -317,7 +317,7 @@ namespace Enyim.Caching.Memcached
 			return this.Acquire(key);
 		}
 
-		IEnumerable<MemcachedNode> IServerPool.GetServers()
+		IEnumerable<IMemcachedNode> IServerPool.GetServers()
 		{
 			return this.GetServers();
 		}

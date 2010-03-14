@@ -9,11 +9,19 @@ using System.Security;
 
 namespace Enyim.Caching.Memcached
 {
+	public interface IMemcachedNode: IDisposable
+	{
+	    IPEndPoint EndPoint { get; }
+	    bool IsAlive { get; }
+		bool Ping();
+		PooledSocket Acquire();
+	}
+
 	/// <summary>
 	/// Represents a Memcached node in the pool.
 	/// </summary>
 	[DebuggerDisplay("{{MemcachedNode [ Address: {EndPoint}, IsAlive = {IsAlive} ]}}")]
-	public sealed class MemcachedNode : IDisposable
+	public sealed class MemcachedNode : IDisposable, IMemcachedNode
 	{
 		private static readonly object SyncRoot = new Object();
 
@@ -63,7 +71,7 @@ namespace Enyim.Caching.Memcached
 		/// </summary>
 		/// <remarks>It's possible that the server is still not up &amp; running so the next call to <see cref="M:Acquire"/> could mark the instance as dead again.</remarks>
 		/// <returns></returns>
-		internal bool Ping()
+		public bool Ping()
 		{
 			// is the server working?
 			if (this.internalPoolImpl.IsAlive)
@@ -408,16 +416,16 @@ namespace Enyim.Caching.Memcached
 		}
 		#endregion
 		#region [ Comparer                     ]
-		internal sealed class Comparer : IEqualityComparer<MemcachedNode>
+		internal sealed class Comparer : IEqualityComparer<IMemcachedNode>
 		{
 			public static readonly Comparer Instance = new Comparer();
 
-			bool IEqualityComparer<MemcachedNode>.Equals(MemcachedNode x, MemcachedNode y)
+			bool IEqualityComparer<IMemcachedNode>.Equals(IMemcachedNode x, IMemcachedNode y)
 			{
 				return x.EndPoint.Equals(y.EndPoint);
 			}
 
-			int IEqualityComparer<MemcachedNode>.GetHashCode(MemcachedNode obj)
+			int IEqualityComparer<IMemcachedNode>.GetHashCode(IMemcachedNode obj)
 			{
 				return obj.EndPoint.GetHashCode();
 			}

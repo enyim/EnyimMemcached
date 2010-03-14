@@ -7,7 +7,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 		protected override bool ExecuteAction()
 		{
-			foreach (MemcachedNode server in this.ServerPool.GetServers())
+			foreach (IMemcachedNode server in this.ServerPool.GetServers())
 			{
 				using (PooledSocket socket = server.Acquire())
 				{

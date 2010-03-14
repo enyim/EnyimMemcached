@@ -41,7 +41,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 			// map each key to the appropriate server in the pool
 			IMemcachedNodeLocator locator = this.ServerPool.NodeLocator;
-			IDictionary<MemcachedNode, List<string>> splitKeys = this.SplitKeys(this.keys);
+			IDictionary<IMemcachedNode, List<string>> splitKeys = this.SplitKeys(this.keys);
 
 			// we'll open 1 socket for each server
 			List<PooledSocket> sockets = new List<PooledSocket>();

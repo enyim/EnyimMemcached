@@ -20,7 +20,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			BinaryRequest request = new BinaryRequest(OpCode.Stat);
 			IList<ArraySegment<byte>> requestData = request.CreateBuffer();
 
-			foreach (MemcachedNode server in this.ServerPool.GetServers())
+			foreach (IMemcachedNode server in this.ServerPool.GetServers())
 			{
 				using (PooledSocket socket = server.Acquire())
 				{

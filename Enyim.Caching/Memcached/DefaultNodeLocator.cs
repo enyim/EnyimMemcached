@@ -9,16 +9,16 @@ namespace Enyim.Caching.Memcached
 	/// </summary>
 	public sealed class DefaultNodeLocator : IMemcachedNodeLocator
 	{
-		private const int ServerAddressMutations = 160;
+		private const int ServerAddressMutations = 100;
 
 		// holds all server keys for mapping an item key to the server consistently
 		private uint[] keys;
 		// used to lookup a server based on its key
-		private Dictionary<uint, MemcachedNode> servers = new Dictionary<uint, MemcachedNode>(new UIntEqualityComparer());
+		private Dictionary<uint, IMemcachedNode> servers = new Dictionary<uint, IMemcachedNode>(new UIntEqualityComparer());
 		private bool isInitialized;
 		private object initLock = new Object();
 
-		void IMemcachedNodeLocator.Initialize(IList<MemcachedNode> nodes)
+		void IMemcachedNodeLocator.Initialize(IList<IMemcachedNode> nodes)
 		{
 			if (this.isInitialized)
 				throw new InvalidOperationException("Instance is already initialized.");
@@ -33,7 +33,7 @@ namespace Enyim.Caching.Memcached
 
 				int nodeIdx = 0;
 
-				foreach (MemcachedNode node in nodes)
+				foreach (IMemcachedNode node in nodes)
 				{
 					List<uint> tmpKeys = DefaultNodeLocator.GenerateKeys(node, DefaultNodeLocator.ServerAddressMutations);
 
@@ -52,7 +52,7 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		MemcachedNode IMemcachedNodeLocator.Locate(string key)
+		IMemcachedNode IMemcachedNodeLocator.Locate(string key)
 		{
 			if (!this.isInitialized)
 				throw new InvalidOperationException("You must call Initialize first");
@@ -91,7 +91,7 @@ namespace Enyim.Caching.Memcached
 			return this.servers[this.keys[foundIndex]];
 		}
 
-		private static List<uint> GenerateKeys(MemcachedNode node, int numberOfKeys)
+		private static List<uint> GenerateKeys(IMemcachedNode node, int numberOfKeys)
 		{
 			const int KeyLength = 4;
 			const int PartCount = 1; // (ModifiedFNV.HashSize / 8) / KeyLength; // HashSize is in bits, uint is 4 byte long

@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		{
 			IList<ArraySegment<byte>> request = null;
 
-			foreach (MemcachedNode server in this.ServerPool.GetServers())
+			foreach (IMemcachedNode server in this.ServerPool.GetServers())
 			{
 				if (request == null)
 				{

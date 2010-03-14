@@ -13,7 +13,7 @@ namespace Enyim.Caching.Memcached
 		IMemcachedKeyTransformer KeyTransformer { get; }
 
 		PooledSocket Acquire(string key);
-		IEnumerable<MemcachedNode> GetServers();
+		IEnumerable<IMemcachedNode> GetServers();
 
 		IAuthenticator Authenticator { get; set; }
 

@@ -8,11 +8,11 @@ namespace Enyim.Caching.Memcached
 	/// </summary>
 	public sealed class SingleNodeLocator : IMemcachedNodeLocator
 	{
-		private MemcachedNode node;
+		private IMemcachedNode node;
 		private bool isInitialized;
 		private object initLock = new Object();
 
-		void IMemcachedNodeLocator.Initialize(IList<MemcachedNode> nodes)
+		void IMemcachedNodeLocator.Initialize(IList<IMemcachedNode> nodes)
 		{
 			if (this.isInitialized)
 				throw new InvalidOperationException("Instance is already initialized.");
@@ -30,7 +30,7 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		MemcachedNode IMemcachedNodeLocator.Locate(string key)
+		IMemcachedNode IMemcachedNodeLocator.Locate(string key)
 		{
 			if (!this.isInitialized)
 				throw new InvalidOperationException("You must call Initialize first");

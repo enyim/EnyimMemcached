@@ -11,13 +11,13 @@ namespace Enyim.Caching.Memcached
 		/// Initializes the locator.
 		/// </summary>
 		/// <param name="nodes">The memcached nodes defined in the configuration.</param>
-		void Initialize(IList<MemcachedNode> nodes);
+		void Initialize(IList<IMemcachedNode> nodes);
 		/// <summary>
 		/// Returns the memcached node the specified key belongs to.
 		/// </summary>
 		/// <param name="key">The key of the item to be located.</param>
 		/// <returns>The <see cref="T:MemcachedNode"/> the specifed item belongs to</returns>
-		MemcachedNode Locate(string key);
+		IMemcachedNode Locate(string key);
 	}
 }
 

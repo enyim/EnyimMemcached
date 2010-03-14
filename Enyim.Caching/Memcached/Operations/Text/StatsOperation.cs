@@ -21,7 +21,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		{
 			Dictionary<IPEndPoint, Dictionary<string, string>> retval = new Dictionary<IPEndPoint, Dictionary<string, string>>();
 
-			foreach (MemcachedNode server in this.ServerPool.GetServers())
+			foreach (IMemcachedNode server in this.ServerPool.GetServers())
 			{
 				using (PooledSocket socket = server.Acquire())
 				{
