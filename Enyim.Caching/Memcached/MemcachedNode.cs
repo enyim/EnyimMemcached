@@ -9,14 +9,6 @@ using System.Security;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IMemcachedNode: IDisposable
-	{
-	    IPEndPoint EndPoint { get; }
-	    bool IsAlive { get; }
-		bool Ping();
-		PooledSocket Acquire();
-	}
-
 	/// <summary>
 	/// Represents a Memcached node in the pool.
 	/// </summary>

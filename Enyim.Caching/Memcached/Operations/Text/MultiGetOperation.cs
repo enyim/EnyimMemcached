@@ -51,7 +51,10 @@ namespace Enyim.Caching.Memcached.Operations.Text
 				// send a 'gets' to each server
 				foreach (var de in splitKeys)
 				{
-					PooledSocket socket = de.Key.Acquire();
+					var server = de.Key;
+					if (!server.IsAlive) continue;
+
+					PooledSocket socket = server.Acquire();
 					if (socket == null) continue;
 					sockets.Add(socket);
 

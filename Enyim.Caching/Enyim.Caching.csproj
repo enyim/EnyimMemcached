@@ -60,6 +60,7 @@
     <Compile Include="Configuration\SocketPoolConfiguration.cs" />
     <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs" />
     <Compile Include="Memcached\IAuthenticator.cs" />
+    <Compile Include="Memcached\IMemcachedNode.cs" />
     <Compile Include="Memcached\IServerPool.cs" />
     <Compile Include="Memcached\IProtocolImplementation.cs" />
     <Compile Include="Memcached\ISaslAuthenticationProvider.cs" />

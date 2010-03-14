@@ -9,6 +9,8 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		{
 			foreach (IMemcachedNode server in this.ServerPool.GetServers())
 			{
+				if (!server.IsAlive) continue;
+
 				using (PooledSocket socket = server.Acquire())
 				{
 					if (socket != null)

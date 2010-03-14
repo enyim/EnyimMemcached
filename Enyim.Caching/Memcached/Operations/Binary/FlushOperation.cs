@@ -13,6 +13,8 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 			foreach (IMemcachedNode server in this.ServerPool.GetServers())
 			{
+				if (!server.IsAlive) continue;
+
 				if (request == null)
 				{
 					BinaryRequest bq = new BinaryRequest(OpCode.FlushQ);
@@ -21,8 +23,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 				using (PooledSocket socket = server.Acquire())
 				{
-					if (socket != null)
-						socket.Write(request);
+					if (socket != null)						socket.Write(request);
 				}
 			}
 
