@@ -22,7 +22,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		protected override bool ExecuteAction()
 		{
 			PooledSocket socket = this.Socket;
-			if (socket == null)
+			if (socket == null || !socket.IsAlive)
 				return false;
 
 			CacheItem item = this.ServerPool.Transcoder.Serialize(this.value);

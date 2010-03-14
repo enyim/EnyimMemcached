@@ -124,7 +124,7 @@ namespace Enyim.Caching.Memcached
 
 		/// <summary>
 		/// Marks a node as dead (unusable)
-		///  - moves hte node to the  "dead list"
+		///  - moves the node to the  "dead list"
 		///  - recreates the locator based on the new list of still functioning servers
 		/// </summary>
 		/// <param name="node"></param>

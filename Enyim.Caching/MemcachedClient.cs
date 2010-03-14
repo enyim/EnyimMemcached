@@ -334,7 +334,7 @@ namespace Enyim.Caching
 
 		#region [ Expiration helper            ]
 		private const int MaxSeconds = 60 * 60 * 24 * 30;
-		private static readonly DateTime UnixEpoch = new DateTime(1971, 1, 1);
+		private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1);
 
 		private static uint GetExpiration(TimeSpan? validFor, DateTime? expiresAt)
 		{
@@ -348,7 +348,9 @@ namespace Enyim.Caching
 				if (dt < UnixEpoch)
 					throw new ArgumentOutOfRangeException("expiresAt", "expiresAt must be >= 1970/1/1");
 
-				return (uint)(dt.ToUniversalTime() - UnixEpoch).TotalSeconds;
+				uint retval = (uint)(dt.ToUniversalTime() - UnixEpoch).TotalSeconds;
+
+				return retval;
 			}
 
 			TimeSpan ts = validFor.Value;

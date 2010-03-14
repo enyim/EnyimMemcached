@@ -34,6 +34,9 @@ namespace Enyim.Caching.Memcached
 			if (this.deadTimeout < 0)
 				throw new InvalidOperationException("deadTimeout must be >= TimeSpan.Zero");
 
+			if (socketPoolConfig.ConnectionTimeout.TotalMilliseconds >= Int32.MaxValue)
+				throw new InvalidOperationException("ConnectionTimeout must be < Int32.MaxValue");
+
 			this.authenticator = authenticator;
 			this.internalPoolImpl = new InternalPoolImpl(this, socketPoolConfig);
 		}

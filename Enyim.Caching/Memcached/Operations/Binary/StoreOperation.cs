@@ -25,9 +25,9 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			OpCode op;
 			switch (this.mode)
 			{
-				case StoreCommand.Add: op = OpCode.AddQ; break;
-				case StoreCommand.Set: op = OpCode.SetQ; break;
-				case StoreCommand.Replace: op = OpCode.ReplaceQ; break;
+				case StoreCommand.Add: op = OpCode.Add; break;
+				case StoreCommand.Set: op = OpCode.Set; break;
+				case StoreCommand.Replace: op = OpCode.Replace; break;
 				default: throw new ArgumentOutOfRangeException("mode", mode + " is not supported");
 			}
 
@@ -47,7 +47,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 			// TEST
 			// no response means success for the quiet commands
-			if (socket.Available == 0) return true;
+			// if (socket.Available == 0) return true;
 
 			BinaryResponse response = new BinaryResponse();
 
