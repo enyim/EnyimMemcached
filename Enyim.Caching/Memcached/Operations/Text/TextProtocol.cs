@@ -90,13 +90,13 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			{
 				IncrementOperation op = new IncrementOperation(this.pool, key, delta);
 
-				return op.Execute() ? 0 : op.Result;
+				return op.Execute() ? op.Result : 0;
 			}
 			else
 			{
 				DecrementOperation op = new DecrementOperation(this.pool, key, delta);
 
-				return op.Execute() ? 0 : op.Result;
+				return op.Execute() ? op.Result : 0;
 			}
 		}
 

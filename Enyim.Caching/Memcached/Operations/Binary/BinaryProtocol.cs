@@ -74,7 +74,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		{
 			using (MutatorOperation m = new MutatorOperation(this.pool, mode, key, defaultValue, delta, expiration))
 			{
-				return m.Execute() ? m.Result : m.Result;
+				return m.Execute() ? m.Result : defaultValue;
 			}
 		}
 
