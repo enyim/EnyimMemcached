@@ -272,7 +272,7 @@ namespace Enyim.Caching.Memcached
 						retval.Reset();
 
 						if (log.IsDebugEnabled) log.Debug("Socket was reset. " + retval.InstanceId);
-#if DEBUG
+#if DEBUG_PROTOCOL
 						Interlocked.Increment(ref this.workingCount);
 #endif
 						return retval;
@@ -295,7 +295,7 @@ namespace Enyim.Caching.Memcached
 				{
 					// okay, create the new item
 					retval = this.CreateSocket();
-#if DEBUG
+#if DEBUG_PROTOCOL
 					Interlocked.Increment(ref this.workingCount);
 #endif
 				}
@@ -339,7 +339,7 @@ namespace Enyim.Caching.Memcached
 					{
 						// mark the item as free
 						this.freeItems.Enqueue(socket);
-#if DEBUG
+#if DEBUG_PROTOCOL
 						Interlocked.Decrement(ref this.workingCount);
 #endif
 						// signal the event so if someone is waiting for it can reuse this item

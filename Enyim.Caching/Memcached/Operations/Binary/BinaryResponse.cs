@@ -38,7 +38,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 			byte[] header = new byte[24];
 			socket.Read(header, 0, 24);
-#if DEBUG
+#if DEBUG_PROTOCOL
 			if (log.IsDebugEnabled)
 			{
 				log.Debug("Received binary response");
