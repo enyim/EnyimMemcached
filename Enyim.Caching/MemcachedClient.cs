@@ -348,6 +348,10 @@ namespace Enyim.Caching
 				if (dt < UnixEpoch)
 					throw new ArgumentOutOfRangeException("expiresAt", "expiresAt must be >= 1970/1/1");
 
+				// accept MaxValue as infinite
+				if (dt == DateTime.MaxValue)
+					return 0;
+
 				uint retval = (uint)(dt.ToUniversalTime() - UnixEpoch).TotalSeconds;
 
 				return retval;
@@ -355,7 +359,8 @@ namespace Enyim.Caching
 
 			TimeSpan ts = validFor.Value;
 
-			if (ts.TotalSeconds >= MaxSeconds || ts <= TimeSpan.Zero)
+			// accept Zero as infinite
+			if (ts.TotalSeconds >= MaxSeconds || ts < TimeSpan.Zero)
 				throw new ArgumentOutOfRangeException("validFor", "validFor must be < 30 days && >= 0");
 
 			return (uint)ts.TotalSeconds;
