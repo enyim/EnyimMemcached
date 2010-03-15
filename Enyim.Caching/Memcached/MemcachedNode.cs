@@ -153,14 +153,14 @@ namespace Enyim.Caching.Memcached
 
 			private int minItems;
 			private int maxItems;
+#if DEBUG_PROTOCOL
 			private int workingCount = 0;
-
+#endif
 			private MemcachedNode ownerNode;
 			private IPEndPoint endPoint;
 			private ISocketPoolConfiguration config;
 			private Semaphore semaphore;
 
-			private bool firstTime = true;
 			private object initLock = new Object();
 
 			internal InternalPoolImpl(MemcachedNode ownerNode, ISocketPoolConfiguration config)
