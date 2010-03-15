@@ -1,4 +1,4 @@
-ï»¿using System.Reflection;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("enyim.com")]
 [assembly: AssemblyProduct("MemcachedTest")]
-[assembly: AssemblyCopyright("Copyright Â© enyim.com 2007")]
+[assembly: AssemblyCopyright("Copyright © enyim.com, Attila Kiskó 2007-2010")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
