@@ -50,6 +50,9 @@
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -129,6 +132,19 @@
     <Compile Include="Memcached\ThrowHelper.cs" />
     <Compile Include="Memcached\Transcoders\CacheItem.cs" />
     <Compile Include="Memcached\Transcoders\ITranscoder.cs" />
+    <Compile Include="NorthScale.Store\BucketConfigListener.cs" />
+    <Compile Include="NorthScale.Store\ConfigManager.cs" />
+    <Compile Include="NorthScale.Store\Configuration\INorthScaleClientConfiguration.cs" />
+    <Compile Include="NorthScale.Store\Configuration\NorthScaleClientConfiguration.cs" />
+    <Compile Include="NorthScale.Store\Configuration\NorthScaleClientSection.cs" />
+    <Compile Include="NorthScale.Store\Configuration\ServersElement.cs" />
+    <Compile Include="NorthScale.Store\Configuration\UriElement.cs" />
+    <Compile Include="NorthScale.Store\Configuration\UriElementCollection.cs" />
+    <Compile Include="NorthScale.Store\Configuration\UriValidator.cs" />
+    <Compile Include="NorthScale.Store\Deserialization.cs" />
+    <Compile Include="NorthScale.Store\MessageStreamListener.cs" />
+    <Compile Include="NorthScale.Store\NorthScaleClient.cs" />
+    <Compile Include="NorthScale.Store\NorthScalePool.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Memcached\ServerPool.cs" />
     <Compile Include="Memcached\StoreMode.cs" />
@@ -137,9 +153,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="License.html" />
+    <None Include="NorthScale.Store\App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
