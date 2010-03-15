@@ -5,6 +5,7 @@ using Enyim.Caching;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using NUnit.Framework;
+using System.Collections.Generic;
 
 namespace MemcachedTest
 {
@@ -23,67 +24,6 @@ namespace MemcachedTest
 			public string FieldB;
 			public int FieldC;
 			public bool FieldD;
-		}
-
-		/// <summary>
-		/// Tests if the client can initialize itself from enyim.com/memcached
-		/// </summary>
-		[TestCase]
-		public void DefaultConfigurationTest()
-		{
-			using (new MemcachedClient()) ;
-		}
-
-		/// <summary>
-		/// Tests if the client can initialize itself from a specific config
-		/// </summary>
-		[TestCase]
-		public void NamedConfigurationTest()
-		{
-			using (new MemcachedClient("test/validConfig")) ;
-		}
-
-		/// <summary>
-		/// Tests if the client can handle an invalid configuration
-		/// </summary>
-		[TestCase]
-		public void InvalidConfigurationTest()
-		{
-			try
-			{
-				using (MemcachedClient client = new MemcachedClient("test/invalidConfig"))
-				{
-					Assert.IsFalse(false, ".ctor should have failed.");
-				}
-			}
-			catch
-			{
-				Assert.IsTrue(true);
-			}
-		}
-
-		/// <summary>
-		/// Tests if the client can be decleratively initialized
-		/// </summary>
-		[TestCase]
-		public void ProgrammaticConfigurationTest()
-		{
-			// try to hit all lines in the config classes
-			MemcachedClientConfiguration mcc = new MemcachedClientConfiguration();
-
-			mcc.Servers.Add(new System.Net.IPEndPoint(IPAddress.Loopback, 20000));
-			mcc.Servers.Add(new System.Net.IPEndPoint(IPAddress.Loopback, 20002));
-
-			mcc.NodeLocator = typeof(DefaultNodeLocator);
-			mcc.KeyTransformer = typeof(SHA1KeyTransformer);
-			mcc.Transcoder = typeof(DefaultTranscoder);
-
-			mcc.SocketPool.MinPoolSize = 10;
-			mcc.SocketPool.MaxPoolSize = 100;
-			mcc.SocketPool.ConnectionTimeout = new TimeSpan(0, 0, 10);
-			mcc.SocketPool.DeadTimeout = new TimeSpan(0, 0, 30);
-
-			using (new MemcachedClient(mcc)) ;
 		}
 
 		/// <summary>
@@ -249,59 +189,37 @@ namespace MemcachedTest
 			}
 		}
 
-		//[TestCase]
-		//public void IncrementTest()
-		//{
-		//    using (MemcachedClient client = GetClient())
-		//    {
-		//        Assert.IsTrue(client.Store(StoreMode.Set, "VALUE", "100"), "Initialization failed");
+		[TestCase]
+		public void MultiGetTest()
+		{
+			// note, this test will fail, if memcached version is < 1.2.4
+			using (var client = GetClient())
+			{
+				var keys = new List<string>();
 
-		//        Assert.AreEqual(102L, client.Increment("VALUE", 0, 2));
-		//        Assert.AreEqual(112L, client.Increment("VALUE", 0, 10));
-		//    }
-		//}
+				for (int i = 0; i < 100; i++)
+				{
+					string k = "multi_get_test_" + i;
+					keys.Add(k);
 
-		//[TestCase]
-		//public void DecrementTest()
-		//{
-		//    MemcachedClient client = new MemcachedClient();
-		//    client.Store(StoreMode.Set, "VALUE", "100");
+					client.Store(StoreMode.Set, k, i);
+				}
 
-		//    Assert.AreEqual(98L, client.Decrement("VALUE", 0, 2));
-		//    Assert.AreEqual(88L, client.Decrement("VALUE", 0, 10));
-		//}
+				IDictionary<string, object> retvals = client.Get(keys);
 
-		//[TestCase]
-		//public void MultiGetTest()
-		//{
-		//    // note, this test will fail, if memcached version is < 1.2.4
-		//    MemcachedClient client = new MemcachedClient();
+				Assert.AreEqual(100, retvals.Count, "MultiGet should have returned 100 items.");
 
-		//    List<string> keys = new List<string>();
+				object value;
 
-		//    for (int i = 0; i < 100; i++)
-		//    {
-		//        string k = "multi_get_test_" + i;
-		//        keys.Add(k);
+				for (int i = 0; i < retvals.Count; i++)
+				{
+					string key = "multi_get_test_" + i;
 
-		//        client.Store(StoreMode.Set, k, i);
-		//    }
-
-		//    IDictionary<string, ulong> cas;
-		//    IDictionary<string, object> retvals = client.Get(keys, out cas);
-
-		//    Assert.AreEqual<int>(100, retvals.Count, "MultiGet should have returned 100 items.");
-
-		//    object value;
-
-		//    for (int i = 0; i < retvals.Count; i++)
-		//    {
-		//        string key = "multi_get_test_" + i;
-
-		//        Assert.IsTrue(retvals.TryGetValue(key, out value), "missing key: " + key);
-		//        Assert.AreEqual(value, i, "Invalid value returned: " + value);
-		//    }
-		//}
+					Assert.IsTrue(retvals.TryGetValue(key, out value), "missing key: " + key);
+					Assert.AreEqual(value, i, "Invalid value returned: " + value);
+				}
+			}
+		}
 
 		[TestCase]
 		public void FlushTest()

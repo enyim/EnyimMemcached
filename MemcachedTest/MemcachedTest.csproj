@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryMemcachedClientTest.cs" />
+    <Compile Include="ConfigTest.cs" />
     <Compile Include="KetamaTest.cs" />
     <Compile Include="TextMemcachedClientTest.cs" />
     <Compile Include="MemcachedClientTest.cs" />
