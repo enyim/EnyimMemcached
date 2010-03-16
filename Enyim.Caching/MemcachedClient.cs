@@ -28,6 +28,12 @@ namespace Enyim.Caching
 			this.Initialize(DefaultSettings);
 		}
 
+		~MemcachedClient()
+		{
+			try { ((IDisposable)this).Dispose(); }
+			catch { }
+		}
+
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the specified configuration section. 
 		/// This overload allows to create multiple MemcachedClients with different pool configurations.
@@ -379,18 +385,18 @@ namespace Enyim.Caching
 		/// the AppPool shuts down all resources will be released correctly and no handles or such will remain in the memory.</remarks>
 		public void Dispose()
 		{
-			if (this.protImpl == null)
-				throw new ObjectDisposedException("MemcachedClient");
-
-			GC.SuppressFinalize(this);
-
-			try
+			if (this.protImpl != null)
 			{
-				this.protImpl.Dispose();
-			}
-			finally
-			{
-				this.protImpl = null;
+				GC.SuppressFinalize(this);
+
+				try
+				{
+					this.protImpl.Dispose();
+				}
+				finally
+				{
+					this.protImpl = null;
+				}
 			}
 		}
 		#endregion

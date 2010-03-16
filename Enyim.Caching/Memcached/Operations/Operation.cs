@@ -82,6 +82,12 @@ namespace Enyim.Caching.Memcached.Operations
 			return retval;
 		}
 
+		~Operation()
+		{
+			try { ((IDisposable)this).Dispose(); }
+			catch { }
+		}
+
 		#region [ IDisposable                  ]
 		public virtual void Dispose()
 		{

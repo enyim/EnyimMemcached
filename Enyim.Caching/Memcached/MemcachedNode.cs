@@ -13,7 +13,7 @@ namespace Enyim.Caching.Memcached
 	/// Represents a Memcached node in the pool.
 	/// </summary>
 	[DebuggerDisplay("{{MemcachedNode [ Address: {EndPoint}, IsAlive = {IsAlive} ]}}")]
-	public sealed class MemcachedNode : IDisposable, IMemcachedNode
+	public sealed class MemcachedNode : IMemcachedNode
 	{
 		private static readonly object SyncRoot = new Object();
 
@@ -109,11 +109,20 @@ namespace Enyim.Caching.Memcached
 			return this.internalPoolImpl.Acquire();
 		}
 
+
+		~MemcachedNode()
+		{
+			try { ((IDisposable)this).Dispose(); }
+			catch { }
+		}
+
 		/// <summary>
 		/// Releases all resources allocated by this instance
 		/// </summary>
 		public void Dispose()
 		{
+			if (this.isDisposed) return;
+
 			GC.SuppressFinalize(this);
 
 			// this is not a graceful shutdown
@@ -122,8 +131,7 @@ namespace Enyim.Caching.Memcached
 			// this should not kill any kittens
 			lock (SyncRoot)
 			{
-				if (this.isDisposed)
-					return;
+				if (this.isDisposed) return;
 
 				this.isDisposed = true;
 
@@ -363,45 +371,55 @@ namespace Enyim.Caching.Memcached
 				}
 			}
 
+
+			~InternalPoolImpl()
+			{
+				try { ((IDisposable)this).Dispose(); }
+				catch { }
+			}
+
 			/// <summary>
 			/// Releases all resources allocated by this instance
 			/// </summary>
 			public void Dispose()
 			{
-				// this is not a graceful shutdown
-				// if someone uses a pooled item then 99% that an exception will be thrown
-				// somewhere. But since the dispose is mostly used when everyone else is finished
-				// this should not kill any kittens
-				lock (this)
+				if (!this.isDisposed)
 				{
-					this.CheckDisposed();
-
-					this.isAlive = false;
-					this.isDisposed = true;
-
-					PooledSocket ps;
-
-					while (this.freeItems.Dequeue(out ps))
+					// this is not a graceful shutdown
+					// if someone uses a pooled item then 99% that an exception will be thrown
+					// somewhere. But since the dispose is mostly used when everyone else is finished
+					// this should not kill any kittens
+					lock (this)
 					{
-						try
+						if (!this.isDisposed)
 						{
-							ps.OwnerNode = null;
-							ps.Destroy();
-						}
-						catch { }
-					}
+							this.isAlive = false;
+							this.isDisposed = true;
 
-					this.ownerNode = null;
-					this.semaphore.Close();
-					this.semaphore = null;
-					this.freeItems = null;
+							PooledSocket ps;
+
+							while (this.freeItems.Dequeue(out ps))
+							{
+								try
+								{
+									ps.OwnerNode = null;
+									ps.Destroy();
+								}
+								catch { }
+							}
+
+							this.ownerNode = null;
+							this.semaphore.Close();
+							this.semaphore = null;
+							this.freeItems = null;
+						}
+					}
 				}
 			}
 
 			private void CheckDisposed()
 			{
-				if (this.isDisposed)
-					throw new ObjectDisposedException("pool");
+				if (this.isDisposed) throw new ObjectDisposedException("pool");
 			}
 
 			void IDisposable.Dispose()

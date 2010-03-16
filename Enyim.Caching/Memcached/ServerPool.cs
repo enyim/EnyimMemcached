@@ -256,6 +256,12 @@ namespace Enyim.Caching.Memcached
 			return keysByNode;
 		}
 
+		~DefaultServerPool()
+		{
+			try { ((IDisposable)this).Dispose(); }
+			catch { }
+		}
+
 		#region [ IDisposable                  ]
 		void IDisposable.Dispose()
 		{

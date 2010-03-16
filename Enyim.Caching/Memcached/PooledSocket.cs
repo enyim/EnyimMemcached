@@ -95,6 +95,12 @@ namespace Enyim.Caching.Memcached
 			this.Dispose(true);
 		}
 
+		~PooledSocket()
+		{
+			try { this.Dispose(true); }
+			catch { }
+		}
+
 		protected void Dispose(bool disposing)
 		{
 			if (disposing)

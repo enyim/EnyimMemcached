@@ -20,6 +20,13 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			this.Dispose();
 		}
 
+
+		~TextProtocol()
+		{
+			try { ((IDisposable)this).Dispose(); }
+			catch { }
+		}
+
 		/// <summary>
 		/// Releases all resources allocated by this instance
 		/// </summary>
@@ -27,11 +34,11 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		/// the AppPool shuts down all resources will be released correctly and no handles or such will remain in the memory.</remarks>
 		public void Dispose()
 		{
-			if (this.pool == null)
-				throw new ObjectDisposedException("MemcachedClient");
-
-			((IDisposable)this.pool).Dispose();
-			this.pool = null;
+			if (this.pool != null)
+			{
+				((IDisposable)this.pool).Dispose();
+				this.pool = null;
+			}
 		}
 
 		bool IProtocolImplementation.Store(StoreMode mode, string key, object value, uint expires)

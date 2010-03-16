@@ -20,6 +20,12 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			this.Dispose();
 		}
 
+		~BinaryProtocol()
+		{
+			try { ((IDisposable)this).Dispose(); }
+			catch { }
+		}
+
 		/// <summary>
 		/// Releases all resources allocated by this instance
 		/// </summary>
@@ -27,11 +33,11 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		/// the AppPool shuts down all resources will be released correctly and no handles or such will remain in the memory.</remarks>
 		public void Dispose()
 		{
-			if (this.pool == null)
-				throw new ObjectDisposedException("MemcachedClient");
-
-			((IDisposable)this.pool).Dispose();
-			this.pool = null;
+			if (this.pool != null)
+			{
+				((IDisposable)this.pool).Dispose();
+				this.pool = null;
+			}
 		}
 
 		private bool TryGet(string key, out object value)

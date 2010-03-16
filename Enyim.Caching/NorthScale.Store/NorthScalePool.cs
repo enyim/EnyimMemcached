@@ -36,6 +36,12 @@ namespace NorthScale.Store
 			this.keyTransformer = (IMemcachedKeyTransformer)Create(configuration.KeyTransformer) ?? new DefaultKeyTransformer();
 		}
 
+		~NorthScalePool()
+		{
+			try { ((IDisposable)this).Dispose(); }
+			catch { }
+		}
+
 		private static object Create(Type type)
 		{
 			if (type == null) return null;
