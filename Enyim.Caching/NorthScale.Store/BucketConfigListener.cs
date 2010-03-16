@@ -18,24 +18,19 @@ namespace NorthScale.Store
 
 		public event Action<IEnumerable<BucketNode>> NodeListChanged;
 
-		protected override void OnConnectionAborted()
-		{
-			if (this.lastNodes != null)
-			{
-				this.lastNodes = null;
-
-				var ev = this.NodeListChanged;
-				if (ev != null)
-					ev(Enumerable.Empty<BucketNode>());
-			}
-		}
-
 		protected override void OnMessageReceived(string message)
 		{
 			base.OnMessageReceived(message);
 
-			// empty message, quit
-			if (String.IsNullOrEmpty(message)) return;
+			// everything failed
+			if (String.IsNullOrEmpty(message)) 
+			{
+				if (this.lastNodes != null)
+					this.RaiseNodeListChanged(Enumerable.Empty<BucketNode>());
+
+				this.lastNodes = null;
+				return;
+			}
 
 			// deserialize the buckets
 			var jss = new JavaScriptSerializer();
@@ -48,16 +43,21 @@ namespace NorthScale.Store
 							select node).ToList();
 
 			// check if the new config is the same as the last one
-			if (lastNodes != null
-				&& lastNodes.SequenceEqual(newNodes, BucketNode.ComparerInstance))
+			if (this.lastNodes != null
+				&& this.lastNodes.SequenceEqual(newNodes, BucketNode.ComparerInstance))
 				return;
 
 			this.lastNodes = newNodes;
+			this.RaiseNodeListChanged(newNodes);
+		}
+
+		private void RaiseNodeListChanged(IEnumerable<BucketNode> nodes)
+		{
 			var nlc = this.NodeListChanged;
 
 			// we got a new config, notify the pool to reload itself
 			if (nlc != null)
-				nlc(newNodes);
+				nlc(nodes);
 		}
 	}
 }

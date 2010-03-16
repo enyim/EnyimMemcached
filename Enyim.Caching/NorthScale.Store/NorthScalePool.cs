@@ -106,8 +106,8 @@ namespace NorthScale.Store
 			// recreate the node lcoator when the config changes
 			this.configListener.NodeListChanged += InitNodes;
 
-			// start the istener by 500 msec delay to let the system settle before stressing it with more work
-			this.configListener.Start(500);
+			// start the listener
+			this.configListener.Start();
 		}
 
 		private void InitNodes(IEnumerable<BucketNode> nodes)

@@ -16,9 +16,9 @@ namespace NorthScale.Store
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(MessageStreamListener));
 
 		private Uri[] urls;
-		private Thread thread;
 		private int stopCounter = 0;
 		private MessageReader currentWorker;
+		private bool started;
 
 		public MessageStreamListener(Uri[] urls)
 		{
@@ -47,19 +47,13 @@ namespace NorthScale.Store
 		/// <summary>
 		/// Starts processing the streaming URI
 		/// </summary>
-		public void Start(int timeout)
+		public void Start()
 		{
-			if (this.thread != null) throw new InvalidOperationException("already started");
+			if (this.started ) throw new InvalidOperationException("already started");
 
-			var t = new Thread(this.Work);
-			t.Priority = ThreadPriority.BelowNormal;
+			var success = ThreadPool.QueueUserWorkItem(this.Work);
 
-			this.thread = t;
-			t.Name = "MessageStreamListener";
-
-			if (log.IsDebugEnabled) log.Debug("Starting the listener.");
-
-			t.Start(timeout);
+			if (log.IsDebugEnabled) log.Debug("Starting the listener. Queue=" + success);
 		}
 
 		/// <summary>
@@ -72,20 +66,7 @@ namespace NorthScale.Store
 			Interlocked.Exchange(ref this.stopCounter, 1);
 			this.currentWorker.Stop();
 
-			if (this.thread.ThreadState == ThreadState.Running)
-			{
-				if (log.IsDebugEnabled) log.Debug("Thread is still running, doing a Join().");
-
-				this.thread.Join(500);
-				if (this.thread.ThreadState == ThreadState.Running)
-				{
-					if (log.IsDebugEnabled) log.Debug("Thread is still running, aborting.");
-
-					this.thread.Abort();
-				}
-			}
-
-			this.thread = null;
+			this.started = false;
 
 			if (log.IsDebugEnabled) log.Debug("Stopped.");
 		}
@@ -93,17 +74,6 @@ namespace NorthScale.Store
 		private void Work(object state)
 		{
 			if (log.IsDebugEnabled) log.Debug("Started working.");
-
-			if (state != null)
-			{
-				int sleep = (int)state;
-				if (sleep > 0)
-				{
-					if (log.IsDebugEnabled) log.Debug("Sleeping for " + sleep + " msec");
-
-					Thread.Sleep(sleep);
-				}
-			}
 
 			Uri[] urls = this.urls;
 			using (var client = ConfigHelper.CreateClient(this.Credentials))
@@ -178,7 +148,7 @@ namespace NorthScale.Store
 
 								if (log.IsWarnEnabled) log.Warn("Current pool " + currentUrl + " has failed.");
 
-								this.OnConnectionAborted();
+								//this.OnConnectionAborted();
 							}
 							else
 							{
@@ -193,8 +163,11 @@ namespace NorthScale.Store
 					{
 						if (log.IsWarnEnabled) log.Warn("All pools are dead, sleeping a while.");
 
+						// TODO maybe this should be a separate event
+						this.OnMessageReceived(null);
+
 						DateTime now = DateTime.UtcNow;
-						while (stopCounter == 0 && (DateTime.UtcNow - now).TotalSeconds < 5)
+						while (this.stopCounter == 0 && (DateTime.UtcNow - now).TotalSeconds < 5)
 						{
 							Thread.Sleep(200);
 						}
