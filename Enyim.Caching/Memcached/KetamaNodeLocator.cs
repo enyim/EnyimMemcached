@@ -32,7 +32,7 @@ namespace Enyim.Caching.Memcached
 			const int KeyLength = 4;
 			var hashAlgo = HashAlgorithm.Create(HashName);
 
-			int PartCount = hashAlgo.HashSize / 8 / KeyLength; // HashSize is in bits, uint is 4 byte long
+			int PartCount = hashAlgo.HashSize / 8 / KeyLength; // HashSize is in bits, uint is 4 bytes long
 			if (PartCount < 1) throw new ArgumentOutOfRangeException("The hash algorithm must provide at least 32 bits long hashes");
 
 			var keys = new List<uint>(nodes.Count * KetamaNodeLocator.ServerAddressMutations);
@@ -93,30 +93,26 @@ namespace Enyim.Caching.Memcached
 			if (this.servers.Count == 0) return null;
 			if (this.servers.Count == 1) return this.servers[0];
 
-			var retval = this.LocateNode(key);
+			var retval = this.LocateNode(this.GetKeyHash(key));
 
 			// isalive is not atomic
 			if (!retval.IsAlive)
 			{
 				for (var i = 0; i < this.servers.Count; i++)
 				{
+					// -- this is from spymemcached so we select the same node for the same items
 					ulong tmpKey = (ulong)GetKeyHash(i + key);
-					// This echos the implementation of Long.hashCode()
 					tmpKey += (uint)(tmpKey ^ (tmpKey >> 32));
 					tmpKey &= 0xffffffffL; /* truncate to 32-bits */
-
+					// -- end
 
 					retval = this.LocateNode((uint)tmpKey);
+
 					if (retval.IsAlive) return retval;
 				}
 			}
 
 			return retval.IsAlive ? retval : null;
-		}
-
-		private IMemcachedNode LocateNode(string key)
-		{
-			return this.LocateNode(GetKeyHash(key));
 		}
 
 		private IMemcachedNode LocateNode(uint itemKeyHash)
