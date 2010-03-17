@@ -40,23 +40,30 @@ namespace Enyim.Caching.Configuration
 			{
 				if (this.endpoint == null)
 				{
-					IPHostEntry entry = System.Net.Dns.GetHostEntry(this.Address);
-					IPAddress[] list = entry.AddressList;
+					IPAddress address;
 
-					if (list.Length == 0)
-						throw new ConfigurationErrorsException(String.Format("Could not resolve host '{0}'.", this.Address));
+					if (!IPAddress.TryParse(this.Address, out address))
+					{
+						IPHostEntry entry = System.Net.Dns.GetHostEntry(this.Address);
+						IPAddress[] list = entry.AddressList;
 
-					// get the first IPv4 address from the list (not sure how memcached works against ipv6 addresses whihc are not localhost)
-                    IPAddress address = null;
-                    for (int i = 0; i < list.Length; i++) {
-                        if (list[i].AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) {
-                            address = list[i];
-                            break;
-                        }
-                    }
-					if (address == null)
-						throw new ConfigurationErrorsException(String.Format("Host '{0}' does not have an IPv4 address.", this.Address));
-						
+						if (list.Length == 0)
+							throw new ConfigurationErrorsException(String.Format("Could not resolve host '{0}'.", this.Address));
+
+						// get the first IPv4 address from the list (not sure how memcached works against ipv6 addresses whihc are not localhost)
+						for (int i = 0; i < list.Length; i++)
+						{
+							if (list[i].AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+							{
+								address = list[i];
+								break;
+							}
+						}
+
+						if (address == null)
+							throw new ConfigurationErrorsException(String.Format("Host '{0}' does not have an IPv4 address.", this.Address));
+					}
+
 					this.endpoint = new System.Net.IPEndPoint(address, this.Port);
 				}
 
