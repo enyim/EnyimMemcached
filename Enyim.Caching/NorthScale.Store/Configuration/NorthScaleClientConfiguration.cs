@@ -18,6 +18,7 @@ namespace NorthScale.Store.Configuration
 		private Type transcoder;
 		private ICredentials credentials;
 		private string bucket;
+		private BucketPortType port = BucketPortType.Direct;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
@@ -98,6 +99,15 @@ namespace NorthScale.Store.Configuration
 			}
 		}
 
+		/// <summary>
+		/// Determines which port the client should use to connect to the nodes
+		/// </summary>
+		public BucketPortType Port
+		{
+			get { return this.port; }
+			set { this.port = value; }
+		}
+
 		#region [ interface                     ]
 		IList<Uri> INorthScaleClientConfiguration.Urls
 		{
@@ -132,6 +142,11 @@ namespace NorthScale.Store.Configuration
 		string INorthScaleClientConfiguration.Bucket
 		{
 			get { return this.bucket; }
+		}
+
+		BucketPortType INorthScaleClientConfiguration.Port
+		{
+			get { return this.port; }
 		}
 
 		#endregion

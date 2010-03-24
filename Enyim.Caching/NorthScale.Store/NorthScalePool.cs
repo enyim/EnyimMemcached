@@ -120,9 +120,13 @@ namespace NorthScale.Store
 		{
 			// default bucket does not require authentication
 			var auth = this.bucketName == null ? null : ((IServerPool)this).Authenticator;
+			var portType = this.configuration.Port;
 
 			var mcNodes = nodes.Select(b => new MemcachedNode(
-												new IPEndPoint(IPAddress.Parse(b.hostname), b.ports.direct),
+												// create a memcached node for each bucket node
+												// TODO currently we expect that the API returns IP addresses, we should confirm this
+												new IPEndPoint(IPAddress.Parse(b.hostname), 
+																	portType == BucketPortType.Proxy ? b.ports.proxy : b.ports.direct),
 												this.configuration.SocketPool,
 												auth)).ToArray();
 

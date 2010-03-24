@@ -12,9 +12,10 @@ namespace Enyim.Caching.Memcached
 		private byte[] authData;
 
 		public PlainTextAuthenticator() { }
-		public PlainTextAuthenticator(string userName, string password) 
+
+		public PlainTextAuthenticator(string zone, string userName, string password) 
 		{
-			this.authData = CreateAuthData(userName, password);
+			this.authData = CreateAuthData(zone, userName, password);
 		}
 
 		string ISaslAuthenticationProvider.Type
@@ -24,10 +25,11 @@ namespace Enyim.Caching.Memcached
 
 		void ISaslAuthenticationProvider.Initialize(Dictionary<string, object> parameters)
 		{
+			string zone = (string)parameters["zone"];
 			string userName = (string)parameters["userName"];
 			string password = (string)parameters["password"];
 
-			this.authData = CreateAuthData(userName, password);
+			this.authData = CreateAuthData(zone, userName, password);
 		}
 
 		byte[] ISaslAuthenticationProvider.Authenticate()
@@ -40,9 +42,14 @@ namespace Enyim.Caching.Memcached
 			return null;
 		}
 
-		private static byte[] CreateAuthData(string userName, string password)
+		private static byte[] CreateAuthData(string zone, string userName, string password)
 		{
-			return System.Text.Encoding.UTF8.GetBytes("memcached\0" + userName + "\0" + password);
+			//message   = [authzid] UTF8NUL authcid UTF8NUL passwd
+			//authcid   = 1*SAFE ; MUST accept up to 255 octets
+			//authzid   = 1*SAFE ; MUST accept up to 255 octets
+			//passwd    = 1*SAFE ; MUST accept up to 255 octets
+			//UTF8NUL   = %x00 ; UTF-8 encoded NUL character
+			return System.Text.Encoding.UTF8.GetBytes(zone + "\0" + userName + "\0" + password);
 		}
 	}
 }

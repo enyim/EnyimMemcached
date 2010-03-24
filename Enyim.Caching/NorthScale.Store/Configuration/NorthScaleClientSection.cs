@@ -14,9 +14,9 @@ namespace NorthScale.Store.Configuration
 	public sealed class NorthScaleClientSection : ConfigurationSection, INorthScaleClientConfiguration
 	{
 		[ConfigurationProperty("servers", IsRequired = true)]
-		public ServersSection Servers
+		public ServersElement Servers
 		{
-			get { return (ServersSection)base["servers"]; }
+			get { return (ServersElement)base["servers"]; }
 			set { base["servers"] = value; }
 		}
 
@@ -113,6 +113,11 @@ namespace NorthScale.Store.Configuration
 		string INorthScaleClientConfiguration.Bucket
 		{
 			get { return this.Servers.Bucket; }
+		}
+
+		BucketPortType INorthScaleClientConfiguration.Port
+		{
+			get { return this.Servers.Port; }
 		}
 
 		#endregion

@@ -37,7 +37,8 @@ namespace NorthScale.Store
 			if (IsDefaultBucket(bucketName) && IsDefaultBucket(bucketName = configuration.Bucket))
 				return null;
 
-			return new PlainTextAuthenticator(bucketName, bucketName);
+			// moxi (when using the proxy port) only accepts an empty authzid
+			return new PlainTextAuthenticator(null, bucketName, bucketName);
 		}
 	}
 }

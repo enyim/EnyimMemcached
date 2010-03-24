@@ -5,7 +5,7 @@ namespace NorthScale.Store.Configuration
 	/// <summary>
 	/// Configures the <see cref="T:MemcachedClient"/>. This class cannot be inherited.
 	/// </summary>
-	public sealed class ServersSection : ConfigurationElement
+	public sealed class ServersElement : ConfigurationElement
 	{
 		/// <summary>
 		/// Gets or sets the name of the bucket to be used. Can be overriden at the pool's constructor, and if not pecified the "default" bucket will be used.
@@ -45,6 +45,17 @@ namespace NorthScale.Store.Configuration
 		{
 			get { return (UriElementCollection)base[""]; }
 		}
+
+		/// <summary>
+		/// Determines which port the client should use to connect to the nodes
+		/// </summary>
+		[ConfigurationProperty("port", IsRequired = false, DefaultValue=BucketPortType.Direct)]
+		public BucketPortType Port
+		{
+			get { return (BucketPortType)base["port"]; }
+			set { base["port"] = value; }
+		}
+
 	}
 }
 

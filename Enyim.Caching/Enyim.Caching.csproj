@@ -133,6 +133,7 @@
     <Compile Include="Memcached\Transcoders\CacheItem.cs" />
     <Compile Include="Memcached\Transcoders\ITranscoder.cs" />
     <Compile Include="NorthScale.Store\BucketConfigListener.cs" />
+    <Compile Include="NorthScale.Store\Configuration\BucketPortType.cs" />
     <Compile Include="NorthScale.Store\ConfigManager.cs" />
     <Compile Include="NorthScale.Store\Configuration\INorthScaleClientConfiguration.cs" />
     <Compile Include="NorthScale.Store\Configuration\NorthScaleClientConfiguration.cs" />

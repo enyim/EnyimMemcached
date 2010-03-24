@@ -50,8 +50,8 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				}
 				else
 				{
-					if (log.IsDebugEnabled)
-						log.DebugFormat("Authentication failed, return code: 0x{0:x}", response.StatusCode);
+					if (log.IsWarnEnabled)
+						log.WarnFormat("Authentication failed, return code: 0x{0:x}", response.StatusCode);
 
 					// invalid credentials or other error
 					return false;

@@ -223,7 +223,11 @@ namespace Enyim.Caching.Memcached
 
 				if (this.ownerNode.authenticator != null)
 					if (!this.ownerNode.authenticator.Authenticate(retval))
+					{
+						if (log.IsErrorEnabled) log.Error("Authentication failed: " + this.endPoint);
+
 						throw new SecurityException("auth failed: " + this.endPoint);
+					}
 
 				return retval;
 			}
