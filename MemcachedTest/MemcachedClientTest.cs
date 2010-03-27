@@ -189,6 +189,20 @@ namespace MemcachedTest
 			}
 		}
 
+		class NonSerializableObject
+		{
+			public string Value;
+		}
+
+		[TestCase]
+		public void NonSerializableTest()
+		{
+			using (MemcachedClient client = GetClient())
+			{
+				Assert.IsFalse(client.Store(StoreMode.Set, "VALUE", new NonSerializableObject()), "Storing a non serializable object should have failed");
+			}
+		}
+
 		[TestCase]
 		public void MultiGetTest()
 		{
