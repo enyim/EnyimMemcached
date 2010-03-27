@@ -34,9 +34,9 @@ namespace Enyim.Caching.Memcached.Operations
 			{
 				// TODO generic catch-all does not seem to be a good idea now. Some errors (like command not supported by server) should be exposed while retaining the fire-and-forget behavior
 				log.Error(e);
-			}
 
-			return true;
+				return false;
+			}
 		}
 
 		protected IServerPool ServerPool
