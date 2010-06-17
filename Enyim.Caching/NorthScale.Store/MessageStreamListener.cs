@@ -32,16 +32,14 @@ namespace NorthScale.Store
 
 		protected virtual WebClient CreateClient()
 		{
-			var client = new WebClient();
-
-			client.Credentials = this.Credentials;
-			client.Headers[HttpRequestHeader.CacheControl] = "no-cache";
-			client.Headers[HttpRequestHeader.Accept] = "application/com.northscale.store+json";
-			client.Headers[HttpRequestHeader.UserAgent] = "enyim.com memcached client";
-
-			client.Encoding = Encoding.UTF8;
-
-			return client;
+			return new WebClientWithTimeout() 
+			{ 
+				Credentials = this.Credentials, 
+				// make it infinite so it will not stop abort the socket thinking that the server have died
+				ReadWriteTimeout = System.Threading.Timeout.Infinite, 
+				// this is just the connect timeout
+				Timeout = this.Timeout 
+			};
 		}
 
 		/// <summary>
@@ -76,7 +74,8 @@ namespace NorthScale.Store
 			if (log.IsDebugEnabled) log.Debug("Started working.");
 
 			Uri[] urls = this.urls;
-			using (var client = ConfigHelper.CreateClient(this.Credentials))
+
+			using (var client = this.CreateClient())
 			{
 				var worker = this.currentWorker = new MessageReader(client, this.OnMessageReceived);
 
@@ -140,6 +139,8 @@ namespace NorthScale.Store
 						}
 						catch (Exception e)
 						{
+							log.Error("POOLFAIL", e);
+
 							if (e is IOException || e is System.Net.WebException)
 							{
 								// current worker failed, most probably the pool it was connected to went down
@@ -185,6 +186,9 @@ namespace NorthScale.Store
 		{
 			//if (log.IsDebugEnabled) log.Debug("Aborted");
 		}
+
+
+		public int Timeout { get; set; }
 
 		#region [ MessageReader                ]
 		private class MessageReader

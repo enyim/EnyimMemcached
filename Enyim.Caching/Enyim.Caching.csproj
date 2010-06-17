@@ -134,7 +134,8 @@
     <Compile Include="Memcached\Transcoders\ITranscoder.cs" />
     <Compile Include="NorthScale.Store\BucketConfigListener.cs" />
     <Compile Include="NorthScale.Store\Configuration\BucketPortType.cs" />
-    <Compile Include="NorthScale.Store\ConfigManager.cs" />
+    <Compile Include="NorthScale.Store\ConfigManager.cs">
+    </Compile>
     <Compile Include="NorthScale.Store\Configuration\INorthScaleClientConfiguration.cs" />
     <Compile Include="NorthScale.Store\Configuration\NorthScaleClientConfiguration.cs" />
     <Compile Include="NorthScale.Store\Configuration\NorthScaleClientSection.cs" />
@@ -142,6 +143,9 @@
     <Compile Include="NorthScale.Store\Configuration\UriElement.cs" />
     <Compile Include="NorthScale.Store\Configuration\UriElementCollection.cs" />
     <Compile Include="NorthScale.Store\Configuration\UriValidator.cs" />
+    <Compile Include="NorthScale.Store\WebClientWithTimeout.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="NorthScale.Store\Deserialization.cs" />
     <Compile Include="NorthScale.Store\MessageStreamListener.cs" />
     <Compile Include="NorthScale.Store\NorthScaleClient.cs" />

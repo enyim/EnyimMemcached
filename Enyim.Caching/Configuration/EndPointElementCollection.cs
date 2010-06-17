@@ -36,7 +36,7 @@ namespace Enyim.Caching.Configuration
 		/// Helper method; converts the collection into an <see cref="T:IPEndPoint"/> collection for the interface implementation.
 		/// </summary>
 		/// <returns></returns>
-		internal IList<IPEndPoint> ToIPEndPointCollection()
+		public IList<IPEndPoint> ToIPEndPointCollection()
 		{
 			List<IPEndPoint> retval = new List<IPEndPoint>(this.Count);
 			foreach (EndPointElement e in this)

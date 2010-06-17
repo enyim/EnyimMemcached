@@ -11,46 +11,22 @@ namespace NorthScale.Store
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(ConfigHelper));
 
-		private WebClient client;
+		private WebClientWithTimeout wcwt;
 
-		public ConfigHelper() { }
-
-		public ICredentials Credentials { get; set; }
-
-		/// <summary>
-		/// Creates a WebClient for communicating with the REST API.
-		/// </summary>
-		/// <param name="credentials"></param>
-		/// <returns></returns>
-		public static WebClient CreateClient(ICredentials credentials)
+		public ConfigHelper()
 		{
-			var retval = new WebClient();
-
-			retval.Credentials = credentials;
-
-			retval.Headers[HttpRequestHeader.CacheControl] = "no-cache";
-			retval.Headers[HttpRequestHeader.Accept] = "application/com.northscale.store+json";
-			// TODO mayvbe we should version this
-			retval.Headers[HttpRequestHeader.UserAgent] = "enyim.com memcached client";
-
-			retval.Encoding = Encoding.UTF8;
-
-			return retval;
+			this.wcwt = new WebClientWithTimeout();
 		}
 
-		private WebClient GetWebClient()
+		public ICredentials Credentials
 		{
-			if (this.client == null)
-			{
-				this.client = CreateClient(this.Credentials);
-			}
-
-			return this.client;
+			get { return this.wcwt.Credentials; }
+			set { this.wcwt.Credentials = value; }
 		}
 
 		private T DeserializeUri<T>(Uri uri)
 		{
-			var info = this.GetWebClient().DownloadString(uri);
+			var info = this.wcwt.DownloadString(uri);
 			var jss = new JavaScriptSerializer();
 
 			return jss.Deserialize<T>(info);
@@ -133,6 +109,16 @@ namespace NorthScale.Store
 			}
 
 			return null;
+		}
+
+		public int Timeout
+		{
+			get { return this.wcwt.Timeout; }
+			set
+			{
+				this.wcwt.Timeout = value;
+				this.wcwt.ReadWriteTimeout = value;
+			}
 		}
 	}
 }

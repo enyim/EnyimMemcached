@@ -49,7 +49,7 @@ namespace NorthScale.Store.Configuration
 		/// <summary>
 		/// Determines which port the client should use to connect to the nodes
 		/// </summary>
-		[ConfigurationProperty("port", IsRequired = false, DefaultValue=BucketPortType.Direct)]
+		[ConfigurationProperty("port", IsRequired = false, DefaultValue=BucketPortType.Proxy)]
 		public BucketPortType Port
 		{
 			get { return (BucketPortType)base["port"]; }

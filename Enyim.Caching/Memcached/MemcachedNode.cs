@@ -421,11 +421,6 @@ namespace Enyim.Caching.Memcached
 				}
 			}
 
-			private void CheckDisposed()
-			{
-				if (this.isDisposed) throw new ObjectDisposedException("pool");
-			}
-
 			void IDisposable.Dispose()
 			{
 				this.Dispose();

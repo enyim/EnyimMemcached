@@ -91,6 +91,7 @@ namespace NorthScale.Store
 
 			var cm = new ConfigHelper();
 			cm.Credentials = this.configuration.Credentials;
+			cm.Timeout = (int)this.configuration.SocketPool.ConnectionTimeout.TotalMilliseconds;
 
 			// get the nodes of the specified buctek using the pool urls 
 			var nodes = cm.GetWorkingNodes(this.poolUrls, this.bucketName ?? "default");
@@ -108,6 +109,7 @@ namespace NorthScale.Store
 			// create a config listener
 			this.configListener = new BucketConfigListener(streamingUris, nodes);
 			this.configListener.Credentials = this.configuration.Credentials;
+			this.configListener.Timeout = cm.Timeout;
 
 			// recreate the node lcoator when the config changes
 			this.configListener.NodeListChanged += InitNodes;

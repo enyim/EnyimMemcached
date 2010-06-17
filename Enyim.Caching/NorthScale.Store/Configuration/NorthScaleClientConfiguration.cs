@@ -18,7 +18,7 @@ namespace NorthScale.Store.Configuration
 		private Type transcoder;
 		private ICredentials credentials;
 		private string bucket;
-		private BucketPortType port = BucketPortType.Direct;
+		private BucketPortType port = BucketPortType.Proxy;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
