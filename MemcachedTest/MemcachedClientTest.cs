@@ -6,6 +6,7 @@ using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.Text;
 
 namespace MemcachedTest
 {
@@ -203,9 +204,28 @@ namespace MemcachedTest
 			}
 		}
 
+		private string[] keyParts = { "multi", "get", "test", "key", "parts", "test", "values" };
+
+		protected string MakeRandomKey(int partCount)
+		{
+			var sb = new StringBuilder();
+			var rnd = new Random();
+
+			for (var i = 0; i < partCount; i++)
+			{
+				sb.Append(keyParts[rnd.Next(keyParts.Length)]).Append(":");
+			}
+
+			sb.Length--;
+
+			return sb.ToString();
+		}
+
 		[TestCase]
 		public void MultiGetTest()
 		{
+			
+
 			// note, this test will fail, if memcached version is < 1.2.4
 			using (var client = GetClient())
 			{
@@ -213,7 +233,7 @@ namespace MemcachedTest
 
 				for (int i = 0; i < 100; i++)
 				{
-					string k = "multi_get_test_" + i;
+					string k = MakeRandomKey(4) + i;
 					keys.Add(k);
 
 					client.Store(StoreMode.Set, k, i);
@@ -227,7 +247,7 @@ namespace MemcachedTest
 
 				for (int i = 0; i < retvals.Count; i++)
 				{
-					string key = "multi_get_test_" + i;
+					string key = keys[i];
 
 					Assert.IsTrue(retvals.TryGetValue(key, out value), "missing key: " + key);
 					Assert.AreEqual(value, i, "Invalid value returned: " + value);

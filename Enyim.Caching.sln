@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemcachedTest", "MemcachedT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoApp", "DemoApp\DemoApp.csproj", "{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Northscale.Store", "Northscale.Store\Northscale.Store.csproj", "{708A2350-A26C-444D-B975-8164263951A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,6 +32,10 @@ Global
 		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{708A2350-A26C-444D-B975-8164263951A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{708A2350-A26C-444D-B975-8164263951A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{708A2350-A26C-444D-B975-8164263951A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{708A2350-A26C-444D-B975-8164263951A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

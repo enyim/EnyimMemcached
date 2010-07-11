@@ -57,7 +57,6 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			}
 #endif
 
-
 			fixed (byte* buffer = header)
 			{
 				if (buffer[0] != MAGIC_VALUE)
