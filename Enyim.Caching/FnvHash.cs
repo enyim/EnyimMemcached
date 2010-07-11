@@ -4,18 +4,18 @@ using System.Security.Cryptography;
 namespace Enyim
 {
 	/// <summary>
-	/// Implements a 64 bit long Fowler-Noll-Vo hash.
+	/// Implements a 64 bit long FNV1 hash.
 	/// </summary>
 	/// <remarks>
 	/// Calculation found at http://lists.danga.com/pipermail/memcached/2007-April/003846.html, but 
 	/// it is pretty much available everywhere
 	/// </remarks>
-	public sealed class FNV64 : System.Security.Cryptography.HashAlgorithm
+	public class FNV64 : System.Security.Cryptography.HashAlgorithm
 	{
-		private const ulong FNV_64_INIT = 0xcbf29ce484222325L;
-		private const ulong FNV_64_PRIME = 0x100000001b3L;
+		protected const ulong Init = 0xcbf29ce484222325L;
+		protected const ulong Prime = 0x100000001b3L;
 
-		private ulong currentHashValue;
+		protected ulong CurrentHashValue;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:FNV64"/> class.
@@ -32,7 +32,7 @@ namespace Enyim
 		/// </summary>
 		public override void Initialize()
 		{
-			this.currentHashValue = FNV_64_INIT;
+			this.CurrentHashValue = Init;
 		}
 
 		/// <summary>Routes data written to the object into the <see cref="T:FNV64" /> hash algorithm for computing the hash.</summary>
@@ -45,7 +45,8 @@ namespace Enyim
 
 			for (int i = ibStart; i < end; i++)
 			{
-				this.currentHashValue = (this.currentHashValue * FNV_64_PRIME) ^ array[i];
+				this.CurrentHashValue *= Prime;
+				this.CurrentHashValue ^= array[i];
 			}
 		}
 
@@ -55,17 +56,38 @@ namespace Enyim
 		/// <returns>The computed hash code.</returns>
 		protected override byte[] HashFinal()
 		{
-			return BitConverter.GetBytes(this.currentHashValue);
+			return BitConverter.GetBytes(this.CurrentHashValue);
 		}
 	}
 
 	/// <summary>
-	/// Implements an FNV1a hash algorithm.
+	/// Implements a 64 bit long FVNV1a hash.
 	/// </summary>
-	public class FNV1a : HashAlgorithm
+	public sealed class FNV64a : FNV64
 	{
-		private const uint Prime = 16777619;
-		private const uint Offset = 2166136261;
+		/// <summary>Routes data written to the object into the <see cref="T:FNV64" /> hash algorithm for computing the hash.</summary>
+		/// <param name="array">The input data. </param>
+		/// <param name="ibStart">The offset into the byte array from which to begin using data. </param>
+		/// <param name="cbSize">The number of bytes in the array to use as data. </param>
+		protected override void HashCore(byte[] array, int ibStart, int cbSize)
+		{
+			int end = ibStart + cbSize;
+
+			for (int i = ibStart; i < end; i++)
+			{
+				this.CurrentHashValue ^= array[i];
+				this.CurrentHashValue *= Prime;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Implements an FNV1 hash algorithm.
+	/// </summary>
+	public class FNV1 : HashAlgorithm
+	{
+		protected const uint Prime = 16777619;
+		protected const uint Init = 2166136261;
 
 		/// <summary>
 		/// The current hash value.
@@ -75,7 +97,7 @@ namespace Enyim
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:FNV1a"/> class.
 		/// </summary>
-		public FNV1a()
+		public FNV1()
 		{
 			this.HashSizeValue = 32;
 			this.Initialize();
@@ -86,7 +108,7 @@ namespace Enyim
 		/// </summary>
 		public override void Initialize()
 		{
-			this.CurrentHashValue = Offset;
+			this.CurrentHashValue = Init;
 		}
 
 		/// <summary>Routes data written to the object into the <see cref="T:FNV1a" /> hash algorithm for computing the hash.</summary>
@@ -99,7 +121,8 @@ namespace Enyim
 
 			for (int i = ibStart; i < end; i++)
 			{
-				this.CurrentHashValue = (this.CurrentHashValue ^ array[i]) * FNV1a.Prime;
+				this.CurrentHashValue *= FNV1.Prime;
+				this.CurrentHashValue ^= array[i];
 			}
 		}
 
@@ -110,6 +133,27 @@ namespace Enyim
 		protected override byte[] HashFinal()
 		{
 			return BitConverter.GetBytes(this.CurrentHashValue);
+		}
+	}
+
+	/// <summary>
+	/// Implements an FNV1a hash algorithm.
+	/// </summary>
+	public class FNV1a : FNV1
+	{
+		/// <summary>Routes data written to the object into the <see cref="T:FNV1a" /> hash algorithm for computing the hash.</summary>
+		/// <param name="array">The input data. </param>
+		/// <param name="ibStart">The offset into the byte array from which to begin using data. </param>
+		/// <param name="cbSize">The number of bytes in the array to use as data. </param>
+		protected override void HashCore(byte[] array, int ibStart, int cbSize)
+		{
+			int end = ibStart + cbSize;
+
+			for (int i = ibStart; i < end; i++)
+			{
+				this.CurrentHashValue ^= array[i];
+				this.CurrentHashValue *= FNV1.Prime;
+			}
 		}
 	}
 
