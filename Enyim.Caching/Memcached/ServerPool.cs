@@ -39,15 +39,11 @@ namespace Enyim.Caching.Memcached
 			this.isAliveTimer = new Timer(callback_isAliveTimer, null, (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds, (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds);
 
 			// create the key transformer instance
-			Type t = this.configuration.KeyTransformer;
-			this.keyTransformer = (t == null) ? new DefaultKeyTransformer() : (IMemcachedKeyTransformer)Enyim.Reflection.FastActivator.CreateInstance(t);
+			this.keyTransformer = this.configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
 
 			// create the item transcoder instance
-			t = this.configuration.Transcoder;
-			this.transcoder = (t == null) ? new DefaultTranscoder() : (ITranscoder)Enyim.Reflection.FastActivator.CreateInstance(t);
+			this.transcoder = this.configuration.CreateTranscoder() ?? new DefaultTranscoder();
 		}
-
-		//public event Action<PooledSocket> SocketConnected;
 
 		/// <summary>
 		/// This will start the pool: initializes the nodelocator, warms up the socket pools, etc.
@@ -72,12 +68,10 @@ namespace Enyim.Caching.Memcached
 
 			try
 			{
-				Type ltype = this.configuration.NodeLocator;
+				var newLocator = this.configuration.CreateNodeLocator();
+				newLocator.Initialize(this.workingServers);
 
-				IMemcachedNodeLocator l = ltype == null ? new DefaultNodeLocator() : (IMemcachedNodeLocator)Enyim.Reflection.FastActivator.CreateInstance(ltype);
-				l.Initialize(this.workingServers);
-
-				this.nodeLocator = l;
+				Interlocked.Exchange(ref this.nodeLocator, newLocator);
 
 				this.publicWorkingServers = null;
 			}

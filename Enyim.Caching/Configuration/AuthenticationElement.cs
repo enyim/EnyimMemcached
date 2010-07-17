@@ -10,7 +10,7 @@ namespace Enyim.Caching.Configuration
 	/// </summary>
 	public sealed class AuthenticationElement : ConfigurationElement, IAuthenticationConfiguration
 	{
-		// TODO make this element play nice with the configuratino system (allow saving, etc.)
+		// TODO make this element play nice with the configuration system (allow saving, etc.)
 		private Dictionary<string, object> parameters = new Dictionary<string, object>();
 
 		/// <summary>

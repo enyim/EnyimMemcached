@@ -3,21 +3,13 @@ using System.Collections.Generic;
 namespace Enyim.Caching.Memcached
 {
 	/// <summary>
-	/// Defines a locator class which maps item keys to memcached servers.
+	/// Provides a way for custom initalization of the providers (locators, transcoders, key transformers)
 	/// </summary>
-	public interface IMemcachedNodeLocator
+	/// <typeparam name="T"></typeparam>
+	public interface IProviderFactory<T>
 	{
-		/// <summary>
-		/// Initializes the locator.
-		/// </summary>
-		/// <param name="nodes">The memcached nodes defined in the configuration.</param>
-		void Initialize(IList<IMemcachedNode> nodes);
-		/// <summary>
-		/// Returns the memcached node the specified key belongs to.
-		/// </summary>
-		/// <param name="key">The key of the item to be located.</param>
-		/// <returns>The <see cref="T:MemcachedNode"/> the specifed item belongs to</returns>
-		IMemcachedNode Locate(string key);
+		void Initialize(Dictionary<string, string> parameters);
+		T Create();
 	}
 }
 

@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Net;
 
 namespace Enyim.Caching.Configuration
 {
@@ -6,8 +8,48 @@ namespace Enyim.Caching.Configuration
 	{
 		public static void CheckForInterface(Type type, Type interfaceType)
 		{
+			if (type == null || interfaceType == null) return;
+
 			if (Array.IndexOf<Type>(type.GetInterfaces(), interfaceType) == -1)
 				throw new System.Configuration.ConfigurationErrorsException("The type " + type.AssemblyQualifiedName + " must implement " + interfaceType.AssemblyQualifiedName);
+		}
+
+		internal static IPEndPoint ResolveToEndPoint(string value)
+		{
+			if (String.IsNullOrEmpty(value))
+				throw new ArgumentNullException("value");
+
+			var parts = value.Split(':');
+			if (parts.Length != 2)
+				throw new ArgumentException("host:port is expected", "value");
+
+			int port;
+			if (!Int32.TryParse(parts[1], out port))
+				throw new ArgumentException("Cannot parse port: " + parts[1], "value");
+
+			return ResolveToEndPoint(parts[0], port);
+		}
+
+		internal static IPEndPoint ResolveToEndPoint(string host, int port)
+		{
+			if (String.IsNullOrEmpty(host))
+				throw new ArgumentNullException("host");
+
+			IPAddress address;
+
+			// parse as an IP address
+			if (!IPAddress.TryParse(host, out address))
+			{
+				// not an ip, resolve from dns
+				// TODO we need to find a way to specify whihc ip should be used when the host has several
+				var entry = System.Net.Dns.GetHostEntry(host);
+				address = entry.AddressList.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+
+				if (address == null)
+					throw new ArgumentException(String.Format("Could not resolve host '{0}'.", host));
+			}
+
+			return new IPEndPoint(address, port);
 		}
 	}
 }

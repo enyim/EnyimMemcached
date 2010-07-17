@@ -1,30 +1,26 @@
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Security.Cryptography;
+using System.Net;
+using System.Web.Script.Serialization;
+using System.Collections.ObjectModel;
+using System.Web;
+using Enyim.Caching.Memcached;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim
 {
-	/// <summary>
-	/// Defines a locator class which maps item keys to memcached servers.
-	/// </summary>
-	public interface IMemcachedNodeLocator
+	internal interface IUIntHashAlgorithm
 	{
-		/// <summary>
-		/// Initializes the locator.
-		/// </summary>
-		/// <param name="nodes">The memcached nodes defined in the configuration.</param>
-		void Initialize(IList<IMemcachedNode> nodes);
-		/// <summary>
-		/// Returns the memcached node the specified key belongs to.
-		/// </summary>
-		/// <param name="key">The key of the item to be located.</param>
-		/// <returns>The <see cref="T:MemcachedNode"/> the specifed item belongs to</returns>
-		IMemcachedNode Locate(string key);
+		uint ComputeHash(byte[] data);
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kisk�, enyim.com
+ *    Copyright (c) 2010 Attila Kiskó, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

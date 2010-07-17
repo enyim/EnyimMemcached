@@ -57,11 +57,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\AuthenticationConfiguration.cs" />
+    <Compile Include="Configuration\ConfigurationElementException.cs" />
     <Compile Include="Configuration\ConfigurationHelper.cs" />
     <Compile Include="Configuration\AuthenticationElement.cs" />
+    <Compile Include="Configuration\ProviderElement.cs" />
     <Compile Include="Configuration\IAuthenticationConfiguration.cs" />
+    <Compile Include="Configuration\IVBucketConfiguration.cs" />
+    <Compile Include="Configuration\JsonVBucketConfig.cs" />
     <Compile Include="Configuration\SocketPoolConfiguration.cs" />
+    <Compile Include="HashkitCrc32.cs" />
+    <Compile Include="HashkitMurmur.cs" />
+    <Compile Include="HashkitOneAtATime.cs" />
+    <Compile Include="IUIntHashAlgorithm.cs" />
     <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs" />
+    <Compile Include="Memcached\VBucketNodeLocatorFactory.cs" />
+    <Compile Include="Memcached\IProviderFactory.cs" />
     <Compile Include="Memcached\IAuthenticator.cs" />
     <Compile Include="Memcached\IMemcachedNode.cs" />
     <Compile Include="Memcached\IServerPool.cs" />
@@ -132,6 +142,7 @@
     <Compile Include="Memcached\ThrowHelper.cs" />
     <Compile Include="Memcached\Transcoders\CacheItem.cs" />
     <Compile Include="Memcached\Transcoders\ITranscoder.cs" />
+    <Compile Include="Memcached\VBucketNodeLocator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Memcached\ServerPool.cs" />
     <Compile Include="Memcached\StoreMode.cs" />

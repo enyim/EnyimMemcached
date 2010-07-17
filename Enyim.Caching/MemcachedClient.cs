@@ -82,7 +82,7 @@ namespace Enyim.Caching
 			if (auth != null)
 			{
 				Type t = auth.Type;
-				var provider = (t == null) ? null : Enyim.Reflection.FastActivator.CreateInstance(t) as ISaslAuthenticationProvider;
+				var provider = (t == null) ? null : Enyim.Reflection.FastActivator2.Create(t) as ISaslAuthenticationProvider;
 
 				if (provider != null)
 				{

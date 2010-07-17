@@ -5,9 +5,39 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading;
+using System.Linq.Expressions;
 
 namespace Enyim.Reflection
 {
+	public static class FastActivator2
+	{
+		private static class F1<T>
+		{
+			public static readonly Func<T> Factory = Expression.Lambda<Func<T>>(Expression.New(typeof(T))).Compile();
+		}
+
+		public static T Create<T>()
+		{
+			return F1<T>.Factory();
+		}
+
+		private static Dictionary<Type, Func<object>> factoryCache = new Dictionary<Type, Func<object>>();
+
+		public static object Create(Type type)
+		{
+			Func<object> f;
+
+			if (!factoryCache.TryGetValue(type, out f))
+				lock (factoryCache)
+					if (!factoryCache.TryGetValue(type, out f))
+					{
+						factoryCache[type] = f = Expression.Lambda<Func<object>>(Expression.New(type)).Compile();
+					}
+
+			return f();
+		}
+	}
+
 	/// <summary>
 	/// <para>Implements a very fast object factory for dynamic object creation. Dynamically generates a factory class which will use the new() constructor of the requested type.</para>
 	/// <para>Much faster than using Activator at the price of the first invocation being significantly slower than subsequent calls.</para>

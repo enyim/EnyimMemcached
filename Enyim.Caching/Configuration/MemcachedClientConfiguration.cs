@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using Enyim.Caching.Memcached;
+using Enyim.Reflection;
 
 namespace Enyim.Caching.Configuration
 {
@@ -17,7 +18,7 @@ namespace Enyim.Caching.Configuration
 		private Type nodeLocator;
 		private Type transcoder;
 		private MemcachedProtocol protocol;
-	
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
 		/// </summary>
@@ -27,7 +28,7 @@ namespace Enyim.Caching.Configuration
 			this.socketPool = new SocketPoolConfiguration();
 			this.authentication = new AuthenticationConfiguration();
 
-			this.Protocol = MemcachedProtocol.Text;
+			this.Protocol = MemcachedProtocol.Binary;
 		}
 
 		/// <summary>
@@ -122,22 +123,19 @@ namespace Enyim.Caching.Configuration
 			get { return this.authentication; }
 		}
 
-		Type IMemcachedClientConfiguration.KeyTransformer
+		IMemcachedKeyTransformer IMemcachedClientConfiguration.CreateKeyTransformer()
 		{
-			get { return this.KeyTransformer; }
-			set { this.KeyTransformer = value; }
+			return (IMemcachedKeyTransformer)FastActivator2.Create(this.KeyTransformer);
 		}
 
-		Type IMemcachedClientConfiguration.NodeLocator
+		IMemcachedNodeLocator IMemcachedClientConfiguration.CreateNodeLocator()
 		{
-			get { return this.NodeLocator; }
-			set { this.NodeLocator = value; }
+			return (IMemcachedNodeLocator)FastActivator2.Create(this.NodeLocator);
 		}
 
-		Type IMemcachedClientConfiguration.Transcoder
+		ITranscoder IMemcachedClientConfiguration.CreateTranscoder()
 		{
-			get { return this.Transcoder; }
-			set { this.Transcoder = value; }
+			return (ITranscoder)FastActivator2.Create(this.Transcoder);
 		}
 
 		MemcachedProtocol IMemcachedClientConfiguration.Protocol

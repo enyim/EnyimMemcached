@@ -36,39 +36,7 @@ namespace Enyim.Caching.Configuration
 		/// </summary>
 		public System.Net.IPEndPoint EndPoint
 		{
-			get
-			{
-				if (this.endpoint == null)
-				{
-					IPAddress address;
-
-					if (!IPAddress.TryParse(this.Address, out address))
-					{
-						IPHostEntry entry = System.Net.Dns.GetHostEntry(this.Address);
-						IPAddress[] list = entry.AddressList;
-
-						if (list.Length == 0)
-							throw new ConfigurationErrorsException(String.Format("Could not resolve host '{0}'.", this.Address));
-
-						// get the first IPv4 address from the list (not sure how memcached works against ipv6 addresses whihc are not localhost)
-						for (int i = 0; i < list.Length; i++)
-						{
-							if (list[i].AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-							{
-								address = list[i];
-								break;
-							}
-						}
-
-						if (address == null)
-							throw new ConfigurationErrorsException(String.Format("Host '{0}' does not have an IPv4 address.", this.Address));
-					}
-
-					this.endpoint = new System.Net.IPEndPoint(address, this.Port);
-				}
-
-				return this.endpoint;
-			}
+			get { return this.endpoint ?? (this.endpoint = ConfigurationHelper.ResolveToEndPoint(this.Address, this.Port)); }
 		}
 
 		#region [ T:IPAddressValidator         ]

@@ -10,7 +10,7 @@ namespace Enyim
 	/// Calculation found at http://lists.danga.com/pipermail/memcached/2007-April/003846.html, but 
 	/// it is pretty much available everywhere
 	/// </remarks>
-	public class FNV64 : System.Security.Cryptography.HashAlgorithm
+	public class FNV64 : System.Security.Cryptography.HashAlgorithm, IUIntHashAlgorithm
 	{
 		protected const ulong Init = 0xcbf29ce484222325L;
 		protected const ulong Prime = 0x100000001b3L;
@@ -23,8 +23,6 @@ namespace Enyim
 		public FNV64()
 		{
 			base.HashSizeValue = 64;
-
-			this.Initialize();
 		}
 
 		/// <summary>
@@ -58,6 +56,18 @@ namespace Enyim
 		{
 			return BitConverter.GetBytes(this.CurrentHashValue);
 		}
+
+		#region [ IUIntHashAlgorithm           ]
+
+		uint IUIntHashAlgorithm.ComputeHash(byte[] data)
+		{
+			this.Initialize();
+			this.HashCore(data, 0, data.Length);
+
+			return (uint)this.CurrentHashValue;
+		}
+
+		#endregion
 	}
 
 	/// <summary>
@@ -84,7 +94,7 @@ namespace Enyim
 	/// <summary>
 	/// Implements an FNV1 hash algorithm.
 	/// </summary>
-	public class FNV1 : HashAlgorithm
+	public class FNV1 : HashAlgorithm, IUIntHashAlgorithm
 	{
 		protected const uint Prime = 16777619;
 		protected const uint Init = 2166136261;
@@ -100,7 +110,6 @@ namespace Enyim
 		public FNV1()
 		{
 			this.HashSizeValue = 32;
-			this.Initialize();
 		}
 
 		/// <summary>
@@ -134,6 +143,18 @@ namespace Enyim
 		{
 			return BitConverter.GetBytes(this.CurrentHashValue);
 		}
+
+		#region [ IUIntHashAlgorithm           ]
+
+		uint IUIntHashAlgorithm.ComputeHash(byte[] data)
+		{
+			this.Initialize();
+			this.HashCore(data, 0, data.Length);
+
+			return this.CurrentHashValue;
+		}
+
+		#endregion
 	}
 
 	/// <summary>

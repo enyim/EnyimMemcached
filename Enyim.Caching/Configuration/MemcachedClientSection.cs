@@ -5,6 +5,7 @@ using System.Configuration;
 using System.Net;
 using System.Web.Configuration;
 using Enyim.Caching.Memcached;
+using Enyim.Reflection;
 
 namespace Enyim.Caching.Configuration
 {
@@ -42,33 +43,24 @@ namespace Enyim.Caching.Configuration
 			set { base["authentication"] = value; }
 		}
 
-		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
-		/// </summary>
-		[ConfigurationProperty("keyTransformer", IsRequired = false), TypeConverter(typeof(TypeNameConverter)), InterfaceValidator(typeof(Enyim.Caching.Memcached.IMemcachedKeyTransformer))]
-		public Type KeyTransformer
+		[ConfigurationProperty("locator", IsRequired = false)]
+		public ProviderElement<IMemcachedNodeLocator> NodeLocator
 		{
-			get { return (Type)base["keyTransformer"]; }
+			get { return (ProviderElement<IMemcachedNodeLocator>)base["locator"]; }
+			set { base["locator"] = value; }
+		}
+
+		[ConfigurationProperty("keyTransformer", IsRequired = false)]
+		public ProviderElement<IMemcachedKeyTransformer> KeyTransformer
+		{
+			get { return (ProviderElement<IMemcachedKeyTransformer>)base["keyTransformer"]; }
 			set { base["keyTransformer"] = value; }
 		}
 
-		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
-		/// </summary>
-		[ConfigurationProperty("nodeLocator", IsRequired = false), TypeConverter(typeof(TypeNameConverter)), InterfaceValidator(typeof(Enyim.Caching.Memcached.IMemcachedNodeLocator))]
-		public Type NodeLocator
+		[ConfigurationProperty("transcoder", IsRequired = false)]
+		public ProviderElement<ITranscoder> Transcoder
 		{
-			get { return (Type)base["nodeLocator"]; }
-			set { base["nodeLocator"] = value; }
-		}
-
-		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
-		/// </summary>
-		[ConfigurationProperty("transcoder", IsRequired = false), TypeConverter(typeof(TypeNameConverter)), InterfaceValidator(typeof(Enyim.Caching.Memcached.ITranscoder))]
-		public Type Transcoder
-		{
-			get { return (Type)base["transcoder"]; }
+			get { return (ProviderElement<ITranscoder>)base["transcoder"]; }
 			set { base["transcoder"] = value; }
 		}
 
@@ -106,22 +98,19 @@ namespace Enyim.Caching.Configuration
 			get { return this.SocketPool; }
 		}
 
-		Type IMemcachedClientConfiguration.KeyTransformer
+		IMemcachedKeyTransformer IMemcachedClientConfiguration.CreateKeyTransformer()
 		{
-			get { return this.KeyTransformer; }
-			set { this.KeyTransformer = value; }
+			return this.KeyTransformer.CreateInstance() ?? new DefaultKeyTransformer();
 		}
 
-		Type IMemcachedClientConfiguration.NodeLocator
+		IMemcachedNodeLocator IMemcachedClientConfiguration.CreateNodeLocator()
 		{
-			get { return this.NodeLocator; }
-			set { this.NodeLocator = value; }
+			return this.NodeLocator.CreateInstance() ?? new DefaultNodeLocator();
 		}
 
-		Type IMemcachedClientConfiguration.Transcoder
+		ITranscoder IMemcachedClientConfiguration.CreateTranscoder()
 		{
-			get { return this.Transcoder; }
-			set { this.Transcoder = value; }
+			return this.Transcoder.CreateInstance() ?? new DefaultTranscoder();
 		}
 
 		IAuthenticationConfiguration IMemcachedClientConfiguration.Authentication
