@@ -1,11 +1,34 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Configuration
 {
 	public static class ConfigurationHelper
 	{
+		internal static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out string value, bool required)
+		{
+			if (dict.TryGetValue(name, out value))
+			{
+				dict.Remove(name);
+
+				if (!String.IsNullOrEmpty(value))
+					return true;
+			}
+
+			if (required)
+				throw new System.Configuration.ConfigurationErrorsException("Missing parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
+
+			return false;
+		}
+
+		internal static void CheckForUnknownAttributes(Dictionary<string, string> dict)
+		{
+			if (dict.Count > 0)
+				throw new System.Configuration.ConfigurationErrorsException("Unrecognized parameter: " + dict.Keys.First());
+		}
+
 		public static void CheckForInterface(Type type, Type interfaceType)
 		{
 			if (type == null || interfaceType == null) return;

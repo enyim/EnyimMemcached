@@ -87,6 +87,11 @@ namespace Enyim.Caching.Configuration
 
 			return factoryInstance.Create();
 		}
+
+		protected override void DeserializeElement(System.Xml.XmlReader reader, bool serializeCollectionKey)
+		{
+			this.parameters[String.Empty] = reader.ReadElementContentAsString();
+		}
 	}
 }
 

@@ -18,18 +18,21 @@ namespace Enyim.Caching.Memcached
 	/// </summary>
 	public class VBucketNodeLocator : IMemcachedNodeLocator
 	{
-		private IVBucketConfiguration config;
+		private VBucket[] buckets;
 		private int mask;
+		private Func<HashAlgorithm> factory;
 
-		public VBucketNodeLocator(IVBucketConfiguration config)
+		public VBucketNodeLocator(string hashAlgorithm, VBucket[] buckets)
 		{
-			this.config = config;
-
-			var log = Math.Log(this.config.Buckets.Count, 2);
+			var log = Math.Log(buckets.Length, 2);
 			if (log != (int)log)
-				throw new ArgumentException("Buckets.Count must be a power of 2!");
+				throw new ArgumentException("bucket count must be a power of 2!");
 
-			this.mask = config.Buckets.Count - 1;
+			this.buckets = buckets;
+			this.mask = buckets.Length - 1;
+
+			if (!hashFactory.TryGetValue(hashAlgorithm, out this.factory))
+				throw new ArgumentException("Unknown hash algorithm: " + hashAlgorithm, "hashAlgorithm");
 		}
 
 		[ThreadStatic]
@@ -44,11 +47,11 @@ namespace Enyim.Caching.Memcached
 			// (we could use an object pool but talk about overkill)
 			var ctx = HttpContext.Current;
 			if (ctx == null)
-				return currentAlgo ?? (currentAlgo = this.config.CreateHashAlgorithm());
+				return currentAlgo ?? (currentAlgo = this.factory());
 
 			var algo = ctx.Items["**VBucket.CurrentAlgo"] as HashAlgorithm;
 			if (algo == null)
-				ctx.Items["**VBucket.CurrentAlgo"] = algo = this.config.CreateHashAlgorithm();
+				ctx.Items["**VBucket.CurrentAlgo"] = algo = this.factory();
 
 			return algo;
 		}
@@ -76,8 +79,23 @@ namespace Enyim.Caching.Memcached
 
 			int index = (int)(keyHash & this.mask);
 
-			return this.nodes[this.config.Buckets[index].Master];
+			return this.nodes[this.buckets[index].Master];
 		}
+
+		#endregion
+		#region [ hashFactory                  ]
+
+		private static readonly Dictionary<string, Func<HashAlgorithm>> hashFactory = new Dictionary<string, Func<HashAlgorithm>>(StringComparer.OrdinalIgnoreCase)
+		        {
+		            { String.Empty, () => new HashkitOneAtATime() },
+		            { "default", () => new HashkitOneAtATime() },
+		            { "crc", () => new HashkitCrc32() },
+		            { "fnv1_32", () => new Enyim.FNV1() },
+		            { "fnv1_64", () => new Enyim.FNV1a() },
+		            { "fnv1a_32", () => new Enyim.FNV64() },
+		            { "fnv1a_64", () => new Enyim.FNV64a() },
+		            { "murmur", () => new HashkitMurmur() }
+		        };
 
 		#endregion
 	}

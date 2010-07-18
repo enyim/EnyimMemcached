@@ -23,25 +23,25 @@ namespace Enyim.Caching.Memcached
 	/// </remarks>
 	public class VBucketNodeLocatorFactory : IProviderFactory<IMemcachedNodeLocator>
 	{
-		private IVBucketConfiguration config;
+		private string hashAlgo;
+		private VBucket[] buckets;
 
 		void IProviderFactory<IMemcachedNodeLocator>.Initialize(Dictionary<string, string> parameters)
 		{
-			string configFile;
+			ConfigurationHelper.TryGetAndRemove(parameters, "hashAlgorithm", out this.hashAlgo, true);
 
-			if (!parameters.TryGetValue("configFile", out configFile))
-				throw new ConfigurationErrorsException("VBucketNodeLocatorFactory expects configFile");
+			string json;
+			ConfigurationHelper.TryGetAndRemove(parameters, String.Empty, out json, true);
+			ConfigurationHelper.CheckForUnknownAttributes(parameters);
 
-			var json = File.ReadAllText(configFile);
-			if (String.IsNullOrEmpty(json))
-				throw new ConfigurationErrorsException("Config file " + configFile + " is empty.");
+			var tmp = new JavaScriptSerializer().Deserialize<int[][]>(parameters[""]);
 
-			this.config = new JsonVBucketConfig(json);
+			this.buckets = tmp.Select(entry => new VBucket(entry[0], entry.Skip(1).ToArray())).ToArray();
 		}
 
 		IMemcachedNodeLocator IProviderFactory<IMemcachedNodeLocator>.Create()
 		{
-			return new VBucketNodeLocator(this.config);
+			return new VBucketNodeLocator(this.hashAlgo, this.buckets);
 		}
 	}
 }
