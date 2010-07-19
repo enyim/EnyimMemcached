@@ -90,8 +90,12 @@ namespace Enyim.Caching.Memcached
 		{
 			if (!this.isInitialized) throw new InvalidOperationException("You must call Initialize first");
 			if (key == null) throw new ArgumentNullException("key");
-			if (this.servers.Count == 0) return null;
-			if (this.servers.Count == 1) return this.servers[0];
+
+			switch (this.servers.Count)
+			{
+				case 0: return null;
+				case 1: return this.servers[0];
+			}
 
 			var retval = this.LocateNode(this.GetKeyHash(key));
 
