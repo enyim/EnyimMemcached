@@ -54,12 +54,16 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\AuthenticationConfiguration.cs" />
     <Compile Include="Configuration\ConfigurationElementException.cs" />
     <Compile Include="Configuration\ConfigurationHelper.cs" />
     <Compile Include="Configuration\AuthenticationElement.cs" />
+    <Compile Include="Configuration\TextElement.cs" />
     <Compile Include="Configuration\ProviderElement.cs" />
     <Compile Include="Configuration\IAuthenticationConfiguration.cs" />
     <Compile Include="Configuration\IVBucketConfiguration.cs" />

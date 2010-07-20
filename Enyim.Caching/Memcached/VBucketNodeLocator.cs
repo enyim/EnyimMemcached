@@ -67,6 +67,13 @@ namespace Enyim.Caching.Memcached
 
 		IMemcachedNode IMemcachedNodeLocator.Locate(string key)
 		{
+			var bucket = this.GetVBucket(key);
+
+			return this.nodes[bucket.Master];
+		}
+
+		public VBucket GetVBucket(string key)
+		{
 			var ha = this.GetAlgo();
 
 			//little shortcut for some hashes; we skip the uint -> byte[] -> uint conversion
@@ -79,9 +86,8 @@ namespace Enyim.Caching.Memcached
 
 			int index = (int)(keyHash & this.mask);
 
-			return this.nodes[this.buckets[index].Master];
+			return this.buckets[index];
 		}
-
 		#endregion
 		#region [ hashFactory                  ]
 

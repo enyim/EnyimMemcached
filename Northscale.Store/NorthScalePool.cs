@@ -46,7 +46,7 @@ namespace NorthScale.Store
 		{
 			if (type == null) return null;
 
-			return Enyim.Reflection.FastActivator.CreateInstance(type);
+			return Enyim.Reflection.FastActivator2.Create(type);
 		}
 
 		IMemcachedKeyTransformer IServerPool.KeyTransformer
@@ -125,9 +125,9 @@ namespace NorthScale.Store
 			var portType = this.configuration.Port;
 
 			var mcNodes = nodes.Select(b => new MemcachedNode(
-												// create a memcached node for each bucket node
-												// TODO currently we expect that the API returns IP addresses, we should confirm this
-												new IPEndPoint(IPAddress.Parse(b.hostname), 
+				// create a memcached node for each bucket node
+				// TODO currently we expect that the API returns IP addresses, we should confirm this
+												new IPEndPoint(IPAddress.Parse(b.hostname),
 																	portType == BucketPortType.Proxy ? b.ports.proxy : b.ports.direct),
 												this.configuration.SocketPool,
 												auth)).ToArray();

@@ -6,11 +6,40 @@ using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.Configuration;
 
 namespace MemcachedTest
 {
 	public class ConfigTest
 	{
+		[TestCase]
+		public void NewProvidersConfigurationTest()
+		{
+			ValidateConfig(ConfigurationManager.GetSection("test/newProviders") as IMemcachedClientConfiguration);
+		}
+
+		[TestCase]
+		public void NewProvidersWithFactoryConfigurationTest()
+		{
+			ValidateConfig(ConfigurationManager.GetSection("test/newProvidersWithFactory") as IMemcachedClientConfiguration);
+		}
+
+		private static void ValidateConfig(IMemcachedClientConfiguration config)
+		{
+			Assert.IsNotNull(config);
+
+			Assert.IsInstanceOf(typeof(TestKeyTransformer), config.CreateKeyTransformer());
+			Assert.IsInstanceOf(typeof(TestLocator), config.CreateNodeLocator());
+			Assert.IsInstanceOf(typeof(TestTranscoder), config.CreateTranscoder());
+		}
+
+		[TestCase]
+		public void TestVBucketConfig()
+		{
+			IMemcachedClientConfiguration config = ConfigurationManager.GetSection("test/vbucket") as IMemcachedClientConfiguration;
+			var loc = config.CreateNodeLocator();
+		}
+
 		/// <summary>
 		/// Tests if the client can initialize itself from enyim.com/memcached
 		/// </summary>
@@ -88,6 +117,79 @@ namespace MemcachedTest
 			using (new MemcachedClient(mcc)) ;
 		}
 	}
+
+	class TestTranscoderFactory : IProviderFactory<ITranscoder>
+	{
+		void IProviderFactory<ITranscoder>.Initialize(Dictionary<string, string> parameters)
+		{
+			Assert.IsTrue(parameters.ContainsKey("test"));
+		}
+
+		ITranscoder IProviderFactory<ITranscoder>.Create()
+		{
+			return new TestTranscoder();
+		}
+	}
+
+	class TestLocatorFactory : IProviderFactory<IMemcachedNodeLocator>
+	{
+		void IProviderFactory<IMemcachedNodeLocator>.Initialize(Dictionary<string, string> parameters)
+		{
+			Assert.IsTrue(parameters.ContainsKey("test"));
+		}
+
+		IMemcachedNodeLocator IProviderFactory<IMemcachedNodeLocator>.Create()
+		{
+			return new TestLocator();
+		}
+	}
+
+	class TestKeyTransformerFactory : IProviderFactory<IMemcachedKeyTransformer>
+	{
+		void IProviderFactory<IMemcachedKeyTransformer>.Initialize(Dictionary<string, string> parameters)
+		{
+			Assert.IsTrue(parameters.ContainsKey("test"));
+		}
+
+		IMemcachedKeyTransformer IProviderFactory<IMemcachedKeyTransformer>.Create()
+		{
+			return new TestKeyTransformer();
+		}
+	}
+
+	class TestTranscoder : ITranscoder
+	{
+		CacheItem ITranscoder.Serialize(object o)
+		{
+			return new CacheItem();
+		}
+
+		object ITranscoder.Deserialize(CacheItem item)
+		{
+			return null;
+		}
+	}
+
+	class TestLocator : IMemcachedNodeLocator
+	{
+		void IMemcachedNodeLocator.Initialize(IList<IMemcachedNode> nodes)
+		{
+		}
+
+		IMemcachedNode IMemcachedNodeLocator.Locate(string key)
+		{
+			return null;
+		}
+	}
+
+	class TestKeyTransformer : IMemcachedKeyTransformer
+	{
+		string IMemcachedKeyTransformer.Transform(string key)
+		{
+			return null;
+		}
+	}
+
 }
 
 #region [ License information          ]

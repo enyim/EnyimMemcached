@@ -11,21 +11,6 @@ namespace MemcachedTest
 	[TestFixture]
 	public class KetamaTest
 	{
-		class MockNode : IMemcachedNode
-		{
-			public MockNode(IPEndPoint endpoint)
-			{
-				this.EndPoint = endpoint;
-			}
-
-			public IPEndPoint EndPoint { get; private set; }
-
-			public bool IsAlive { get { return true; } }
-			public bool Ping() { return true; }
-			public PooledSocket Acquire() { return null; }
-			public void Dispose() { }
-		}
-
 		#region exp[][]
 		// this is from spymemcached's tests
 		private static String[][] exp = new[]{
@@ -3298,9 +3283,24 @@ namespace MemcachedTest
 			{
 				var node = ketama.Locate(pair[0]);
 
-				Assert.AreEqual(node.EndPoint.ToString(),pair[1]);
+				Assert.AreEqual(node.EndPoint.ToString(), pair[1]);
 			}
 		}
+	}
+
+	class MockNode : IMemcachedNode
+	{
+		public MockNode(IPEndPoint endpoint)
+		{
+			this.EndPoint = endpoint;
+		}
+
+		public IPEndPoint EndPoint { get; private set; }
+
+		public bool IsAlive { get { return true; } }
+		public bool Ping() { return true; }
+		public PooledSocket Acquire() { return null; }
+		public void Dispose() { }
 	}
 }
 

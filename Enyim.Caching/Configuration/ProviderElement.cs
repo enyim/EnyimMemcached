@@ -4,13 +4,14 @@ using System.Configuration;
 using System.Collections.Generic;
 using Enyim.Caching.Memcached;
 using Enyim.Reflection;
+using System.Xml.Linq;
 
 namespace Enyim.Caching.Configuration
 {
 	/// <summary>
-	/// This element defines the IMemcachedNodeLocator used by the client.
+	/// This element is used to define locator/transcoder/keyTransformer instances. It also provides custom initializations for them using a factory.
 	/// </summary>
-	/// <remarks>This deprecates the nodeLocator attribute (which will be removed later).</remarks>
+	/// <typeparam name="T"></typeparam>
 	public sealed class ProviderElement<T> : ConfigurationElement
 		where T : class
 	{
@@ -88,9 +89,20 @@ namespace Enyim.Caching.Configuration
 			return factoryInstance.Create();
 		}
 
-		protected override void DeserializeElement(System.Xml.XmlReader reader, bool serializeCollectionKey)
+		[ConfigurationProperty("data", IsRequired = false)]
+		public TextElement Content
 		{
-			this.parameters[String.Empty] = reader.ReadElementContentAsString();
+			get { return (TextElement)base["data"]; }
+			set { base["data"] = value; }
+		}
+
+		protected override void PostDeserialize()
+		{
+			base.PostDeserialize();
+
+			var c = this.Content;
+			if (c != null)
+				this.parameters[String.Empty] = c.Content;
 		}
 	}
 }

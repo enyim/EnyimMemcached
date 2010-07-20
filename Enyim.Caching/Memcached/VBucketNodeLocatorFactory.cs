@@ -34,7 +34,7 @@ namespace Enyim.Caching.Memcached
 			ConfigurationHelper.TryGetAndRemove(parameters, String.Empty, out json, true);
 			ConfigurationHelper.CheckForUnknownAttributes(parameters);
 
-			var tmp = new JavaScriptSerializer().Deserialize<int[][]>(parameters[""]);
+			var tmp = new JavaScriptSerializer().Deserialize<int[][]>(json);
 
 			this.buckets = tmp.Select(entry => new VBucket(entry[0], entry.Skip(1).ToArray())).ToArray();
 		}
