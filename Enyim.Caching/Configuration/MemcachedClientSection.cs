@@ -43,6 +43,9 @@ namespace Enyim.Caching.Configuration
 			set { base["authentication"] = value; }
 		}
 
+		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
+		/// </summary>
 		[ConfigurationProperty("locator", IsRequired = false)]
 		public ProviderElement<IMemcachedNodeLocator> NodeLocator
 		{
@@ -50,6 +53,9 @@ namespace Enyim.Caching.Configuration
 			set { base["locator"] = value; }
 		}
 
+		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
+		/// </summary>
 		[ConfigurationProperty("keyTransformer", IsRequired = false)]
 		public ProviderElement<IMemcachedKeyTransformer> KeyTransformer
 		{
@@ -57,6 +63,9 @@ namespace Enyim.Caching.Configuration
 			set { base["keyTransformer"] = value; }
 		}
 
+		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
+		/// </summary>
 		[ConfigurationProperty("transcoder", IsRequired = false)]
 		public ProviderElement<ITranscoder> Transcoder
 		{

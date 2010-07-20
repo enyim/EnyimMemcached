@@ -14,9 +14,6 @@ namespace Enyim.Caching.Configuration
 		private List<IPEndPoint> servers;
 		private ISocketPoolConfiguration socketPool;
 		private IAuthenticationConfiguration authentication;
-		private Type keyTransformer;
-		private Type nodeLocator;
-		private Type transcoder;
 		private MemcachedProtocol protocol;
 
 		/// <summary>
@@ -56,46 +53,19 @@ namespace Enyim.Caching.Configuration
 		}
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
 		/// </summary>
-		public Type KeyTransformer
-		{
-			get { return this.keyTransformer; }
-			set
-			{
-				ConfigurationHelper.CheckForInterface(value, typeof(IMemcachedKeyTransformer));
-
-				this.keyTransformer = value;
-			}
-		}
+		public IMemcachedKeyTransformer KeyTransformer { get; set; }
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
 		/// </summary>
-		public Type NodeLocator
-		{
-			get { return this.nodeLocator; }
-			set
-			{
-				ConfigurationHelper.CheckForInterface(value, typeof(IMemcachedNodeLocator));
-
-				this.nodeLocator = value;
-			}
-		}
+		public IMemcachedNodeLocator NodeLocator { get; set; }
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
 		/// </summary>
-		public Type Transcoder
-		{
-			get { return this.transcoder; }
-			set
-			{
-				ConfigurationHelper.CheckForInterface(value, typeof(ITranscoder));
-
-				this.transcoder = value;
-			}
-		}
+		public ITranscoder Transcoder { get; set; }
 
 		/// <summary>
 		/// Gets or sets the type of the communication between client and server.
@@ -106,7 +76,7 @@ namespace Enyim.Caching.Configuration
 			set { this.protocol = value; }
 		}
 
-		#region [ IMemcachedClientConfiguration]
+		#region [ interface                     ]
 
 		IList<System.Net.IPEndPoint> IMemcachedClientConfiguration.Servers
 		{
@@ -125,17 +95,17 @@ namespace Enyim.Caching.Configuration
 
 		IMemcachedKeyTransformer IMemcachedClientConfiguration.CreateKeyTransformer()
 		{
-			return (IMemcachedKeyTransformer)FastActivator2.Create(this.KeyTransformer);
+			return this.KeyTransformer;
 		}
 
 		IMemcachedNodeLocator IMemcachedClientConfiguration.CreateNodeLocator()
 		{
-			return (IMemcachedNodeLocator)FastActivator2.Create(this.NodeLocator);
+			return this.NodeLocator;
 		}
 
 		ITranscoder IMemcachedClientConfiguration.CreateTranscoder()
 		{
-			return (ITranscoder)FastActivator2.Create(this.Transcoder);
+			return this.Transcoder;
 		}
 
 		MemcachedProtocol IMemcachedClientConfiguration.Protocol

@@ -32,8 +32,8 @@ namespace NorthScale.Store
 			if (String.IsNullOrEmpty(bucketName) || bucketName == "default")
 				bucketName = null;
 
-			this.transcoder = (ITranscoder)Create(configuration.Transcoder) ?? new DefaultTranscoder();
-			this.keyTransformer = (IMemcachedKeyTransformer)Create(configuration.KeyTransformer) ?? new DefaultKeyTransformer();
+			this.transcoder = configuration.CreateTranscoder() ?? new DefaultTranscoder();
+			this.keyTransformer = configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
 		}
 
 		~NorthScalePool()
@@ -132,7 +132,7 @@ namespace NorthScale.Store
 												this.configuration.SocketPool,
 												auth)).ToArray();
 
-			var locator = (IMemcachedNodeLocator)Create(this.configuration.NodeLocator) ?? new KetamaNodeLocator();
+			var locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator();
 			locator.Initialize(mcNodes);
 
 			Interlocked.Exchange(ref this.currentNodes, new ReadOnlyCollection<IMemcachedNode>(mcNodes));

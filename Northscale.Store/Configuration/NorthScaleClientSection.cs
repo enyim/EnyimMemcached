@@ -5,6 +5,7 @@ using System.Configuration;
 using System.Net;
 using System.Web.Configuration;
 using Enyim.Caching.Configuration;
+using Enyim.Caching.Memcached;
 
 namespace NorthScale.Store.Configuration
 {
@@ -31,32 +32,32 @@ namespace NorthScale.Store.Configuration
 		}
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
 		/// </summary>
-		[ConfigurationProperty("keyTransformer", IsRequired = false), TypeConverter(typeof(TypeNameConverter)), InterfaceValidator(typeof(Enyim.Caching.Memcached.IMemcachedKeyTransformer))]
-		public Type KeyTransformer
+		[ConfigurationProperty("locator", IsRequired = false)]
+		public ProviderElement<IMemcachedNodeLocator> NodeLocator
 		{
-			get { return (Type)base["keyTransformer"]; }
+			get { return (ProviderElement<IMemcachedNodeLocator>)base["locator"]; }
+			set { base["locator"] = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
+		/// </summary>
+		[ConfigurationProperty("keyTransformer", IsRequired = false)]
+		public ProviderElement<IMemcachedKeyTransformer> KeyTransformer
+		{
+			get { return (ProviderElement<IMemcachedKeyTransformer>)base["keyTransformer"]; }
 			set { base["keyTransformer"] = value; }
 		}
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
 		/// </summary>
-		[ConfigurationProperty("nodeLocator", IsRequired = false), TypeConverter(typeof(TypeNameConverter)), InterfaceValidator(typeof(Enyim.Caching.Memcached.IMemcachedNodeLocator))]
-		public Type NodeLocator
+		[ConfigurationProperty("transcoder", IsRequired = false)]
+		public ProviderElement<ITranscoder> Transcoder
 		{
-			get { return (Type)base["nodeLocator"]; }
-			set { base["nodeLocator"] = value; }
-		}
-
-		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
-		/// </summary>
-		[ConfigurationProperty("transcoder", IsRequired = false), TypeConverter(typeof(TypeNameConverter)), InterfaceValidator(typeof(Enyim.Caching.Memcached.ITranscoder))]
-		public Type Transcoder
-		{
-			get { return (Type)base["transcoder"]; }
+			get { return (ProviderElement<ITranscoder>)base["transcoder"]; }
 			set { base["transcoder"] = value; }
 		}
 
@@ -84,19 +85,19 @@ namespace NorthScale.Store.Configuration
 			get { return this.SocketPool; }
 		}
 
-		Type INorthScaleClientConfiguration.KeyTransformer
+		IMemcachedKeyTransformer INorthScaleClientConfiguration.CreateKeyTransformer()
 		{
-			get { return this.KeyTransformer; }
+			return this.KeyTransformer.CreateInstance() ?? new DefaultKeyTransformer();
 		}
 
-		Type INorthScaleClientConfiguration.NodeLocator
+		IMemcachedNodeLocator INorthScaleClientConfiguration.CreateNodeLocator()
 		{
-			get { return this.NodeLocator; }
+			return this.NodeLocator.CreateInstance() ?? new DefaultNodeLocator();
 		}
 
-		Type INorthScaleClientConfiguration.Transcoder
+		ITranscoder INorthScaleClientConfiguration.CreateTranscoder()
 		{
-			get { return this.Transcoder; }
+			return this.Transcoder.CreateInstance() ?? new DefaultTranscoder();
 		}
 
 		ICredentials INorthScaleClientConfiguration.Credentials

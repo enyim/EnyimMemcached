@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
+using Enyim.Reflection;
 
 namespace NorthScale.Store.Configuration
 {
@@ -13,9 +14,6 @@ namespace NorthScale.Store.Configuration
 	{
 		private List<Uri> urls;
 		private ISocketPoolConfiguration socketPool;
-		private Type keyTransformer;
-		private Type nodeLocator;
-		private Type transcoder;
 		private ICredentials credentials;
 		private string bucket;
 		private BucketPortType port = BucketPortType.Proxy;
@@ -58,46 +56,19 @@ namespace NorthScale.Store.Configuration
 		}
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
 		/// </summary>
-		public Type KeyTransformer
-		{
-			get { return this.keyTransformer; }
-			set
-			{
-				ConfigurationHelper.CheckForInterface(value, typeof(IMemcachedKeyTransformer));
-
-				this.keyTransformer = value;
-			}
-		}
+		public IMemcachedKeyTransformer KeyTransformer { get; set; }
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
 		/// </summary>
-		public Type NodeLocator
-		{
-			get { return this.nodeLocator; }
-			set
-			{
-				ConfigurationHelper.CheckForInterface(value, typeof(IMemcachedNodeLocator));
-
-				this.nodeLocator = value;
-			}
-		}
+		public IMemcachedNodeLocator NodeLocator { get; set;}
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
 		/// </summary>
-		public Type Transcoder
-		{
-			get { return this.transcoder; }
-			set
-			{
-				ConfigurationHelper.CheckForInterface(value, typeof(ITranscoder));
-
-				this.transcoder = value;
-			}
-		}
+		public ITranscoder Transcoder { get; set; }
 
 		/// <summary>
 		/// Determines which port the client should use to connect to the nodes
@@ -124,19 +95,19 @@ namespace NorthScale.Store.Configuration
 			get { return this.SocketPool; }
 		}
 
-		Type INorthScaleClientConfiguration.KeyTransformer
+		IMemcachedKeyTransformer INorthScaleClientConfiguration.CreateKeyTransformer()
 		{
-			get { return this.KeyTransformer; }
+			return this.KeyTransformer;
 		}
 
-		Type INorthScaleClientConfiguration.NodeLocator
+		IMemcachedNodeLocator INorthScaleClientConfiguration.CreateNodeLocator()
 		{
-			get { return this.NodeLocator; }
+			return this.NodeLocator;
 		}
 
-		Type INorthScaleClientConfiguration.Transcoder
+		ITranscoder INorthScaleClientConfiguration.CreateTranscoder()
 		{
-			get { return this.Transcoder; }
+			return this.Transcoder;
 		}
 
 		string INorthScaleClientConfiguration.Bucket

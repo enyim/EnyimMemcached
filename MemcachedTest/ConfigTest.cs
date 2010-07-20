@@ -105,9 +105,9 @@ namespace MemcachedTest
 			mcc.Servers.Add(new System.Net.IPEndPoint(IPAddress.Loopback, 20000));
 			mcc.Servers.Add(new System.Net.IPEndPoint(IPAddress.Loopback, 20002));
 
-			mcc.NodeLocator = typeof(DefaultNodeLocator);
-			mcc.KeyTransformer = typeof(SHA1KeyTransformer);
-			mcc.Transcoder = typeof(DefaultTranscoder);
+			mcc.NodeLocator = new DefaultNodeLocator();
+			mcc.KeyTransformer = new SHA1KeyTransformer();
+			mcc.Transcoder = new DefaultTranscoder();
 
 			mcc.SocketPool.MinPoolSize = 10;
 			mcc.SocketPool.MaxPoolSize = 100;

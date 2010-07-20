@@ -5,6 +5,8 @@ using Enyim.Caching;
 using Enyim.Caching.Memcached;
 using System.Net;
 using Enyim.Caching.Configuration;
+using NorthScale.Store;
+using NorthScale.Store.Configuration;
 
 namespace DemoApp
 {
@@ -12,6 +14,17 @@ namespace DemoApp
 	{
 		static void Main(string[] args)
 		{
+			//new NorthScaleClient().Stats();
+
+			//var nsc = new NorthScaleClientConfiguration();
+
+			//nsc.KeyTransformer = new TigerHashKeyTransformer();
+			//nsc.NodeLocator = new VBucketNodeLocator("crc", new VBucket[] { new VBucket(0, null), new VBucket(1, null) });
+
+			//nsc.Urls.Add(new Uri("http://192.168.2.200:8080/pools/default"));
+
+			//new NorthScaleClient(nsc);
+
 			// create a MemcachedClient
 			// in your application you can cache the client in a static variable or just recreate it every time
 			// MemcachedClient mc = new MemcachedClient();
@@ -31,8 +44,8 @@ namespace DemoApp
 
 			var mc = new MemcachedClient(config);
 
-			for(var i = 0; i< 100; i++)
-			mc.Store(StoreMode.Set, "Hello", "World");
+			for (var i = 0; i < 100; i++)
+				mc.Store(StoreMode.Set, "Hello", "World");
 
 
 			// simple multiget; please note that only 1.2.4 supports it (windows version is at 1.2.1)

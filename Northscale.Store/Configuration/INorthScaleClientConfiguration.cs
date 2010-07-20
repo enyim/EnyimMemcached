@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using Enyim.Caching.Configuration;
+using Enyim.Caching.Memcached;
 
 namespace NorthScale.Store.Configuration
 {
@@ -20,19 +21,19 @@ namespace NorthScale.Store.Configuration
 		ISocketPoolConfiguration SocketPool { get; }
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
+		/// Creates an <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> instance which will be used to convert item keys for Memcached.
 		/// </summary>
-		Type KeyTransformer { get; }
+		IMemcachedKeyTransformer CreateKeyTransformer();
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
+		/// Creates an <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> instance which will be used to assign items to Memcached nodes.
 		/// </summary>
-		Type NodeLocator { get; }
+		IMemcachedNodeLocator CreateNodeLocator();
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
+		/// Creates an <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> instance which will be used to serialize or deserialize items.
 		/// </summary>
-		Type Transcoder { get; }
+		ITranscoder CreateTranscoder();
 
 		/// <summary>
 		/// Gets the credentials used to connect to the REST API of the cluster.

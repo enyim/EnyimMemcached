@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
+using System.Threading;
 
 namespace Enyim.Caching.Memcached
 {
@@ -10,24 +12,13 @@ namespace Enyim.Caching.Memcached
 	/// </summary>
 	public sealed class KetamaNodeLocator : IMemcachedNodeLocator
 	{
-		private const int ServerAddressMutations = 160;
-
-		private List<IMemcachedNode> servers;
-
-		// holds all server keys for mapping an item key to the server consistently
-		private List<uint> keys;
-		// used to lookup a server based on its key
-		private Dictionary<uint, IMemcachedNode> keyToServer;
-
-		private bool isInitialized;
-
 		// TODO make this configurable without restructuring the whole config system
 		private const string HashName = "System.Security.Cryptography.MD5";
+		private const int ServerAddressMutations = 160;
+		private LookupData lookupData;
 
 		void IMemcachedNodeLocator.Initialize(IList<IMemcachedNode> nodes)
 		{
-			if (this.isInitialized) throw new InvalidOperationException("Instance is already initialized.");
-
 			// sizeof(uint)
 			const int KeyLength = 4;
 			var hashAlgo = HashAlgorithm.Create(HashName);
@@ -69,13 +60,15 @@ namespace Enyim.Caching.Memcached
 
 			keys.Sort();
 
-			this.keys = keys;
-			this.keyToServer = keyToServer;
+			var lookupData = new LookupData
+			{
+				keys = keys.ToArray(),
+				keyToServer = keyToServer,
+				servers = nodes.ToArray()
+			};
 
-			this.servers = new List<IMemcachedNode>();
-			this.servers.AddRange(nodes);
-
-			this.isInitialized = true;
+			// now the re-initialization is kinda thread safe without locking
+			Interlocked.Exchange(ref this.lookupData, lookupData);
 		}
 
 		private uint GetKeyHash(string key)
@@ -88,21 +81,22 @@ namespace Enyim.Caching.Memcached
 
 		IMemcachedNode IMemcachedNodeLocator.Locate(string key)
 		{
-			if (!this.isInitialized) throw new InvalidOperationException("You must call Initialize first");
 			if (key == null) throw new ArgumentNullException("key");
 
-			switch (this.servers.Count)
+			var ld = this.lookupData;
+
+			switch (ld.servers.Length)
 			{
 				case 0: return null;
-				case 1: return this.servers[0];
+				case 1: return ld.servers[0];
 			}
 
-			var retval = this.LocateNode(this.GetKeyHash(key));
+			var retval = LocateNode(ld, this.GetKeyHash(key));
 
 			// isalive is not atomic
 			if (!retval.IsAlive)
 			{
-				for (var i = 0; i < this.servers.Count; i++)
+				for (var i = 0; i < ld.servers.Length; i++)
 				{
 					// -- this is from spymemcached so we select the same node for the same items
 					ulong tmpKey = (ulong)GetKeyHash(i + key);
@@ -110,7 +104,7 @@ namespace Enyim.Caching.Memcached
 					tmpKey &= 0xffffffffL; /* truncate to 32-bits */
 					// -- end
 
-					retval = this.LocateNode((uint)tmpKey);
+					retval = LocateNode(ld, (uint)tmpKey);
 
 					if (retval.IsAlive) return retval;
 				}
@@ -119,10 +113,10 @@ namespace Enyim.Caching.Memcached
 			return retval.IsAlive ? retval : null;
 		}
 
-		private IMemcachedNode LocateNode(uint itemKeyHash)
+		private static IMemcachedNode LocateNode(LookupData ld, uint itemKeyHash)
 		{
 			// get the index of the server assigned to this hash
-			int foundIndex = this.keys.BinarySearch(itemKeyHash);
+			int foundIndex = Array.BinarySearch<uint>(ld.keys, itemKeyHash);
 
 			// no exact match
 			if (foundIndex < 0)
@@ -133,20 +127,34 @@ namespace Enyim.Caching.Memcached
 				if (foundIndex == 0)
 				{
 					// it's smaller than everything, so use the last server (with the highest key)
-					foundIndex = this.keys.Count - 1;
+					foundIndex = ld.keys.Length - 1;
 				}
-				else if (foundIndex >= this.keys.Count)
+				else if (foundIndex >= ld.keys.Length)
 				{
 					// the key was larger than all server keys, so return the first server
 					foundIndex = 0;
 				}
 			}
 
-			if (foundIndex < 0 || foundIndex > this.keys.Count)
+			if (foundIndex < 0 || foundIndex > ld.keys.Length)
 				return null;
 
-			return this.keyToServer[this.keys[foundIndex]];
+			return ld.keyToServer[ld.keys[foundIndex]];
 		}
+
+		#region [ LookupData                   ]
+		// this will encapsulate all the indexes we need for lookup
+		// so the instance can be reinitialized without locking
+		// in case an IMemcachedConfig implementation returns the same instance form the CreateLocator()
+		private class LookupData
+		{
+			public IMemcachedNode[] servers;
+			// holds all server keys for mapping an item key to the server consistently
+			public uint[] keys;
+			// used to lookup a server based on its key
+			public Dictionary<uint, IMemcachedNode> keyToServer;
+		}
+		#endregion
 	}
 }
 
