@@ -92,7 +92,7 @@ namespace NorthScale.Store.Configuration
 
 		IMemcachedNodeLocator INorthScaleClientConfiguration.CreateNodeLocator()
 		{
-			return this.NodeLocator.CreateInstance() ?? new DefaultNodeLocator();
+			return this.NodeLocator.CreateInstance() ?? new KetamaNodeLocator();
 		}
 
 		ITranscoder INorthScaleClientConfiguration.CreateTranscoder()
