@@ -278,7 +278,8 @@ namespace Enyim.Caching.Memcached
 
 				int retval = this.socket.Receive(buffer, offset, count, SocketFlags.None, out errorCode);
 
-				if (errorCode == SocketError.Success)
+				// actually "0 bytes read" could mean an error as well
+				if (errorCode == SocketError.Success && retval > 0)
 					return retval;
 
 				throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode));
