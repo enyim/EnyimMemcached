@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Net;
 
 namespace NorthScale.Store
 {
@@ -30,6 +31,16 @@ namespace NorthScale.Store
 		}
 
 		internal static readonly IEqualityComparer<BucketNode> ComparerInstance = new Comparer();
+
+		public IPAddress GetIP()
+		{
+			var tmp = this.hostname;
+			var index = tmp.IndexOf(':');
+			if (index > 0)
+				tmp = tmp.Substring(0, index);
+
+			return IPAddress.Parse(tmp);
+		}
 
 		#region [ Comparer                     ]
 		private class Comparer : IEqualityComparer<BucketNode>

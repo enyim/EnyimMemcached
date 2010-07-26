@@ -127,7 +127,7 @@ namespace NorthScale.Store
 			var mcNodes = nodes.Select(b => new MemcachedNode(
 				// create a memcached node for each bucket node
 				// TODO currently we expect that the API returns IP addresses, we should confirm this
-												new IPEndPoint(IPAddress.Parse(b.hostname),
+												new IPEndPoint(b.GetIP(),
 																	portType == BucketPortType.Proxy ? b.ports.proxy : b.ports.direct),
 												this.configuration.SocketPool,
 												auth)).ToArray();
