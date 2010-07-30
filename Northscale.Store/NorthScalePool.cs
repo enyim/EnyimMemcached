@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading;
 using Enyim.Caching.Memcached;
 using NorthScale.Store.Configuration;
+using Enyim.Caching.Configuration;
 
 namespace NorthScale.Store
 {
@@ -100,26 +101,52 @@ namespace NorthScale.Store
 				DeadTimeout = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds
 			};
 
-			this.configListener.NodeListChanged += this.InitNodes;
+			this.configListener.ClusterConfigChanged += this.InitNodes;
 
 			// start blocks until the first NodeListChanged event is triggered
 			this.configListener.Start();
 		}
 
-		private void InitNodes(IEnumerable<BucketNode> nodes)
+		private void InitNodes(ClusterConfig config)
 		{
 			// default bucket does not require authentication
 			var auth = this.bucketName == null ? null : ((IServerPool)this).Authenticator;
-			var portType = this.configuration.Port;
 
-			var mcNodes = nodes.Select(b => new MemcachedNode(
-				// create a memcached node for each bucket node
-				new IPEndPoint(IPAddress.Parse(b.hostname),
-								portType == BucketPortType.Proxy ? b.ports.proxy : b.ports.direct),
-				this.configuration.SocketPool,
-				auth)).ToArray();
+			IEnumerable<IPEndPoint> endpoints;
+			IMemcachedNodeLocator locator;
 
-			var locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator();
+			if (config.vBucketServerMap == null)
+			{
+				// no vbucket config, use the node list and the ports
+				var portType = this.configuration.Port;
+
+				endpoints = from node in config.nodes
+							where node.status == "healthy"
+							select new IPEndPoint(
+										 IPAddress.Parse(node.hostname),
+										 (portType == BucketPortType.Proxy
+											 ? node.ports.proxy
+											 : node.ports.direct));
+
+				locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator();
+			}
+			else
+			{
+				// we have a vbucket config, which has its own server list
+				// it's supposed to be the same as the cluster config's list,
+				// but the order is significicant (because of the bucket indexes),
+				// so we we'll use this for initializing the locator
+				var vbsm = config.vBucketServerMap;
+				endpoints = from server in vbsm.serverList
+							let parts = server.Split(':')
+							select new IPEndPoint(IPAddress.Parse(parts[0]), Int32.Parse(parts[1]));
+
+				locator = new VBucketNodeLocator(vbsm.hashAlgorithm, vbsm.vBucketMap.Select(a => new VBucket(a[0], a.Skip(1).ToArray())).ToArray());
+			}
+
+			var mcNodes = (from e in endpoints
+						   select new MemcachedNode(e, this.configuration.SocketPool, auth)).ToArray();
+
 			locator.Initialize(mcNodes);
 
 			Interlocked.Exchange(ref this.currentNodes, new ReadOnlyCollection<IMemcachedNode>(mcNodes));

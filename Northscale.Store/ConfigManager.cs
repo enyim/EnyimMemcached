@@ -53,10 +53,10 @@ namespace NorthScale.Store
 			return new Uri(poolUri, bucketsUrl);
 		}
 
-		public Bucket ResolveBucket(Uri poolUri, string name)
+		public ClusterConfig ResolveBucket(Uri poolUri, string name)
 		{
 			var root = this.GetBucketsRoot(poolUri);
-			var allBuckets = this.DeserializeUri<Bucket[]>(root);
+			var allBuckets = this.DeserializeUri<ClusterConfig[]>(root);
 
 			return allBuckets.FirstOrDefault(b => b.name == name);
 		}
@@ -87,7 +87,7 @@ namespace NorthScale.Store
 			return retval.Count == 0 ? null : retval.ToArray();
 		}
 
-		public BucketNode[] GetWorkingNodes(Uri[] pools, string name)
+		public ClusterNode[] GetWorkingNodes(Uri[] pools, string name)
 		{
 			if (pools == null) throw new ArgumentNullException("pools");
 			if (pools.Length == 0) throw new ArgumentException("must specify at least one url", "pools");

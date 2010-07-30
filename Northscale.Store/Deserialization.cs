@@ -5,14 +5,14 @@ using System.Net;
 namespace NorthScale.Store
 {
 #pragma warning disable 649
-	class Bucket
+	class ClusterConfig
 	{
 		public string name;
 
 		public string uri;
 		public string streamingUri;
 
-		public BucketNode[] nodes;
+		public ClusterNode[] nodes;
 
 		public VBucketConfig vBucketServerMap;
 	}
@@ -25,7 +25,7 @@ namespace NorthScale.Store
 		public int[][] vBucketMap;
 	}
 
-	class BucketNode
+	class ClusterNode
 	{
 		private string _hostname;
 
@@ -48,14 +48,14 @@ namespace NorthScale.Store
 			}
 		}
 		public string status;
-		public BucketNodePorts ports;
+		public ClusterNodePorts ports;
 
-		internal static readonly IEqualityComparer<BucketNode> ComparerInstance = new Comparer();
+		internal static readonly IEqualityComparer<ClusterNode> ComparerInstance = new Comparer();
 
 		#region [ Comparer                     ]
-		private class Comparer : IEqualityComparer<BucketNode>
+		private class Comparer : IEqualityComparer<ClusterNode>
 		{
-			bool IEqualityComparer<BucketNode>.Equals(BucketNode x, BucketNode y)
+			bool IEqualityComparer<ClusterNode>.Equals(ClusterNode x, ClusterNode y)
 			{
 				return x.hostname == y.hostname
 						&& x.ports.direct == y.ports.direct
@@ -63,7 +63,7 @@ namespace NorthScale.Store
 						&& x.status == y.status;
 			}
 
-			int IEqualityComparer<BucketNode>.GetHashCode(BucketNode obj)
+			int IEqualityComparer<ClusterNode>.GetHashCode(ClusterNode obj)
 			{
 				return obj.GetHashCode();
 			}
@@ -71,7 +71,7 @@ namespace NorthScale.Store
 		#endregion
 	}
 
-	class BucketNodePorts
+	class ClusterNodePorts
 	{
 		public int direct;
 		public int proxy;

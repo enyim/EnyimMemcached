@@ -23,9 +23,7 @@ namespace NorthScale.Store
 			this.Timeout = helper.Timeout;
 		}
 
-		private List<BucketNode> lastNodes;
-
-		public event Action<IEnumerable<BucketNode>> NodeListChanged;
+		public event Action<ClusterConfig> ClusterConfigChanged;
 
 		protected override void OnMessageReceived(string message)
 		{
@@ -34,30 +32,27 @@ namespace NorthScale.Store
 			// everything failed
 			if (String.IsNullOrEmpty(message))
 			{
-				if (this.lastNodes != null)
-					this.RaiseNodeListChanged(Enumerable.Empty<BucketNode>());
-
-				this.lastNodes = null;
+				this.RaiseConfigChanged(null);
 				return;
 			}
 
 			// deserialize the buckets
 			var jss = new JavaScriptSerializer();
-			var config = jss.Deserialize<Bucket>(message);
+			var config = jss.Deserialize<ClusterConfig>(message);
 
-			// ignore the unhealthy nodes
-			var newNodes = (from node in config.nodes
-							where node.status == "healthy"
-							orderby node.hostname
-							select node).ToList();
+			//// ignore the unhealthy nodes
+			//var newNodes = (from node in config.nodes
+			//                where node.status == "healthy"
+			//                orderby node.hostname
+			//                select node).ToList();
 
 			// check if the new config is the same as the last one
-			if (this.lastNodes != null
-				&& this.lastNodes.SequenceEqual(newNodes, BucketNode.ComparerInstance))
-				return;
+			//if (this.lastNodes != null
+			//    && this.lastNodes.SequenceEqual(newNodes, ClusterNode.ComparerInstance))
+			//    return;
 
-			this.lastNodes = newNodes;
-			this.RaiseNodeListChanged(newNodes);
+			//this.lastNodes = newNodes;
+			this.RaiseConfigChanged(config);
 		}
 
 		private ManualResetEvent mre;
@@ -88,13 +83,13 @@ namespace NorthScale.Store
 			this.mre = null;
 		}
 
-		private void RaiseNodeListChanged(IEnumerable<BucketNode> nodes)
+		private void RaiseConfigChanged(ClusterConfig config)
 		{
-			var nlc = this.NodeListChanged;
+			var ccc = this.ClusterConfigChanged;
 
 			// we got a new config, notify the pool to reload itself
-			if (nlc != null)
-				nlc(nodes);
+			if (ccc != null)
+				ccc(config);
 
 			// trigger the event so Start stops blocking
 			if (this.mre != null)
