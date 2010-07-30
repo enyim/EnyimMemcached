@@ -177,8 +177,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Migrated rules for Enyim.Caching %282%29.ruleset" />
-    <None Include="Migrated rules for Enyim.Caching.ruleset" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

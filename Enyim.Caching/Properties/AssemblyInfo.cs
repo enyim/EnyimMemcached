@@ -17,8 +17,8 @@ using System.Runtime.InteropServices;
 
 [assembly: Guid("a8cd3f39-7731-4ee8-a7ce-444d540d4a4d")]
 
-[assembly: AssemblyVersion("2.2.0.0")]
-[assembly: AssemblyFileVersion("2.2.0.0")]
+[assembly: AssemblyVersion("2.3.0.0")]
+[assembly: AssemblyFileVersion("2.3.0.0")]
 
 #if SIGN
 [assembly: AssemblyKeyName("enyim")]

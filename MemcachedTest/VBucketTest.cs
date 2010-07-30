@@ -13,24 +13,24 @@ namespace MemcachedTest
 	{
 		// copied from libvbucket
 		Dictionary<string, int> keyToVBucket = new Dictionary<string, int>
-        {
-            { "hello", 0 },
-            { "doctor", 0 },
-            { "name", 3 },
-            { "continue", 3 },
-            { "yesterday", 0 },
-            { "tomorrow", 1 },
-            { "another key", 2 }
-        };
+		{
+			{ "hello", 0 },
+			{ "doctor", 0 },
+			{ "name", 3 },
+			{ "continue", 3 },
+			{ "yesterday", 0 },
+			{ "tomorrow", 1 },
+			{ "another key", 2 }
+		};
 
 		// copied from libvbucket
 		VBucket[] buckets = new[]
-                {
-                    new VBucket(0, new [] { 1, 2 }),
-                    new VBucket(1, new [] { 2, 0 }),
-                    new VBucket(2, new [] { 1, -1 }),
-                    new VBucket(1, new [] { 2, 0 }),
-                };
+		{
+			new VBucket(0, new [] { 1, 2 }),
+			new VBucket(1, new [] { 2, 0 }),
+			new VBucket(2, new [] { 1, -1 }),
+			new VBucket(1, new [] { 2, 0 }),
+		};
 
 		[TestCase]
 		public void TestBuckets()
