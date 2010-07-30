@@ -87,34 +87,22 @@ namespace NorthScale.Store
 			// get the pool urls
 			this.poolUrls = this.configuration.Urls.ToArray();
 			if (this.poolUrls.Length == 0)
-				throw new InvalidOperationException("at least 1 pool url must be specified.");
+				throw new InvalidOperationException("At least 1 pool url must be specified.");
 
-			var cm = new ConfigHelper();
-			cm.Credentials = this.configuration.Credentials;
-			cm.Timeout = (int)this.configuration.SocketPool.ConnectionTimeout.TotalMilliseconds;
+			var helper = new ConfigHelper
+			{
+				Credentials = this.configuration.Credentials,
+				Timeout = (int)this.configuration.SocketPool.ConnectionTimeout.TotalMilliseconds
+			};
 
-			// get the nodes of the specified buctek using the pool urls 
-			var nodes = cm.GetWorkingNodes(this.poolUrls, this.bucketName ?? "default");
-			if (nodes == null || nodes.Length == 0)
-				throw new InvalidOperationException("none of the pool urls are working.");
+			this.configListener = new BucketConfigListener(this.bucketName, helper, this.poolUrls)
+			{
+				DeadTimeout = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds
+			};
 
-			// initialize the locator and create the MemcachedNodes
-			this.InitNodes(nodes);
+			this.configListener.NodeListChanged += this.InitNodes;
 
-			// discover the streamingUri of the bucket
-			var streamingUris = cm.GetBucketStreamingUris(this.poolUrls, this.bucketName ?? "default");
-			if (streamingUris == null)
-				throw new InvalidOperationException("none of the pool urls are working.");
-
-			// create a config listener
-			this.configListener = new BucketConfigListener(streamingUris, nodes);
-			this.configListener.Credentials = this.configuration.Credentials;
-			this.configListener.Timeout = cm.Timeout;
-
-			// recreate the node lcoator when the config changes
-			this.configListener.NodeListChanged += InitNodes;
-
-			// start the listener
+			// start blocks until the first NodeListChanged event is triggered
 			this.configListener.Start();
 		}
 
@@ -126,11 +114,10 @@ namespace NorthScale.Store
 
 			var mcNodes = nodes.Select(b => new MemcachedNode(
 				// create a memcached node for each bucket node
-				// TODO currently we expect that the API returns IP addresses, we should confirm this
-												new IPEndPoint(b.GetIP(),
-																	portType == BucketPortType.Proxy ? b.ports.proxy : b.ports.direct),
-												this.configuration.SocketPool,
-												auth)).ToArray();
+				new IPEndPoint(IPAddress.Parse(b.hostname),
+								portType == BucketPortType.Proxy ? b.ports.proxy : b.ports.direct),
+				this.configuration.SocketPool,
+				auth)).ToArray();
 
 			var locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator();
 			locator.Initialize(mcNodes);

@@ -2,16 +2,25 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Script.Serialization;
+using System.Threading;
 
 namespace NorthScale.Store
 {
 	internal class BucketConfigListener : MessageStreamListener
 	{
-		public BucketConfigListener(Uri[] urls, IEnumerable<BucketNode> currentNodes)
-			: base(urls)
+		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(BucketConfigListener));
+
+		private ConfigHelper helper;
+		private string bucketName;
+
+		public BucketConfigListener(string bucketName, ConfigHelper helper, Uri[] poolUrls)
+			: base(poolUrls)
 		{
-			if (currentNodes != null)
-				this.lastNodes = currentNodes.ToList();
+			this.helper = helper;
+			this.bucketName = bucketName ?? "default";
+
+			this.Credentials = helper.Credentials;
+			this.Timeout = helper.Timeout;
 		}
 
 		private List<BucketNode> lastNodes;
@@ -23,7 +32,7 @@ namespace NorthScale.Store
 			base.OnMessageReceived(message);
 
 			// everything failed
-			if (String.IsNullOrEmpty(message)) 
+			if (String.IsNullOrEmpty(message))
 			{
 				if (this.lastNodes != null)
 					this.RaiseNodeListChanged(Enumerable.Empty<BucketNode>());
@@ -51,6 +60,34 @@ namespace NorthScale.Store
 			this.RaiseNodeListChanged(newNodes);
 		}
 
+		private ManualResetEvent mre;
+
+		protected override Uri ResolveUri(Uri uri)
+		{
+			try
+			{
+				var bucket = this.helper.ResolveBucket(uri, this.bucketName);
+
+				return new Uri(uri, bucket.streamingUri);
+			}
+			catch (Exception e)
+			{
+				log.Error("Error resolving streaming uri", e);
+
+				return null;
+			}
+		}
+
+		public override void Start()
+		{
+			this.mre = new ManualResetEvent(false);
+
+			base.Start();
+
+			using (this.mre) this.mre.WaitOne();
+			this.mre = null;
+		}
+
 		private void RaiseNodeListChanged(IEnumerable<BucketNode> nodes)
 		{
 			var nlc = this.NodeListChanged;
@@ -58,6 +95,10 @@ namespace NorthScale.Store
 			// we got a new config, notify the pool to reload itself
 			if (nlc != null)
 				nlc(nodes);
+
+			// trigger the event so Start stops blocking
+			if (this.mre != null)
+				this.mre.Set();
 		}
 	}
 }

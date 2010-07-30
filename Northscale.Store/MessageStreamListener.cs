@@ -18,7 +18,6 @@ namespace NorthScale.Store
 		private Uri[] urls;
 		private int stopCounter = 0;
 		private MessageReader currentWorker;
-		private bool started;
 
 		public MessageStreamListener(Uri[] urls)
 		{
@@ -26,28 +25,44 @@ namespace NorthScale.Store
 			if (urls.Length == 0) throw new ArgumentException("must specify at least 1 url");
 
 			this.urls = urls;
+			this.DeadTimeout = 2000;
 		}
 
+		protected bool IsStarted { get; private set; }
+
+		/// <summary>
+		/// The credentials used to connect to the urls.
+		/// </summary>
 		public ICredentials Credentials { get; set; }
+
+		/// <summary>
+		/// Connection timeout in milliseconds for connecting the urls.
+		/// </summary>
+		public int Timeout { get; set; }
+
+		/// <summary>
+		/// The time in milliseconds the listener should wait when retrying after the whole server list goes down.
+		/// </summary>
+		public int DeadTimeout { get; set; }
 
 		protected virtual WebClient CreateClient()
 		{
-			return new WebClientWithTimeout() 
-			{ 
-				Credentials = this.Credentials, 
+			return new WebClientWithTimeout()
+			{
+				Credentials = this.Credentials,
 				// make it infinite so it will not stop abort the socket thinking that the server have died
-				ReadWriteTimeout = System.Threading.Timeout.Infinite, 
+				ReadWriteTimeout = System.Threading.Timeout.Infinite,
 				// this is just the connect timeout
-				Timeout = this.Timeout 
+				Timeout = this.Timeout
 			};
 		}
 
 		/// <summary>
 		/// Starts processing the streaming URI
 		/// </summary>
-		public void Start()
+		public virtual void Start()
 		{
-			if (this.started ) throw new InvalidOperationException("already started");
+			if (this.IsStarted) throw new InvalidOperationException("already started");
 
 			var success = ThreadPool.QueueUserWorkItem(this.Work);
 
@@ -57,16 +72,26 @@ namespace NorthScale.Store
 		/// <summary>
 		/// Stops processing
 		/// </summary>
-		public void Stop()
+		public virtual void Stop()
 		{
 			if (log.IsDebugEnabled) log.Debug("Stopping the listener.");
 
 			Interlocked.Exchange(ref this.stopCounter, 1);
 			this.currentWorker.Stop();
 
-			this.started = false;
+			this.IsStarted = false;
 
 			if (log.IsDebugEnabled) log.Debug("Stopped.");
+		}
+
+		/// <summary>
+		/// derived classes can use this to redirect the original url into somewhere else. called only once by urls before the MessageStreamListener starts processing it
+		/// </summary>
+		/// <param name="uri"></param>
+		/// <returns></returns>
+		protected virtual Uri ResolveUri(Uri uri)
+		{
+			return uri;
 		}
 
 		private void Work(object state)
@@ -84,8 +109,11 @@ namespace NorthScale.Store
 					Uri currentUrl = null;
 
 					int urlIndex = 0;
+
 					// false meens that the url was not responding or failed while reading
-					Dictionary<Uri, bool> urlPool = this.urls.ToDictionary(u => u, u => true);
+					Dictionary<Uri, bool> statusPool = this.urls.ToDictionary(u => u, u => true);
+					// this holds the resolved urls, key is coming from the 'urls' array
+					Dictionary<Uri, Uri> realUrls = this.urls.ToDictionary(u => u, u => (Uri)null);
 
 					while (this.stopCounter == 0)
 					{
@@ -95,22 +123,43 @@ namespace NorthScale.Store
 						int i = urlIndex;
 
 						// find the first working url
+						#region [ Find the first working url ]
 						while (i < urls.Length)
 						{
-							var tmp = urls[i];
-							if (urlPool[tmp])
+							var nextUrl = urls[i];
+
+							// check if the url is alive
+							if (statusPool[nextUrl])
 							{
-								currentUrl = tmp;
+								try
+								{
+									// resolve the url
+									var realUrl = realUrls[nextUrl] ?? this.ResolveUri(nextUrl);
 
-								if (log.IsDebugEnabled) log.Debug("Found pool url " + tmp);
+									if (realUrl != null)
+									{
+										currentUrl = realUrl;
 
-								break;
+										if (log.IsDebugEnabled) log.Debug("Found pool url " + currentUrl);
+
+										break;
+									}
+								}
+								catch (Exception e)
+								{
+									log.Error(e);
+								}
+
+								// ResolveUri threw an exception or returned null so mark this url as invalid
+								statusPool[nextUrl] = false;
+								log.Warn("Could not resolve url " + nextUrl + "; trying the next in the list");
 							}
 
 							i++;
 						}
+						#endregion
 
-						// the break here will bo into the outer while, and reinitialize the lookup table and the indexer
+						// the break here will go into the outer while, and reinitialize the lookup table and the indexer
 						if (currentUrl == null)
 						{
 							if (log.IsWarnEnabled) log.Debug("Could not found a working pool url.");
@@ -144,12 +193,10 @@ namespace NorthScale.Store
 							if (e is IOException || e is System.Net.WebException)
 							{
 								// current worker failed, most probably the pool it was connected to went down
-								if (currentUrl != null && urlPool != null)
-									urlPool[currentUrl] = false;
+								if (currentUrl != null)
+									statusPool[currentUrl] = false;
 
 								if (log.IsWarnEnabled) log.Warn("Current pool " + currentUrl + " has failed.");
-
-								//this.OnConnectionAborted();
 							}
 							else
 							{
@@ -168,7 +215,10 @@ namespace NorthScale.Store
 						this.OnMessageReceived(null);
 
 						DateTime now = DateTime.UtcNow;
-						while (this.stopCounter == 0 && (DateTime.UtcNow - now).TotalSeconds < 5)
+
+						var waitUntil = this.DeadTimeout;
+						while (this.stopCounter == 0
+								&& (DateTime.UtcNow - now).TotalMilliseconds < waitUntil)
 						{
 							Thread.Sleep(200);
 						}
@@ -181,14 +231,6 @@ namespace NorthScale.Store
 		{
 			//if (log.IsDebugEnabled) log.Debug("Received message " + message);
 		}
-
-		protected virtual void OnConnectionAborted()
-		{
-			//if (log.IsDebugEnabled) log.Debug("Aborted");
-		}
-
-
-		public int Timeout { get; set; }
 
 		#region [ MessageReader                ]
 		private class MessageReader

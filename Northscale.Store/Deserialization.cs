@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 
 namespace NorthScale.Store
@@ -12,35 +13,44 @@ namespace NorthScale.Store
 		public string streamingUri;
 
 		public BucketNode[] nodes;
+
+		public VBucketConfig vBucketServerMap;
+	}
+
+	class VBucketConfig
+	{
+		public string hashAlgorithm;
+		public int numReplicas;
+		public string[] serverList;
+		public int[][] vBucketMap;
 	}
 
 	class BucketNode
 	{
-		public string hostname;
+		private string _hostname;
+
+		public string hostname
+		{
+			get { return this._hostname; }
+			set
+			{
+				var tmp = value;
+
+				// strip the management port (mc server 1.0.3> & membase 1.6>)
+				if (!String.IsNullOrEmpty(tmp))
+				{
+					var index = tmp.IndexOf(':');
+					if (index > 0)
+						tmp = tmp.Substring(0, index);
+				}
+
+				this._hostname = tmp;
+			}
+		}
 		public string status;
 		public BucketNodePorts ports;
 
-		public override string ToString()
-		{
-			return this.hostname + ":" + this.ports.ToString() + "," + this.status;
-		}
-
-		public override int GetHashCode()
-		{
-			return this.ToString().GetHashCode();
-		}
-
 		internal static readonly IEqualityComparer<BucketNode> ComparerInstance = new Comparer();
-
-		public IPAddress GetIP()
-		{
-			var tmp = this.hostname;
-			var index = tmp.IndexOf(':');
-			if (index > 0)
-				tmp = tmp.Substring(0, index);
-
-			return IPAddress.Parse(tmp);
-		}
 
 		#region [ Comparer                     ]
 		private class Comparer : IEqualityComparer<BucketNode>

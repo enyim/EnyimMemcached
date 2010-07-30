@@ -53,7 +53,7 @@ namespace NorthScale.Store
 			return new Uri(poolUri, bucketsUrl);
 		}
 
-		private Bucket ResolveBucket(Uri poolUri, string name)
+		public Bucket ResolveBucket(Uri poolUri, string name)
 		{
 			var root = this.GetBucketsRoot(poolUri);
 			var allBuckets = this.DeserializeUri<Bucket[]>(root);

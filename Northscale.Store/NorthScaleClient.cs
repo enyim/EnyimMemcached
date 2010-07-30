@@ -17,7 +17,7 @@ namespace NorthScale.Store
 			this(DefaultConfig, bucketName) { }
 
 		public NorthScaleClient(string sectionName, string bucketName) :
-			this((INorthScaleClientConfiguration)ConfigurationManager.GetSection("sectionName"), bucketName) { }
+			this((INorthScaleClientConfiguration)ConfigurationManager.GetSection(sectionName), bucketName) { }
 
 		public NorthScaleClient(INorthScaleClientConfiguration configuration) :
 			this(configuration, null) { }
