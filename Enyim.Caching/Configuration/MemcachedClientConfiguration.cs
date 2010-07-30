@@ -11,19 +11,19 @@ namespace Enyim.Caching.Configuration
 	/// </summary>
 	public class MemcachedClientConfiguration : IMemcachedClientConfiguration
 	{
-		private List<IPEndPoint> servers;
-		private ISocketPoolConfiguration socketPool;
-		private IAuthenticationConfiguration authentication;
-		private MemcachedProtocol protocol;
+		// these are lazy initialized in the getters
+		private IMemcachedNodeLocator nodeLocator;
+		private ITranscoder transcoder;
+		private IMemcachedKeyTransformer keyTransformer;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
 		/// </summary>
 		public MemcachedClientConfiguration()
 		{
-			this.servers = new List<IPEndPoint>();
-			this.socketPool = new SocketPoolConfiguration();
-			this.authentication = new AuthenticationConfiguration();
+			this.Servers = new List<IPEndPoint>();
+			this.SocketPool = new SocketPoolConfiguration();
+			this.Authentication = new AuthenticationConfiguration();
 
 			this.Protocol = MemcachedProtocol.Binary;
 		}
@@ -31,50 +31,49 @@ namespace Enyim.Caching.Configuration
 		/// <summary>
 		/// Gets a list of <see cref="T:IPEndPoint"/> each representing a Memcached server in the pool.
 		/// </summary>
-		public IList<IPEndPoint> Servers
-		{
-			get { return this.servers; }
-		}
+		public IList<IPEndPoint> Servers { get; private set; }
 
 		/// <summary>
 		/// Gets the configuration of the socket pool.
 		/// </summary>
-		public ISocketPoolConfiguration SocketPool
-		{
-			get { return this.socketPool; }
-		}
+		public ISocketPoolConfiguration SocketPool { get; private set; }
 
 		/// <summary>
 		/// Gets the authentication settings.
 		/// </summary>
-		public IAuthenticationConfiguration Authentication
-		{
-			get { return this.authentication; }
-		}
+		public IAuthenticationConfiguration Authentication { get; private set; }
 
 		/// <summary>
 		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
 		/// </summary>
-		public IMemcachedKeyTransformer KeyTransformer { get; set; }
+		public IMemcachedKeyTransformer KeyTransformer
+		{
+			get { return this.keyTransformer ?? (this.keyTransformer = new DefaultKeyTransformer()); }
+			set { this.keyTransformer = value; }
+		}
 
 		/// <summary>
 		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
 		/// </summary>
-		public IMemcachedNodeLocator NodeLocator { get; set; }
+		public IMemcachedNodeLocator NodeLocator
+		{
+			get { return this.nodeLocator ?? (this.nodeLocator = new DefaultNodeLocator()); }
+			set { this.nodeLocator = value; }
+		}
 
 		/// <summary>
 		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
 		/// </summary>
-		public ITranscoder Transcoder { get; set; }
+		public ITranscoder Transcoder
+		{
+			get { return this.transcoder ?? (this.transcoder = new DefaultTranscoder()); }
+			set { this.transcoder = value; }
+		}
 
 		/// <summary>
 		/// Gets or sets the type of the communication between client and server.
 		/// </summary>
-		public MemcachedProtocol Protocol
-		{
-			get { return this.protocol; }
-			set { this.protocol = value; }
-		}
+		public MemcachedProtocol Protocol { get; set; }
 
 		#region [ interface                     ]
 
@@ -90,7 +89,7 @@ namespace Enyim.Caching.Configuration
 
 		IAuthenticationConfiguration IMemcachedClientConfiguration.Authentication
 		{
-			get { return this.authentication; }
+			get { return this.Authentication; }
 		}
 
 		IMemcachedKeyTransformer IMemcachedClientConfiguration.CreateKeyTransformer()
@@ -110,8 +109,8 @@ namespace Enyim.Caching.Configuration
 
 		MemcachedProtocol IMemcachedClientConfiguration.Protocol
 		{
-			get { return this.protocol; }
-			set { this.protocol = value; }
+			get { return this.Protocol; }
+			set { this.Protocol = value; }
 		}
 		#endregion
 	}

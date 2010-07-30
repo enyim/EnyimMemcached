@@ -10,6 +10,7 @@ using System.Configuration;
 
 namespace MemcachedTest
 {
+	[TestFixture]
 	public class ConfigTest
 	{
 		[TestCase]
@@ -113,6 +114,18 @@ namespace MemcachedTest
 			mcc.SocketPool.MaxPoolSize = 100;
 			mcc.SocketPool.ConnectionTimeout = new TimeSpan(0, 0, 10);
 			mcc.SocketPool.DeadTimeout = new TimeSpan(0, 0, 30);
+
+			using (new MemcachedClient(mcc)) ;
+		}
+
+		[TestCase]
+		public void ProgrammaticConfigurationTestWithDefaults()
+		{
+			MemcachedClientConfiguration mcc = new MemcachedClientConfiguration();
+
+			// only add servers
+			mcc.Servers.Add(new System.Net.IPEndPoint(IPAddress.Loopback, 20000));
+			mcc.Servers.Add(new System.Net.IPEndPoint(IPAddress.Loopback, 20002));
 
 			using (new MemcachedClient(mcc)) ;
 		}
