@@ -40,6 +40,19 @@ namespace MemcachedTest
 			}
 		}
 
+		[TestCase]
+		public void IncrementNoDefaultTest()
+		{
+			using (MemcachedClient client = GetClient())
+			{
+				Assert.IsNull(client.Get("VALUE"), "Initialization failed");
+
+				Assert.AreEqual(2, client.Increment("VALUE", 2, 2), "Increment failed");
+
+				var value = client.Get("VALUE");
+				Assert.AreEqual("2", value, "Get failed. Expected 2, returned: '" + value + "'");
+			}
+		}
 	}
 }
 

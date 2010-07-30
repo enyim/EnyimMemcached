@@ -130,15 +130,17 @@ namespace Enyim.Caching.Memcached
 
 			TypeCode code = (TypeCode)(item.Flags & 0x00ff);
 			
-			if (code == TypeCode.Empty)
-				return null;
-
 			byte[] data = item.Data.Array;
 			int offset = item.Data.Offset;
 			int count = item.Data.Count;
 
 			switch (code)
 			{
+				// incrementing a non-existing key then getting it
+				// returns as a string, but the flag will be 0
+				// so treat all 0 flagged items as string
+				// this may help inter-client data management as well
+				case TypeCode.Empty:
 				case TypeCode.String:
 					return Encoding.UTF8.GetString(data, offset, count);
 
