@@ -115,18 +115,20 @@ namespace NorthScale.Store
 			IEnumerable<IPEndPoint> endpoints;
 			IMemcachedNodeLocator locator;
 
-			if (config.vBucketServerMap == null)
+			if (config == null || config.vBucketServerMap == null)
 			{
 				// no vbucket config, use the node list and the ports
 				var portType = this.configuration.Port;
 
-				endpoints = from node in config.nodes
-							where node.status == "healthy"
-							select new IPEndPoint(
-										 IPAddress.Parse(node.hostname),
-										 (portType == BucketPortType.Proxy
-											 ? node.ports.proxy
-											 : node.ports.direct));
+				endpoints = config == null
+							? Enumerable.Empty<IPEndPoint>()
+							: (from node in config.nodes
+							   where node.status == "healthy"
+							   select new IPEndPoint(
+											IPAddress.Parse(node.hostname),
+											(portType == BucketPortType.Proxy
+												? node.ports.proxy
+												: node.ports.direct)));
 
 				locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator();
 			}
