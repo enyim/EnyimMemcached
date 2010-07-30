@@ -1,0 +1,59 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+	<Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+	<Target Name="BeforeBuild">
+		<RemoveDir Directories="Enyim.Caching\bin;Enyim.Caching\obj;NorthScale.Store\bin;NorthScale.Store\obj" ContinueOnError="true" />
+	</Target>
+
+	<Target Name="Compile" DependsOnTargets="BeforeBuild">
+		<MSBuild Projects="Enyim.Caching\Enyim.Caching.csproj" Targets="Rebuild" Properties="Configuration=Release;DefineConstants=SIGN=true" />
+		<MSBuild Projects="NorthScale.Store\NorthScale.Store.csproj" Targets="Rebuild" Properties="Configuration=Release;DefineConstants=SIGN=true" />
+	</Target>
+
+	<Target Name="PrepareFiles">
+		<Move SourceFiles="Enyim.Caching\bin\Release\Enyim.Caching.dll.config" DestinationFiles="Enyim.Caching\bin\Release\Demo.config" />
+		<Move SourceFiles="NorthScale.Store\bin\Release\NorthScale.Store.dll.config" DestinationFiles="NorthScale.Store\bin\Release\Demo.config" />
+
+		<Copy SourceFiles="LICENSE" DestinationFolder="Enyim.Caching\bin\Release\" />
+		<Copy SourceFiles="LICENSE" DestinationFolder="NorthScale.Store\bin\Release\" />
+	</Target>
+
+	<Target Name="Pack">
+		<GetAssemblyIdentity AssemblyFiles="Enyim.Caching\bin\Release\Enyim.Caching.dll">
+			<Output TaskParameter="Assemblies" ItemName="EnyimCachingInfo" />
+		</GetAssemblyIdentity>
+		<GetAssemblyIdentity AssemblyFiles="NorthScale.Store\bin\Release\NorthScale.Store.dll">
+			<Output TaskParameter="Assemblies" ItemName="NorthScaleStoreInfo" />
+		</GetAssemblyIdentity>
+
+		<CreateItem Include="Enyim.Caching\bin\Release\**\*.*">
+			<Output ItemName="EnyimItems" TaskParameter="Include" />
+		</CreateItem>
+		<CreateItem Include="NorthScale.Store\bin\Release\**\*.*">
+			<Output ItemName="NorthScaleItems" TaskParameter="Include" />
+		</CreateItem>
+
+		<Zip Files="@(EnyimItems)" ZipFileName="Enyim.Caching.$([System.Text.RegularExpressions.regex]::Replace(%(EnyimCachingInfo.Version), `\.\d+\.\d+$`, ``)).zip" ZipLevel="9" Flatten="true" />
+		<Zip Files="@(NorthScaleItems)" ZipFileName="NorthScale.Store.$([System.Text.RegularExpressions.regex]::Replace(%(NorthScaleStoreInfo.Version), `\.\d+\.\d+$`, ``)).zip" ZipLevel="9" Flatten="true" />
+	</Target>
+
+	<Target Name="Build" DependsOnTargets="Compile;PrepareFiles;Pack"></Target>
+</Project>
+<!--
+/* ************************************************************
+ * 
+ *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *    
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *    
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *    
+ * ************************************************************/
+-->
