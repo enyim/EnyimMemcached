@@ -9,6 +9,7 @@ using System.Net;
 
 namespace MemcachedTest
 {
+	[TestFixture]
 	class VBucketTest
 	{
 		// copied from libvbucket
