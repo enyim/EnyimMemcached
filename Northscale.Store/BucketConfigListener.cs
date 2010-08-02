@@ -3,24 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web.Script.Serialization;
 using System.Threading;
+using System.Net;
 
 namespace NorthScale.Store
 {
-	internal class BucketConfigListener : MessageStreamListener
+	internal class BucketConfigListener : MessageStreamListener, IDisposable
 	{
 		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(BucketConfigListener));
 
 		private ConfigHelper helper;
 		private string bucketName;
+		private int previousHash;
+		private ManualResetEvent initEvent;
 
-		public BucketConfigListener(string bucketName, ConfigHelper helper, Uri[] poolUrls)
+		public BucketConfigListener(string bucketName, Uri[] poolUrls)
 			: base(poolUrls)
 		{
-			this.helper = helper;
 			this.bucketName = bucketName ?? "default";
-
-			this.Credentials = helper.Credentials;
-			this.Timeout = helper.Timeout;
 		}
 
 		public event Action<ClusterConfig> ClusterConfigChanged;
@@ -32,7 +31,14 @@ namespace NorthScale.Store
 			// everything failed
 			if (String.IsNullOrEmpty(message))
 			{
-				this.RaiseConfigChanged(null);
+				// only signal a config change when the last config was not empty
+				if (this.previousHash != Int32.MinValue)
+				{
+					this.previousHash = Int32.MinValue;
+
+					this.RaiseConfigChanged(null);
+				}
+
 				return;
 			}
 
@@ -40,28 +46,26 @@ namespace NorthScale.Store
 			var jss = new JavaScriptSerializer();
 			var config = jss.Deserialize<ClusterConfig>(message);
 
-			//// ignore the unhealthy nodes
-			//var newNodes = (from node in config.nodes
-			//                where node.status == "healthy"
-			//                orderby node.hostname
-			//                select node).ToList();
+			var hc = config.GetHashCode();
+			if (hc == this.previousHash)
+				return;
 
-			// check if the new config is the same as the last one
-			//if (this.lastNodes != null
-			//    && this.lastNodes.SequenceEqual(newNodes, ClusterNode.ComparerInstance))
-			//    return;
+			this.previousHash = hc;
 
-			//this.lastNodes = newNodes;
 			this.RaiseConfigChanged(config);
 		}
-
-		private ManualResetEvent mre;
 
 		protected override Uri ResolveUri(Uri uri)
 		{
 			try
 			{
 				var bucket = this.helper.ResolveBucket(uri, this.bucketName);
+
+				var firstNode = bucket.nodes.FirstOrDefault();
+
+				// quick fix for membase beta2
+				if (firstNode != null && firstNode.version == "1.6.0beta2")
+					return new Uri(uri, bucket.streamingUri.Replace("/bucketsStreaming/", "/bucketsStreamingConfig/"));
 
 				return new Uri(uri, bucket.streamingUri);
 			}
@@ -75,12 +79,17 @@ namespace NorthScale.Store
 
 		public override void Start()
 		{
-			this.mre = new ManualResetEvent(false);
+			this.initEvent = new ManualResetEvent(false);
+			this.helper = new ConfigHelper()
+			{
+				Timeout = this.Timeout,
+				Credentials = this.Credentials
+			};
 
 			base.Start();
 
-			using (this.mre) this.mre.WaitOne();
-			this.mre = null;
+			using (this.initEvent) this.initEvent.WaitOne();
+			this.initEvent = null;
 		}
 
 		private void RaiseConfigChanged(ClusterConfig config)
@@ -92,8 +101,17 @@ namespace NorthScale.Store
 				ccc(config);
 
 			// trigger the event so Start stops blocking
-			if (this.mre != null)
-				this.mre.Set();
+			if (this.initEvent != null)
+				this.initEvent.Set();
+		}
+
+		void IDisposable.Dispose()
+		{
+			if (this.helper != null)
+			{
+				((IDisposable)this.helper).Dispose();
+				this.helper = null;
+			}
 		}
 	}
 }
