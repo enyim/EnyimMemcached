@@ -9,6 +9,9 @@ namespace Enyim.Caching.Memcached
 		bool IsAlive { get; }
 		bool Ping();
 		PooledSocket Acquire();
+
+		// TEMP HACK
+		int Bucket { get; }
 	}
 }
 

@@ -62,6 +62,9 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				// 5 -- data type, 0 (RAW)
 				// 6,7 -- reserved, always 0
 
+				buffer[0x06] = (byte)(this.Reserved >> 8);
+				buffer[0x07] = (byte)(this.Reserved & 255);
+
 				// body length
 				buffer[0x08] = (byte)(totalLength >> 24);
 				buffer[0x09] = (byte)(totalLength >> 16);
@@ -102,6 +105,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			return retval;
 		}
 
+		public ushort Reserved;
 		public ArraySegment<byte> Extra;
 		public ArraySegment<byte> Data;
 

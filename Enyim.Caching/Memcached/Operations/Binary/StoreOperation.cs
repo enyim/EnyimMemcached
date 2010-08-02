@@ -32,6 +32,9 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			}
 
 			BinaryRequest request = new BinaryRequest(op);
+
+			request.Reserved = (ushort)this.Socket.OwnerNode.Bucket;
+
 			byte[] extra = new byte[8];
 
 			CacheItem item = this.ServerPool.Transcoder.Serialize(this.value);

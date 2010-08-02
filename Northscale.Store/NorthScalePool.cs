@@ -142,8 +142,7 @@ namespace NorthScale.Store
 				locator = new VBucketNodeLocator(vbsm.hashAlgorithm, vbsm.vBucketMap.Select(a => new VBucket(a[0], a.Skip(1).ToArray())).ToArray());
 			}
 
-			var mcNodes = (from e in endpoints
-						   select new MemcachedNode(e, this.configuration.SocketPool, auth)).ToArray();
+			var mcNodes = endpoints.Select((ip, idx) => new MemcachedNode(ip, this.configuration.SocketPool, auth) { Bucket = idx }).ToArray();
 
 			locator.Initialize(mcNodes);
 
