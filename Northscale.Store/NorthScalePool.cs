@@ -148,7 +148,7 @@ namespace NorthScale.Store
 
 				var bucketNodeMap = buckets.ToLookup(vb => epa[vb.Master]);
 
-				nodes = endpoints.Select(ip => new MemcachedNode(ip, this.configuration.SocketPool, auth) { Bucket = Array.IndexOf(buckets, bucketNodeMap[ip].First()) }).ToArray();
+				nodes = endpoints.Select(ip => new MemcachedNode(ip, this.configuration.SocketPool, auth) { Bucket = Array.IndexOf(buckets, bucketNodeMap[ip].FirstOrDefault()) }).ToArray();
 			}
 
 			locator.Initialize(nodes);
