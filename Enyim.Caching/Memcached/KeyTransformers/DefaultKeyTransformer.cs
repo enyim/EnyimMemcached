@@ -19,7 +19,7 @@ namespace Enyim.Caching.Memcached
 		public override string Transform(string key)
 		{
 			if (key.IndexOfAny(ForbiddenChars) > -1)
-				throw new ArgumentException("Keys cannot contain the chars 0x00-0x02f and space.");
+				throw new ArgumentException("Keys cannot contain the chars 0x00-0x20 and space.");
 
 			return key;
 		}
