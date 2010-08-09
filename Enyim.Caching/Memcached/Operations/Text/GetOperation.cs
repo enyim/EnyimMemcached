@@ -33,6 +33,16 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 			return true;
 		}
+
+		protected override System.Collections.Generic.IList<System.ArraySegment<byte>> GetBuffer()
+		{
+			throw new System.NotImplementedException();
+		}
+
+		protected override bool ReadResponse(PooledSocket socket)
+		{
+			throw new System.NotImplementedException();
+		}
 	}
 }
 

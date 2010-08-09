@@ -119,6 +119,16 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		{
 			get { return this.casValues; }
 		}
+
+		protected override IList<ArraySegment<byte>> GetBuffer()
+		{
+			throw new NotImplementedException();
+		}
+
+		protected override bool ReadResponse(PooledSocket socket)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }
 

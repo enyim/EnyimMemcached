@@ -4,31 +4,39 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
-	internal class ConcatenationOperation : ItemOperation
+	internal class ConcatenationOperation : ItemOperation2, IConcatOperation
 	{
 		private ArraySegment<byte> data;
 		private ConcatenationMode mode;
 
-		public ConcatenationOperation(IServerPool pool, ConcatenationMode mode, string key, ArraySegment<byte> data)
-			: base(pool, key)
+		public ConcatenationOperation(ConcatenationMode mode, string key, ArraySegment<byte> data)
+			: base(key)
 		{
 			this.data = data;
 			this.mode = mode;
 		}
 
-		protected override bool ExecuteAction()
+		protected override IList<ArraySegment<byte>> GetBuffer()
 		{
-			PooledSocket socket = this.Socket;
-			if (socket == null) return false;
+			var request = new BinaryRequest((OpCode)this.mode)
+			{
+				Key = this.Key,
+				Data = this.data
+			};
 
-			BinaryRequest request = new BinaryRequest(this.mode == ConcatenationMode.Append ? OpCode.Append : OpCode.Prepend);
-			request.Key = this.Key;
-			request.Data = this.data;
+			return request.CreateBuffer();
+		}
 
-			request.Write(socket);
+		protected override bool ReadResponse(PooledSocket socket)
+		{
+			var response = new BinaryResponse();
 
-			BinaryResponse response = new BinaryResponse();
 			return response.Read(socket);
+		}
+
+		ConcatenationMode IConcatOperation.Mode
+		{
+			get { return this.mode; }
 		}
 	}
 }

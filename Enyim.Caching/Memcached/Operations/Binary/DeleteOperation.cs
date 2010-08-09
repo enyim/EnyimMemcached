@@ -1,20 +1,23 @@
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
-	internal class DeleteOperation : ItemOperation
+	internal class DeleteOperation : ItemOperation2, IDeleteOperation
 	{
-		public DeleteOperation(IServerPool pool, string key) : base(pool, key) { }
+		public DeleteOperation(string key) : base(key) { }
 
-		protected override bool ExecuteAction()
+		protected override System.Collections.Generic.IList<System.ArraySegment<byte>> GetBuffer()
 		{
-			PooledSocket socket = this.Socket;
-			if (socket == null) return false;
+			var request = new BinaryRequest(OpCode.Delete)
+			{
+				Key = this.Key
+			};
 
-			BinaryRequest request = new BinaryRequest(OpCode.Delete);
-			request.Key = this.HashedKey;
-			request.Write(socket);
+			return request.CreateBuffer();
+		}
 
-			BinaryResponse response = new BinaryResponse();
+		protected override bool ReadResponse(PooledSocket socket)
+		{
+			var response = new BinaryResponse();
 
 			return response.Read(socket);
 		}

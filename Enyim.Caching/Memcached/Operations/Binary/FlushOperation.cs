@@ -3,31 +3,22 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
-	internal class FlushOperation : Operation
+	internal class FlushOperation : Operation, IFlushOperation
 	{
-		public FlushOperation(IServerPool pool) : base(pool) { }
+		public FlushOperation() { }
 
-		protected override bool ExecuteAction()
+		protected override IList<ArraySegment<byte>> GetBuffer()
 		{
-			IList<ArraySegment<byte>> request = null;
+			var request = new BinaryRequest(OpCode.Flush);
 
-			foreach (IMemcachedNode server in this.ServerPool.GetServers())
-			{
-				if (!server.IsAlive) continue;
+			return request.CreateBuffer();
+		}
 
-				if (request == null)
-				{
-					BinaryRequest bq = new BinaryRequest(OpCode.FlushQ);
-					request = bq.CreateBuffer();
-				}
+		protected override bool ReadResponse(PooledSocket socket)
+		{
+			var response = new BinaryResponse();
 
-				using (PooledSocket socket = server.Acquire())
-				{
-					if (socket != null)						socket.Write(request);
-				}
-			}
-
-			return true;
+			return response.Read(socket);
 		}
 	}
 }

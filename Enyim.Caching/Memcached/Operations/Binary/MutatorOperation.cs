@@ -2,7 +2,7 @@ using System;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
-	internal class MutatorOperation : ItemOperation
+	internal class MutatorOperation : ItemOperation2, IMutatorOperation
 	{
 		private ulong defaultValue;
 		private ulong delta;
@@ -10,10 +10,10 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		private MutationMode mode;
 		private ulong result;
 
-		public MutatorOperation(IServerPool pool, MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
-			: base(pool, key)
+		public MutatorOperation(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+			: base(key)
 		{
-			if (delta < 0) throw new ArgumentOutOfRangeException("delta", "delta must be >= 1");
+			if (delta < 0) throw new ArgumentOutOfRangeException("delta", "delta must be >= 0");
 
 			this.defaultValue = defaultValue;
 			this.delta = delta;
@@ -36,26 +36,26 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			request.Extra = new ArraySegment<byte>(extra);
 		}
 
-
-		protected override bool ExecuteAction()
+		protected override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
 		{
-			PooledSocket socket = this.Socket;
-			if (socket == null) return false;
-
-			BinaryRequest request = new BinaryRequest(this.mode == MutationMode.Increment ? OpCode.Increment : OpCode.Decrement);
-			request.Key = this.HashedKey;
+			var request = new BinaryRequest((OpCode)this.mode);
+			request.Key = this.Key;
 
 			this.UpdateExtra(request);
 
-			request.Write(socket);
+			return request.CreateBuffer();
+		}
 
-			BinaryResponse response = new BinaryResponse();
-			bool retval = response.Read(socket);
+		protected override bool ReadResponse(PooledSocket socket)
+		{
+			var response = new BinaryResponse();
+			var retval = response.Read(socket);
+
 			if (retval)
 			{
-				ArraySegment<byte> data = response.Data;
+				var data = response.Data;
 				if (data.Count != 8)
-					throw new InvalidOperationException("result must be 8 bytes, received: " + data.Count);
+					throw new InvalidOperationException("result must be 8 bytes long, received: " + data.Count);
 
 				this.result = BinaryConverter.DecodeUInt64(data.Array, data.Offset);
 			}
@@ -63,7 +63,12 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			return retval;
 		}
 
-		public ulong Result
+		MutationMode IMutatorOperation.Mode
+		{
+			get { return this.mode; }
+		}
+
+		ulong IMutatorOperation.Result
 		{
 			get { return this.result; }
 		}

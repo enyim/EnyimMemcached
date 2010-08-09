@@ -15,6 +15,7 @@ namespace Enyim.Caching.Memcached
 	[DebuggerDisplay("{{MemcachedNode [ Address: {EndPoint}, IsAlive = {IsAlive} ]}}")]
 	public class MemcachedNode : IMemcachedNode
 	{
+		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MemcachedNode));
 		private static readonly object SyncRoot = new Object();
 
 		private bool isDisposed;
@@ -219,19 +220,27 @@ namespace Enyim.Caching.Memcached
 
 			private PooledSocket CreateSocket()
 			{
-				PooledSocket retval = new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, this.ReleaseSocket);
-				retval.OwnerNode = this.ownerNode;
+				var ps = this.ownerNode.CreateSocket();
+				ps.CleanupCallback = this.ReleaseSocket;
 
-				if (this.ownerNode.authenticator != null)
-					if (!this.ownerNode.authenticator.Authenticate(retval))
-					{
-						if (log.IsErrorEnabled) log.Error("Authentication failed: " + this.endPoint);
-
-						throw new SecurityException("auth failed: " + this.endPoint);
-					}
-
-				return retval;
+				return ps;
 			}
+
+			//private PooledSocket CreateSocket()
+			//{
+			//    PooledSocket retval = new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, this.ReleaseSocket);
+			//    retval.OwnerNode = this.ownerNode;
+
+			//    if (this.ownerNode.authenticator != null)
+			//        if (!this.ownerNode.authenticator.Authenticate(retval))
+			//        {
+			//            if (log.IsErrorEnabled) log.Error("Authentication failed: " + this.endPoint);
+
+			//            throw new SecurityException("auth failed: " + this.endPoint);
+			//        }
+
+			//    return retval;
+			//}
 
 			public bool IsAlive
 			{
@@ -407,7 +416,7 @@ namespace Enyim.Caching.Memcached
 							{
 								try
 								{
-									ps.OwnerNode = null;
+									//ps.OwnerNode = null;
 									ps.Destroy();
 								}
 								catch { }
@@ -497,7 +506,244 @@ namespace Enyim.Caching.Memcached
 		//    }
 		//}
 		#endregion
+
+		protected internal virtual PooledSocket CreateSocket()
+		{
+			PooledSocket retval = new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout);
+
+			if (this.authenticator != null)
+				if (!this.authenticator.Authenticate(retval))
+				{
+					if (log.IsErrorEnabled) log.Error("Authentication failed: " + this.endPoint);
+
+					throw new SecurityException("auth failed: " + this.endPoint);
+				}
+
+			return retval;
+		}
+
+		public virtual bool Execute(IOperation op)
+		{
+			using (var ps = this.Acquire())
+			{
+				ps.Write(op.GetBuffer());
+
+				return op.ReadResponse(ps);
+			}
+		}
+
+		#region temp async
+		/*
+		class Pair<TFirst, TSecond>
+		{
+			public Pair(TFirst first, TSecond second)
+			{
+				this.First = first;
+				this.Second = second;
+			}
+
+			public readonly TFirst First;
+			public readonly TSecond Second;
+		}
+
+		public IAsyncResult BeginExecute(IOperation op)
+		{
+			var req = op.GetRequest();
+			var ps = this.Acquire();
+
+			var retval = new IAR(null)
+			{
+				PS = ps,
+				Request = req
+			};
+
+			ps.BeginWrite(req.GetBuffer(), PS_BeginWriteCallback, retval);
+
+			return retval;
+		}
+
+		private static void PS_BeginWriteCallback(IAsyncResult result)
+		{
+			var iar = (IAR)result.AsyncState;
+
+			iar.PS.EndWrite(result);
+			iar.Request.BeginReadResponse(iar.PS, Request_BeginReadResponseCallback, iar);
+		}
+
+		private static void Request_BeginReadResponseCallback(IAsyncResult result)
+		{
+			var iar = (IAR)result.AsyncState;
+
+			iar.Success = iar.Request.EndReadResponse(result);
+			iar.Complete();
+		}
+
+		public bool EndExecute(IAsyncResult result)
+		{
+			using (var iar = (IAR)result)
+			using (iar.PS)
+			{
+				if (!result.IsCompleted)
+					result.AsyncWaitHandle.WaitOne();
+
+				return iar.Success;
+			}
+		}
+
+		#region IAR
+		class IAR : IAsyncResult, IDisposable
+		{
+			private object state;
+			private object SyncLock;
+			private ManualResetEvent mre;
+			private bool isCompleted;
+
+			public PooledSocket PS { get; set; }
+			public IRequest Request { get; set; }
+
+			public IAR(object state)
+			{
+				this.state = state;
+				this.SyncLock = new Object();
+			}
+
+			object IAsyncResult.AsyncState
+			{
+				get { return this.state; }
+			}
+
+			WaitHandle IAsyncResult.AsyncWaitHandle
+			{
+				get
+				{
+					if (this.mre == null)
+						lock (this.SyncLock)
+							if (this.mre == null)
+								this.mre = new ManualResetEvent(this.isCompleted);
+
+					return this.mre;
+				}
+			}
+
+			bool IAsyncResult.CompletedSynchronously
+			{
+				get { return false; }
+			}
+
+			bool IAsyncResult.IsCompleted
+			{
+				get { return this.isCompleted; }
+			}
+
+			internal void Complete()
+			{
+				this.isCompleted = true;
+
+				lock (this.SyncLock)
+					if (this.mre != null)
+						mre.Set();
+			}
+
+			public bool Success { get; set; }
+
+			void IDisposable.Dispose()
+			{
+				lock (SyncLock)
+					if (this.mre != null)
+					{
+						((IDisposable)this.mre).Dispose();
+						this.mre = null;
+					}
+			}
+		}
+		#endregion
+		*/
+		#endregion
+
+		#region IMemcachedNode Members
+
+		IPEndPoint IMemcachedNode.EndPoint
+		{
+			get { throw new NotImplementedException(); }
+		}
+
+		bool IMemcachedNode.IsAlive
+		{
+			get { throw new NotImplementedException(); }
+		}
+
+		bool IMemcachedNode.Ping()
+		{
+			throw new NotImplementedException();
+		}
+
+		PooledSocket IMemcachedNode.Acquire()
+		{
+			throw new NotImplementedException();
+		}
+
+		int IMemcachedNode.Bucket
+		{
+			get { throw new NotImplementedException(); }
+		}
+
+
+		#endregion
+
+		#region IMemcachedNode Members
+
+
+		bool IMemcachedNode.Execute(IOperation op)
+		{
+			throw new NotImplementedException();
+		}
+
+		IAsyncResult IMemcachedNode.BeginExecute(IOperation op, AsyncCallback callback, object state)
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
+
+		#region IMemcachedNode Members
+
+
+		bool IMemcachedNode.EndExecute(IAsyncResult result)
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
 	}
+
+
+	public class BinaryNode : MemcachedNode
+	{
+		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(BinaryNode));
+
+		ISaslAuthenticationProvider ap;
+
+		public BinaryNode(IPEndPoint endpoint, ISocketPoolConfiguration config, ISaslAuthenticationProvider ap)
+			: base(endpoint, config, null)
+		{
+			this.ap = ap;
+		}
+
+		protected internal override PooledSocket CreateSocket()
+		{
+			var retval = base.CreateSocket();
+
+			if (this.ap != null && !Enyim.Caching.Memcached.Operations.Binary.BinaryAuthenticator.Authenticate(retval, this.ap))
+			{
+				if (log.IsErrorEnabled) log.Error("Authentication failed: " + this.EndPoint);
+
+				throw new SecurityException("auth failed: " + this.EndPoint);
+			}
+
+			return retval;
+		}
+	}
+
 }
 
 #region [ License information          ]

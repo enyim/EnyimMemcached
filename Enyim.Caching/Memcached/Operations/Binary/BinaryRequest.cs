@@ -18,12 +18,16 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		public BinaryRequest(OpCode operation)
 		{
 			this.Operation = operation;
-
 			// session id
 			this.CorrelationId = Interlocked.Increment(ref InstanceCounter);
 		}
 
 		public unsafe IList<ArraySegment<byte>> CreateBuffer()
+		{
+			return CreateBuffer(null);
+		}
+
+		public unsafe IList<ArraySegment<byte>> CreateBuffer(IList<ArraySegment<byte>> appendTo)
 		{
 			// key size 
 			byte[] keyData = BinaryConverter.EncodeKey(this.Key);
@@ -80,7 +84,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				// CAS
 				if (cas > 0)
 				{
-					// skip this if no session id is specfied
+					// skip this if no cas is specfied
 					buffer[0x10] = (byte)(cas >> 56);
 					buffer[0x11] = (byte)(cas >> 48);
 					buffer[0x12] = (byte)(cas >> 40);
@@ -92,13 +96,13 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				}
 			}
 
-			List<ArraySegment<byte>> retval = new List<ArraySegment<byte>>(4);
+			var retval = appendTo ?? new List<ArraySegment<byte>>(4);
 
 			retval.Add(new ArraySegment<byte>(header));
 
 			if (extraLength > 0) retval.Add(extras);
 
-			// NOTE key must be already encoded and should not contain any invalid characters whihc are not allowed by the protocol
+			// NOTE key must be already encoded and should not contain any invalid characters which are not allowed by the protocol
 			if (keyLength > 0) retval.Add(new ArraySegment<byte>(keyData));
 			if (bodyLength > 0) retval.Add(body);
 

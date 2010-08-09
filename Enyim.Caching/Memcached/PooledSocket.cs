@@ -16,16 +16,13 @@ namespace Enyim.Caching.Memcached
 
 		private bool isAlive = true;
 		private Socket socket;
-		private Action<PooledSocket> cleanupCallback;
 		private IPEndPoint endpoint;
 
 		private BufferedStream inputStream;
-		private IMemcachedNode ownerNode;
 
-		internal PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, Action<PooledSocket> cleanupCallback)
+		public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
 		{
 			this.endpoint = endpoint;
-			this.cleanupCallback = cleanupCallback;
 
 			this.socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
@@ -39,11 +36,7 @@ namespace Enyim.Caching.Memcached
 			this.inputStream = new BufferedStream(new BasicNetworkStream(this.socket));
 		}
 
-		public IMemcachedNode OwnerNode
-		{
-			get { return this.ownerNode; }
-			internal set { this.ownerNode = value; }
-		}
+		public Action<PooledSocket> CleanupCallback { get; set; }
 
 		public int Available
 		{
@@ -117,11 +110,11 @@ namespace Enyim.Caching.Memcached
 
 				this.inputStream = null;
 				this.socket = null;
-				this.cleanupCallback = null;
+				this.CleanupCallback = null;
 			}
 			else
 			{
-				Action<PooledSocket> cc = this.cleanupCallback;
+				Action<PooledSocket> cc = this.CleanupCallback;
 
 				if (cc != null)
 				{
@@ -195,11 +188,6 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public void Write(ArraySegment<byte> data)
-		{
-			this.Write(data.Array, data.Offset, data.Count);
-		}
-
 		public void Write(byte[] data, int offset, int length)
 		{
 			this.CheckDisposed();
@@ -231,6 +219,61 @@ namespace Enyim.Caching.Memcached
 				ThrowHelper.ThrowSocketWriteError(this.endpoint, status);
 			}
 		}
+
+		public IAsyncResult BeginWrite(IList<ArraySegment<byte>> buffers, AsyncCallback callback, object state)
+		{
+			this.CheckDisposed();
+
+			return this.socket.BeginSend(buffers, SocketFlags.None, callback, state);
+		}
+
+		public void EndWrite(IAsyncResult result)
+		{
+			SocketError status;
+
+			this.socket.EndSend(result, out status);
+
+			if (status != SocketError.Success)
+			{
+				this.isAlive = false;
+
+				ThrowHelper.ThrowSocketWriteError(this.endpoint, status);
+			}
+		}
+
+		//public IAsyncResult BeginRead(byte[] buffer, int offset, int size, AsyncCallback callback, object state)
+		//{
+		//    this.inputStream.BEG
+		//    return null;
+
+		//    //return this.socket.BeginReceive(buffer, offset, size, callback, state);
+
+		//    //            this.CheckDisposed();
+
+		//    //int read = 0;
+		//    //int shouldRead = count;
+
+		//    //while (read < count)
+		//    //{
+		//    //    try
+		//    //    {
+		//    //        int currentRead = this.inputStream.Read(buffer, offset, shouldRead);
+		//    //        if (currentRead < 1)
+		//    //            continue;
+
+		//    //        read += currentRead;
+		//    //        offset += currentRead;
+		//    //        shouldRead -= currentRead;
+		//    //    }
+		//    //    catch (IOException)
+		//    //    {
+		//    //        this.isAlive = false;
+		//    //        throw;
+		//    //    }
+		//    //}
+
+		//}
+
 
 		#region [ BasicNetworkStream           ]
 		private class BasicNetworkStream : Stream
@@ -270,6 +313,31 @@ namespace Enyim.Caching.Memcached
 			{
 				get { throw new NotSupportedException(); }
 				set { throw new NotSupportedException(); }
+			}
+
+			public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+			{
+				SocketError errorCode;
+
+				var retval = this.socket.BeginReceive(buffer, offset, count, SocketFlags.None, out errorCode, callback, state);
+
+				if (errorCode == SocketError.Success)
+					return retval;
+
+				throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode));
+			}
+
+			public override int EndRead(IAsyncResult asyncResult)
+			{
+				SocketError errorCode;
+
+				var retval = this.socket.EndReceive(asyncResult, out errorCode);
+
+				// actually "0 bytes read" could mean an error as well
+				if (errorCode == SocketError.Success && retval > 0)
+					return retval;
+
+				throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode));
 			}
 
 			public override int Read(byte[] buffer, int offset, int count)

@@ -35,6 +35,16 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		{
 			get { return this.result; }
 		}
+
+		protected override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
+		{
+			throw new NotImplementedException();
+		}
+
+		protected override bool ReadResponse(PooledSocket socket)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }
 

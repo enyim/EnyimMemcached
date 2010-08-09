@@ -6,16 +6,23 @@ namespace Enyim.Caching.Memcached.Operations
 	/// <summary>
 	/// Base class for implementing operations.
 	/// </summary>
-	internal abstract class Operation : IDisposable
+	public abstract class Operation : IDisposable, IOperation
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(Operation));
 
 		private bool isDisposed;
 		private IServerPool serverPool;
 
+		protected Operation() { }
+
 		protected Operation(IServerPool serverPool)
 		{
 			this.serverPool = serverPool;
+		}
+
+		public bool Execute(PooledSocket ps)
+		{
+			return false;
 		}
 
 		public bool Execute()
@@ -44,7 +51,7 @@ namespace Enyim.Caching.Memcached.Operations
 			get { return this.serverPool; }
 		}
 
-		protected abstract bool ExecuteAction();
+		protected virtual bool ExecuteAction() { return false; }
 
 		protected bool CheckDisposed(bool throwOnError)
 		{
@@ -99,6 +106,19 @@ namespace Enyim.Caching.Memcached.Operations
 			this.Dispose();
 		}
 		#endregion
+
+		protected abstract IList<ArraySegment<byte>> GetBuffer();
+		protected abstract bool ReadResponse(PooledSocket socket);
+
+		IList<ArraySegment<byte>> IOperation.GetBuffer()
+		{
+			return this.GetBuffer();
+		}
+
+		bool IOperation.ReadResponse(PooledSocket socket)
+		{
+			return this.ReadResponse(socket);
+		}
 	}
 }
 

@@ -81,6 +81,16 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 			return String.Compare(TextSocketHelper.ReadResponse(socket), "STORED", StringComparison.Ordinal) == 0;
 		}
+
+		protected override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
+		{
+			throw new NotImplementedException();
+		}
+
+		protected override bool ReadResponse(PooledSocket socket)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }
 

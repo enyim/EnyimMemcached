@@ -45,7 +45,7 @@ namespace Enyim.Caching.Memcached
 
 			foreach (IPEndPoint ip in this.configuration.Servers)
 			{
-				MemcachedNode node = new MemcachedNode(ip, this.configuration.SocketPool, this.Authenticator);
+				var node = this.CreateNode(ip);
 
 				this.workingServers.Add(node);
 			}
@@ -102,7 +102,7 @@ namespace Enyim.Caching.Memcached
 			return node;
 		}
 
-		public PooledSocket Acquire(string itemKey)
+		public virtual PooledSocket Acquire(string itemKey)
 		{
 			IMemcachedNode server = this.LocateNode(itemKey);
 
@@ -136,6 +136,11 @@ namespace Enyim.Caching.Memcached
 		{
 			try { ((IDisposable)this).Dispose(); }
 			catch { }
+		}
+
+		protected virtual IMemcachedNode CreateNode(IPEndPoint endpoint)
+		{
+			return new MemcachedNode(endpoint, this.configuration.SocketPool, this.Authenticator);
 		}
 
 		#region [ IServerPool                  ]

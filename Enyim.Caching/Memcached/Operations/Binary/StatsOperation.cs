@@ -5,60 +5,46 @@ using System.Net;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
-	internal class StatsOperation : Operation
+	internal class StatsOperation : Operation, IStatsOperation
 	{
-		private log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
+		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
 
-		private ServerStats results;
+		private Dictionary<string, string> result;
 
-		public StatsOperation(IServerPool pool) : base(pool) { }
+		public StatsOperation() { }
 
-		protected override bool ExecuteAction()
+		protected override IList<ArraySegment<byte>> GetBuffer()
 		{
-			Dictionary<IPEndPoint, Dictionary<string, string>> retval = new Dictionary<IPEndPoint, Dictionary<string, string>>();
+			var request = new BinaryRequest(OpCode.Stat);
 
-			BinaryRequest request = new BinaryRequest(OpCode.Stat);
-			IList<ArraySegment<byte>> requestData = request.CreateBuffer();
-
-			foreach (IMemcachedNode server in this.ServerPool.GetServers())
-			{
-				using (PooledSocket socket = server.Acquire())
-				{
-					if (socket == null || !socket.IsAlive) continue;
-
-					try
-					{
-						socket.Write(requestData);
-
-						BinaryResponse response = new BinaryResponse();
-						Dictionary<string, string> serverData = new Dictionary<string, string>(StringComparer.Ordinal);
-
-						while (response.Read(socket) && response.KeyLength > 0)
-						{
-							ArraySegment<byte> data = response.Data;
-
-							string key = BinaryConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
-							string value = BinaryConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
-							serverData[key] = value;
-						}
-
-						retval[server.EndPoint] = serverData;
-					}
-					catch (Exception e)
-					{
-						log.Error(e);
-					}
-				}
-			}
-
-			this.results = new ServerStats(retval);
-
-			return true;
+			return request.CreateBuffer();
 		}
 
-		public ServerStats Results
+		protected override bool ReadResponse(PooledSocket socket)
 		{
-			get { return this.results; }
+			var response = new BinaryResponse();
+			var serverData = new Dictionary<string, string>();
+			var retval = false;
+
+			while (response.Read(socket) && response.KeyLength > 0)
+			{
+				retval = true;
+
+				var data = response.Data;
+				var key = BinaryConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
+				var value = BinaryConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
+
+				serverData[key] = value;
+			}
+
+			this.result = serverData;
+
+			return retval;
+		}
+
+		Dictionary<string, string> IStatsOperation.Result
+		{
+			get { return this.result; }
 		}
 	}
 }

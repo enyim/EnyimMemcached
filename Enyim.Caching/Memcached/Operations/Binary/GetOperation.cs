@@ -1,25 +1,30 @@
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
-	internal class GetOperation : ItemOperation
+	internal class GetOperation : ItemOperation2, IGetOperation
 	{
-		public GetOperation(IServerPool pool, string key) : base(pool, key) { }
+		private CacheItem result;
 
-		protected override bool ExecuteAction()
+		public GetOperation(string key) : base(key) { }
+
+		protected override System.Collections.Generic.IList<System.ArraySegment<byte>> GetBuffer()
 		{
-			PooledSocket socket = this.Socket;
-			if (socket == null) return false;
+			var request = new BinaryRequest(OpCode.Get)
+			{
+				Key = this.Key
+			};
 
-			BinaryRequest request = new BinaryRequest(OpCode.Get);
-			request.Key = this.HashedKey;
-			request.Write(socket);
+			return request.CreateBuffer();
+		}
 
-			BinaryResponse response = new BinaryResponse();
+		protected override bool ReadResponse(PooledSocket socket)
+		{
+			var response = new BinaryResponse();
 
 			if (response.Read(socket))
 			{
 				int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
-				this.result = this.ServerPool.Transcoder.Deserialize(new CacheItem((ushort)flags, response.Data));
+				this.result = new CacheItem((ushort)flags, response.Data);
 
 				return true;
 			}
@@ -27,13 +32,10 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			return false;
 		}
 
-		private object result;
-
-		public object Result
+		CacheItem IGetOperation.Result
 		{
 			get { return this.result; }
 		}
-
 	}
 }
 

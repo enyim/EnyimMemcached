@@ -20,15 +20,20 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 		public bool Authenticate(PooledSocket socket)
 		{
+			return Authenticate(socket, this.provider);
+		}
+
+		public static bool Authenticate(PooledSocket socket, ISaslAuthenticationProvider provider)
+		{
 			if (log.IsDebugEnabled)
-				log.DebugFormat("Authenticating socket {0} using provider {1}", socket.InstanceId, this.provider.GetType());
+				log.DebugFormat("Authenticating socket {0} using provider {1}", socket.InstanceId, provider.GetType());
 
 			// create a Sasl Start command
 			BinaryRequest request = new BinaryRequest(OpCode.SaslStart);
-			request.Key = this.provider.Type;
+			request.Key = provider.Type;
 
 			// set the auth data
-			request.Data = new ArraySegment<byte>(this.provider.Authenticate());
+			request.Data = new ArraySegment<byte>(provider.Authenticate());
 			request.Write(socket);
 
 			// read the response
@@ -41,11 +46,11 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				if (response.StatusCode == 0x21)
 				{
 					request = new BinaryRequest(OpCode.SaslStep);
-					request.Key = this.provider.Type;
+					request.Key = provider.Type;
 
 					// set the auth data
 					// we're cutting a corner here with the Data.Array, it always contains the full body
-					request.Data = new ArraySegment<byte>(this.provider.Continue(response.Data.Array));
+					request.Data = new ArraySegment<byte>(provider.Continue(response.Data.Array));
 					request.Write(socket);
 				}
 				else

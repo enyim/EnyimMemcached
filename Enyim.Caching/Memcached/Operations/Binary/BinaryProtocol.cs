@@ -8,6 +8,10 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 	/// </summary>
 	internal class BinaryProtocol : IProtocolImplementation
 	{
+		public BinaryProtocol(IServerPool pool) { }
+
+		#region
+		/*
 		private IServerPool pool;
 
 		public BinaryProtocol(IServerPool pool)
@@ -132,6 +136,70 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			{
 				return mg.Execute() ? mg.Result : new Dictionary<string, object>();
 			}
+		}
+
+		#endregion
+		*/
+		#endregion
+		#region IProtocolImplementation Members
+
+		object IProtocolImplementation.Get(string key)
+		{
+			throw new NotImplementedException();
+		}
+
+		bool IProtocolImplementation.TryGet(string key, out object value)
+		{
+			throw new NotImplementedException();
+		}
+
+		IDictionary<string, object> IProtocolImplementation.Get(IEnumerable<string> keys)
+		{
+			throw new NotImplementedException();
+		}
+
+		bool IProtocolImplementation.Store(StoreMode mode, string key, object value, uint expiration)
+		{
+			throw new NotImplementedException();
+		}
+
+		bool IProtocolImplementation.Remove(string key)
+		{
+			throw new NotImplementedException();
+		}
+
+		ulong IProtocolImplementation.Mutate(MutationMode mode, string key, ulong startValue, ulong step, uint expiration)
+		{
+			throw new NotImplementedException();
+		}
+
+		bool IProtocolImplementation.Concatenate(ConcatenationMode mode, string key, ArraySegment<byte> data)
+		{
+			throw new NotImplementedException();
+		}
+
+		void IProtocolImplementation.FlushAll()
+		{
+			throw new NotImplementedException();
+		}
+
+		ServerStats IProtocolImplementation.Stats()
+		{
+			throw new NotImplementedException();
+		}
+
+		IAuthenticator IProtocolImplementation.CreateAuthenticator(ISaslAuthenticationProvider provider)
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
+
+		#region IDisposable Members
+
+		void IDisposable.Dispose()
+		{
+			throw new NotImplementedException();
 		}
 
 		#endregion

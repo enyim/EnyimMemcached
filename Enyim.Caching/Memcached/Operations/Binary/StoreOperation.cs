@@ -3,59 +3,50 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
-	internal class StoreOperation : ItemOperation
+	internal class StoreOperation : ItemOperation2, IStoreOperation
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
 
-		private StoreCommand mode;
-		private object value;
+		private StoreMode mode;
+		private CacheItem value;
 		private uint expires;
 
-		public StoreOperation(IServerPool pool, StoreCommand mode, string key, object value, uint expires) :
-			base(pool, key)
+		public StoreOperation(StoreMode mode, string key, CacheItem value, uint expires) :
+			base(key)
 		{
 			this.mode = mode;
 			this.value = value;
 			this.expires = expires;
 		}
 
-		protected override bool ExecuteAction()
+		protected override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
 		{
-			PooledSocket socket = this.Socket;
-			if (socket == null) return false;
-
 			OpCode op;
 			switch (this.mode)
 			{
-				case StoreCommand.Add: op = OpCode.Add; break;
-				case StoreCommand.Set: op = OpCode.Set; break;
-				case StoreCommand.Replace: op = OpCode.Replace; break;
+				case StoreMode.Add: op = OpCode.Add; break;
+				case StoreMode.Set: op = OpCode.Set; break;
+				case StoreMode.Replace: op = OpCode.Replace; break;
 				default: throw new ArgumentOutOfRangeException("mode", mode + " is not supported");
 			}
 
-			BinaryRequest request = new BinaryRequest(op);
+			var request = new BinaryRequest(op);
+			var extra = new byte[8];
 
-			request.Reserved = (ushort)this.Socket.OwnerNode.Bucket;
-
-			byte[] extra = new byte[8];
-
-			CacheItem item = this.ServerPool.Transcoder.Serialize(this.value);
-
-			BinaryConverter.EncodeUInt32((uint)item.Flags, extra, 0);
+			BinaryConverter.EncodeUInt32((uint)this.value.Flags, extra, 0);
 			BinaryConverter.EncodeUInt32(expires, extra, 4);
 
 			request.Extra = new ArraySegment<byte>(extra);
-			request.Data = item.Data;
-			request.Key = this.HashedKey;
+			request.Data = this.value.Data;
+			request.Key = this.Key;
 
-			request.Write(socket);
+			return request.CreateBuffer();
+		}
 
-			// TEST
-			// no response means success for the quiet commands
-			// if (socket.Available == 0) return true;
 
-			BinaryResponse response = new BinaryResponse();
-
+		protected override bool ReadResponse(PooledSocket socket)
+		{
+			var response = new BinaryResponse();
 			var retval = response.Read(socket);
 
 			if (!retval)
@@ -63,6 +54,11 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 					log.DebugFormat("Store failed for key '{0}'. Reason: {1}", this.Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
 
 			return retval;
+		}
+
+		StoreMode IStoreOperation.Mode
+		{
+			get { return this.mode; }
 		}
 	}
 }

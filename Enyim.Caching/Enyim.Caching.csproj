@@ -91,11 +91,13 @@
     <Compile Include="Configuration\IVBucketConfiguration.cs" />
     <Compile Include="Configuration\JsonVBucketConfig.cs" />
     <Compile Include="Configuration\SocketPoolConfiguration.cs" />
+    <Compile Include="MemcachedClient2.cs" />
     <Compile Include="HashkitCrc32.cs" />
     <Compile Include="HashkitMurmur.cs" />
     <Compile Include="HashkitOneAtATime.cs" />
     <Compile Include="IUIntHashAlgorithm.cs" />
     <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs" />
+    <Compile Include="Memcached\Operations\Binary\BinaryOperationFactory.cs" />
     <Compile Include="Memcached\VBucketNodeLocatorFactory.cs" />
     <Compile Include="Memcached\IProviderFactory.cs" />
     <Compile Include="Memcached\IAuthenticator.cs" />
@@ -170,7 +172,7 @@
     <Compile Include="Memcached\Transcoders\ITranscoder.cs" />
     <Compile Include="Memcached\VBucketNodeLocator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Memcached\ServerPool.cs" />
+    <Compile Include="Memcached\DefaultServerPool.cs" />
     <Compile Include="Memcached\StoreMode.cs" />
     <Compile Include="TigerHash.cs" />
     <Compile Include="UIntEqualityComparer.cs" />

@@ -105,7 +105,8 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			// send the whole command with only one Write
 			// since Nagle is disabled on the socket this is more efficient than
 			// Write(command), Write("\r\n")
-			socket.Write(TextSocketHelper.GetCommandBuffer(value));
+			var b = TextSocketHelper.GetCommandBuffer(value);
+			socket.Write(b.Array, b.Offset, b.Count);
 		}
 
 		/// <summary>
