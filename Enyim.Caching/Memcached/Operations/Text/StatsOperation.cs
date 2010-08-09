@@ -4,92 +4,62 @@ using System.Net;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal sealed class StatsOperation : Operation
+	internal sealed class StatsOperation : Operation, IStatsOperation
 	{
 		private log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
 
-		private ServerStats results;
+		private Dictionary<string, string> result;
 
-		public StatsOperation(IServerPool pool) : base(pool) { }
-
-		public ServerStats Results
-		{
-			get { return this.results; }
-		}
-
-		protected override bool ExecuteAction()
-		{
-			Dictionary<IPEndPoint, Dictionary<string, string>> retval = new Dictionary<IPEndPoint, Dictionary<string, string>>();
-
-			foreach (IMemcachedNode server in this.ServerPool.GetServers())
-			{
-				if (!server.IsAlive) continue;
-
-				using (PooledSocket socket = server.Acquire())
-				{
-					if (socket == null)
-						continue;
-
-					try
-					{
-						TextSocketHelper.SendCommand(socket, "stats");
-						if (!socket.IsAlive) continue;
-
-						Dictionary<string, string> serverData = new Dictionary<string, string>(StringComparer.Ordinal);
-
-						while (true)
-						{
-							string line = TextSocketHelper.ReadResponse(socket);
-
-							// stat values are terminated by END
-							if (String.Compare(line, "END", StringComparison.Ordinal) == 0)
-								break;
-
-							// expected response is STAT item_name item_value
-							if (line.Length < 6 || String.Compare(line, 0, "STAT ", 0, 5, StringComparison.Ordinal) != 0)
-							{
-								if (log.IsWarnEnabled)
-									log.Warn("Unknow response: " + line);
-
-								continue;
-							}
-
-							// get the key&value
-							string[] parts = line.Remove(0, 5).Split(' ');
-							if (parts.Length != 2)
-							{
-								if (log.IsWarnEnabled)
-									log.Warn("Unknow response: " + line);
-
-								continue;
-							}
-
-							// store the stat item
-							serverData[parts[0]] = parts[1];
-						}
-
-						retval[server.EndPoint] = serverData;
-					}
-					catch (Exception e)
-					{
-						log.Error(e);
-					}
-				}
-			}
-
-			this.results = new ServerStats(retval);
-
-			return true;
-		}
+		public StatsOperation() { }
 
 		protected override IList<ArraySegment<byte>> GetBuffer()
 		{
-			throw new NotImplementedException();
+			return TextSocketHelper.GetCommandBuffer("stats" + TextSocketHelper.CommandTerminator);
 		}
 
 		protected override bool ReadResponse(PooledSocket socket)
 		{
-			throw new NotImplementedException();
+			var serverData = new Dictionary<string, string>();
+
+			while (true)
+			{
+				string line = TextSocketHelper.ReadResponse(socket);
+
+				// stat values are terminated by END
+				if (String.Compare(line, "END", StringComparison.Ordinal) == 0)
+					break;
+
+				// expected response is STAT item_name item_value
+				if (line.Length < 6 || String.Compare(line, 0, "STAT ", 0, 5, StringComparison.Ordinal) != 0)
+				{
+					if (log.IsWarnEnabled)
+						log.Warn("Unknow response: " + line);
+
+					continue;
+				}
+
+				// get the key&value
+				string[] parts = line.Remove(0, 5).Split(' ');
+				if (parts.Length != 2)
+				{
+					if (log.IsWarnEnabled)
+						log.Warn("Unknow response: " + line);
+
+					continue;
+				}
+
+				// store the stat item
+				serverData[parts[0]] = parts[1];
+			}
+
+			this.result = serverData;
+
+			return true;
+		}
+
+		Dictionary<string, string> IStatsOperation.Result
+		{
+			get { return result; }
 		}
 	}
 }

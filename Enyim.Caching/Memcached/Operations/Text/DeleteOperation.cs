@@ -2,32 +2,20 @@ using System;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal sealed class DeleteOperation : ItemOperation
+	internal sealed class DeleteOperation : ItemOperation2, IDeleteOperation
 	{
-		internal DeleteOperation(IServerPool pool, string key)
-			: base(pool, key)
-		{
-		}
-
-		protected override bool ExecuteAction()
-		{
-			PooledSocket socket = this.Socket;
-			if (socket == null)
-				return false;
-
-			TextSocketHelper.SendCommand(socket, "delete " + this.HashedKey);
-
-			return String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0;
-		}
+		internal DeleteOperation(string key) : base(key) { }
 
 		protected override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
 		{
-			throw new NotImplementedException();
+			var command = "delete " + this.Key + TextSocketHelper.CommandTerminator;
+
+			return TextSocketHelper.GetCommandBuffer(command);
 		}
 
 		protected override bool ReadResponse(PooledSocket socket)
 		{
-			throw new NotImplementedException();
+			return String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0;
 		}
 	}
 }

@@ -1,95 +1,23 @@
 using System;
 using System.Globalization;
 using System.Text;
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal class StoreOperation : ItemOperation
+	internal class StoreOperation : StoreOperationBase, IStoreOperation
 	{
-		private static readonly ArraySegment<byte> DataTerminator = new ArraySegment<byte>(new byte[2] { (byte)'\r', (byte)'\n' });
-		private StoreCommand mode;
-		private object value;
-		private uint expires;
+		private StoreMode mode;
 
-		internal StoreOperation(IServerPool pool, StoreCommand mode, string key, object value, uint expires)
-			: base(pool, key)
+		internal StoreOperation(StoreMode mode, string key, CacheItem value, uint expires, uint cas)
+			: base((StoreCommand)mode, key, value, expires, cas)
 		{
 			this.mode = mode;
-			this.value = value;
-			this.expires = expires;
 		}
 
-		protected override bool ExecuteAction()
+		StoreMode IStoreOperation.Mode
 		{
-			PooledSocket socket = this.Socket;
-			if (socket == null || !socket.IsAlive)
-				return false;
-
-			CacheItem item = this.ServerPool.Transcoder.Serialize(this.value);
-
-			ushort flag = item.Flags;
-			ArraySegment<byte> data = item.Data;
-
-			// todo adjust the size to fit a request using a fnv hashed key
-			StringBuilder sb = new StringBuilder(128);
-
-			switch (mode)
-			{
-				case StoreCommand.Add:
-					sb.Append("add ");
-					break;
-				case StoreCommand.Replace:
-					sb.Append("replace ");
-					break;
-				case StoreCommand.Set:
-					sb.Append("set ");
-					break;
-
-				case StoreCommand.Append:
-					sb.Append("append ");
-					break;
-
-				case StoreCommand.Prepend:
-					sb.Append("prepend ");
-					break;
-
-				case StoreCommand.CheckAndSet:
-					sb.Append("cas ");
-					break;
-
-				default:
-					throw new MemcachedClientException(mode + " is not supported.");
-			}
-
-			sb.Append(this.HashedKey);
-			sb.Append(" ");
-			sb.Append(flag.ToString(CultureInfo.InvariantCulture));
-			sb.Append(" ");
-			sb.Append(expires.ToString(CultureInfo.InvariantCulture));
-			sb.Append(" ");
-			sb.Append(Convert.ToString(data.Count - data.Offset, CultureInfo.InvariantCulture));
-
-			if (mode == StoreCommand.CheckAndSet)
-			{
-				sb.Append(" ");
-				sb.Append(Convert.ToString(this.Cas, CultureInfo.InvariantCulture));
-			}
-
-			ArraySegment<byte> commandBuffer = TextSocketHelper.GetCommandBuffer(sb.ToString());
-
-			socket.Write(new ArraySegment<byte>[] { commandBuffer, data, StoreOperation.DataTerminator });
-
-			return String.Compare(TextSocketHelper.ReadResponse(socket), "STORED", StringComparison.Ordinal) == 0;
-		}
-
-		protected override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
-		{
-			throw new NotImplementedException();
-		}
-
-		protected override bool ReadResponse(PooledSocket socket)
-		{
-			throw new NotImplementedException();
+			get { return this.mode; }
 		}
 	}
 }

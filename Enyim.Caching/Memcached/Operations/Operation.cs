@@ -61,33 +61,33 @@ namespace Enyim.Caching.Memcached.Operations
 			return this.isDisposed;
 		}
 
-		/// <summary>
-		/// Maps each key in the list to a MemcachedNode
-		/// </summary>
-		/// <param name="keys"></param>
-		/// <returns></returns>
-		protected Dictionary<IMemcachedNode, List<string>> SplitKeys(IEnumerable<string> keys)
-		{
-			var retval = new Dictionary<IMemcachedNode, List<string>>(MemcachedNode.Comparer.Instance);
-			var kt = this.serverPool.KeyTransformer;
-			var locator = this.serverPool.NodeLocator;
+		///// <summary>
+		///// Maps each key in the list to a MemcachedNode
+		///// </summary>
+		///// <param name="keys"></param>
+		///// <returns></returns>
+		//protected Dictionary<IMemcachedNode, List<string>> SplitKeys(IEnumerable<string> keys)
+		//{
+		//    var retval = new Dictionary<IMemcachedNode, List<string>>(MemcachedNode.Comparer.Instance);
+		//    var kt = this.serverPool.KeyTransformer;
+		//    var locator = this.serverPool.NodeLocator;
 
-			foreach (var key in keys)
-			{
-				var node = locator.Locate(kt.Transform(key));
-				if (node != null)
-				{
-					List<string> list;
+		//    foreach (var key in keys)
+		//    {
+		//        var node = locator.Locate(kt.Transform(key));
+		//        if (node != null)
+		//        {
+		//            List<string> list;
 
-					if (!retval.TryGetValue(node, out list))
-						retval[node] = list = new List<string>();
+		//            if (!retval.TryGetValue(node, out list))
+		//                retval[node] = list = new List<string>();
 
-					list.Add(key);
-				}
-			}
+		//            list.Add(key);
+		//        }
+		//    }
 
-			return retval;
-		}
+		//    return retval;
+		//}
 
 		~Operation()
 		{

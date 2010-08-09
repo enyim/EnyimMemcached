@@ -91,13 +91,43 @@
     <Compile Include="Configuration\IVBucketConfiguration.cs" />
     <Compile Include="Configuration\JsonVBucketConfig.cs" />
     <Compile Include="Configuration\SocketPoolConfiguration.cs" />
-    <Compile Include="MemcachedClient2.cs" />
+    <Compile Include="MemcachedClient.cs" />
     <Compile Include="HashkitCrc32.cs" />
     <Compile Include="HashkitMurmur.cs" />
     <Compile Include="HashkitOneAtATime.cs" />
     <Compile Include="IUIntHashAlgorithm.cs" />
     <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs" />
     <Compile Include="Memcached\Operations\Binary\BinaryOperationFactory.cs" />
+    <Compile Include="Memcached\Operations\Text\TextOperationFactory.cs" />
+    <Compile Include="Memcached\Operations\Text\ConcateOperation.cs" />
+    <Compile Include="Memcached\Operations\Text\StoreOperationBase.cs" />
+    <Compile Include="Memcached\Operations\Text\MutatorOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Operations\Text\DeleteOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Operations\Text\FlushOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Operations\Text\GetHelper.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Operations\Text\GetOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Operations\Text\MultiGetOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Operations\Text\StatsOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Operations\Text\StoreOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Operations\Text\TextSocketHelper.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Memcached\VBucketNodeLocatorFactory.cs" />
     <Compile Include="Memcached\IProviderFactory.cs" />
     <Compile Include="Memcached\IAuthenticator.cs" />
@@ -112,8 +142,6 @@
     <Compile Include="Memcached\Operations\Binary\SaslAuthenticator.cs" />
     <Compile Include="Memcached\Operations\Binary\FlushOperation.cs" />
     <Compile Include="Memcached\Operations\Binary\StatsOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\TextProtocol.cs" />
-    <Compile Include="Memcached\Operations\Binary\BinaryProtocol.cs" />
     <Compile Include="HashCodeCombiner.cs" />
     <Compile Include="InterlockedQueue.cs" />
     <Compile Include="Memcached\CommandNotSupportedException.cs" />
@@ -136,16 +164,6 @@
     <Compile Include="Memcached\Operations\Binary\StoreOperation.cs" />
     <Compile Include="Memcached\Operations\ItemOperation.cs" />
     <Compile Include="Memcached\Operations\Operation.cs" />
-    <Compile Include="Memcached\Operations\Text\DecrementOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\DeleteOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\FlushOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\GetHelper.cs" />
-    <Compile Include="Memcached\Operations\Text\GetOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\IncrementOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\MultiGetOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\TextSocketHelper.cs" />
-    <Compile Include="Memcached\Operations\Text\StatsOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\StoreOperation.cs" />
     <Compile Include="Memcached\SingleNodeLocator.cs" />
     <Compile Include="Memcached\StatItem.cs" />
     <Compile Include="Memcached\Transcoders\DefaultTranscoder.cs" />
@@ -161,7 +179,6 @@
     <Compile Include="Memcached\DefaultNodeLocator.cs" />
     <Compile Include="Memcached\IMemcachedNodeLocator.cs" />
     <Compile Include="FnvHash.cs" />
-    <Compile Include="MemcachedClient.cs" />
     <Compile Include="Memcached\MemcachedClientException.cs" />
     <Compile Include="Configuration\MemcachedClientSection.cs" />
     <Compile Include="Memcached\MemcachedException.cs" />

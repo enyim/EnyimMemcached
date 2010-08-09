@@ -1,34 +1,25 @@
+using System;
+using System.Globalization;
+using System.Text;
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal class GetOperation : ItemOperation2, IGetOperation
+	internal class ConcateOperation : StoreOperationBase, IConcatOperation
 	{
-		private CacheItem result;
+		private ConcatenationMode mode;
 
-		internal GetOperation(string key) : base(key) { }
-
-		protected override System.Collections.Generic.IList<System.ArraySegment<byte>> GetBuffer()
+		internal ConcateOperation(ConcatenationMode mode, string key, ArraySegment<byte> data)
+			: base(mode == ConcatenationMode.Append
+					? StoreCommand.Append
+					: StoreCommand.Prepend, key, new CacheItem() { Data = data, Flags = 0 }, 0, 0)
 		{
-			var command = "get " + this.Key + TextSocketHelper.CommandTerminator;
-
-			return TextSocketHelper.GetCommandBuffer(command);
+			this.mode = mode;
 		}
 
-		protected override bool ReadResponse(PooledSocket socket)
+		ConcatenationMode IConcatOperation.Mode
 		{
-			GetResponse r = GetHelper.ReadItem(socket);
-
-			if (r == null) return false;
-
-			this.result = r.Item;
-			GetHelper.FinishCurrent(socket);
-
-			return true;
-		}
-
-		CacheItem IGetOperation.Result
-		{
-			get { return this.result; }
+			get { return this.mode; }
 		}
 	}
 }

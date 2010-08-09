@@ -15,9 +15,10 @@ namespace Enyim.Caching.Memcached
 		List<IMemcachedNode> workingServers;
 
 		private IMemcachedClientConfiguration configuration;
-		private IMemcachedKeyTransformer keyTransformer;
+		//		private IMemcachedKeyTransformer keyTransformer;
 		private IMemcachedNodeLocator nodeLocator;
-		private ITranscoder transcoder;
+		//		private ITranscoder transcoder;
+		private IOpFactory factory;
 
 		public IEnumerable<IMemcachedNode> GetServers()
 		{
@@ -31,8 +32,11 @@ namespace Enyim.Caching.Memcached
 
 			this.configuration = configuration;
 
-			this.keyTransformer = this.configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
-			this.transcoder = this.configuration.CreateTranscoder() ?? new DefaultTranscoder();
+			//this.keyTransformer = this.configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
+			//this.transcoder = this.configuration.CreateTranscoder() ?? new DefaultTranscoder();
+			this.factory = this.configuration.CreateOperationFactory();
+
+			if (this.factory == null) throw new ArgumentException("Invalid op factory.", "configuration");
 		}
 
 		/// <summary>
@@ -57,24 +61,6 @@ namespace Enyim.Caching.Memcached
 			this.nodeLocator = locator;
 		}
 
-		/// <summary>
-		/// Returns the <see cref="t:IKeyTransformer"/> instance used by the pool
-		/// </summary>
-		public IMemcachedKeyTransformer KeyTransformer
-		{
-			get { return this.keyTransformer; }
-		}
-
-		public IMemcachedNodeLocator NodeLocator
-		{
-			get { return this.nodeLocator; }
-		}
-
-		public ITranscoder Transcoder
-		{
-			get { return this.transcoder; }
-		}
-
 		public IAuthenticator Authenticator { get; set; }
 
 		/// <summary>
@@ -84,7 +70,7 @@ namespace Enyim.Caching.Memcached
 		/// <returns></returns>
 		private IMemcachedNode LocateNode(string itemKey)
 		{
-			IMemcachedNode node = this.NodeLocator.Locate(itemKey);
+			IMemcachedNode node = this.nodeLocator.Locate(itemKey);
 			// probably all servers are down
 			if (node == null)
 			{
@@ -145,31 +131,20 @@ namespace Enyim.Caching.Memcached
 
 		#region [ IServerPool                  ]
 
-		IMemcachedKeyTransformer IServerPool.KeyTransformer
-		{
-			get { return this.KeyTransformer; }
-		}
+		//IMemcachedKeyTransformer IServerPool.KeyTransformer
+		//{
+		//    get { return this.keyTransformer; }
+		//}
 
-		ITranscoder IServerPool.Transcoder
-		{
-			get { return this.Transcoder; }
-		}
+		//ITranscoder IServerPool.Transcoder
+		//{
+		//    get { return this.transcoder; }
+		//}
 
-		IMemcachedNodeLocator IServerPool.NodeLocator
-		{
-			get { return this.NodeLocator; }
-		}
-
-		IAuthenticator IServerPool.Authenticator
-		{
-			get { return this.Authenticator; }
-			set { this.Authenticator = value; }
-		}
-
-		PooledSocket IServerPool.Acquire(string key)
-		{
-			return this.Acquire(key);
-		}
+		//IMemcachedNodeLocator IServerPool.NodeLocator
+		//{
+		//    get { return this.nodeLocator; }
+		//}
 
 		IEnumerable<IMemcachedNode> IServerPool.GetServers()
 		{
@@ -179,6 +154,11 @@ namespace Enyim.Caching.Memcached
 		void IServerPool.Start()
 		{
 			this.Start();
+		}
+
+		IOpFactory IServerPool.OperationFactory
+		{
+			get { return this.factory; }
 		}
 
 		#endregion
@@ -223,6 +203,16 @@ namespace Enyim.Caching.Memcached
 				//rwl.ReleaseLock();
 			}
 		}
+		#endregion
+
+		#region IServerPool Members
+
+
+		IMemcachedNode IServerPool.Locate(string key)
+		{
+			return this.nodeLocator.Locate(key);
+		}
+
 		#endregion
 	}
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using Enyim.Caching.Memcached;
 using Enyim.Reflection;
+using Enyim.Caching.Memcached.Operations.Binary;
 
 namespace Enyim.Caching.Configuration
 {
@@ -107,10 +108,11 @@ namespace Enyim.Caching.Configuration
 			return this.Transcoder;
 		}
 
-		MemcachedProtocol IMemcachedClientConfiguration.Protocol
+		IOpFactory IMemcachedClientConfiguration.CreateOperationFactory()
 		{
-			get { return this.Protocol; }
-			set { this.Protocol = value; }
+			return this.Protocol == MemcachedProtocol.Binary
+					? new BinaryOperationFactory()
+					: null;
 		}
 		#endregion
 	}

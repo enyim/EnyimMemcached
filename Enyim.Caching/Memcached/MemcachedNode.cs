@@ -744,6 +744,45 @@ namespace Enyim.Caching.Memcached
 		}
 	}
 
+
+	class BinaryPool : DefaultServerPool
+	{
+		ISaslAuthenticationProvider ap;
+		IMemcachedClientConfiguration configuration;
+
+		public BinaryPool(IMemcachedClientConfiguration configuration)
+			: base(configuration)
+		{
+			this.ap = GetProvider(configuration);
+			this.configuration = configuration;
+		}
+
+		protected override IMemcachedNode CreateNode(IPEndPoint endpoint)
+		{
+			return new BinaryNode(endpoint, this.configuration.SocketPool, this.ap);
+		}
+
+		private static ISaslAuthenticationProvider GetProvider(IMemcachedClientConfiguration configuration)
+		{
+			// create&initialize the authenticator, if any
+			// we'll use this single instance everywhere, so it must be thread safe
+			IAuthenticationConfiguration auth = configuration.Authentication;
+			if (auth != null)
+			{
+				Type t = auth.Type;
+				var provider = (t == null) ? null : Enyim.Reflection.FastActivator2.Create(t) as ISaslAuthenticationProvider;
+
+				if (provider != null)
+				{
+					provider.Initialize(auth.Parameters);
+					return provider;
+				}
+			}
+
+			return null;
+		}
+
+	}
 }
 
 #region [ License information          ]

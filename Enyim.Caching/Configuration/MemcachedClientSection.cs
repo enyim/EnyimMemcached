@@ -127,10 +127,11 @@ namespace Enyim.Caching.Configuration
 			get { return this.Authentication; }
 		}
 
-		MemcachedProtocol IMemcachedClientConfiguration.Protocol
+		IOpFactory IMemcachedClientConfiguration.CreateOperationFactory()
 		{
-			get { return this.Protocol; }
-			set { this.Protocol = value; }
+			return this.Protocol == MemcachedProtocol.Binary
+					? new Enyim.Caching.Memcached.Operations.Binary.BinaryOperationFactory()
+					: null;
 		}
 
 		#endregion

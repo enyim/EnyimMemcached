@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
@@ -10,6 +11,8 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		private const string ClientErrorResponse = "CLIENT_ERROR ";
 		private const string ServerErrorResponse = "SERVER_ERROR ";
 		private const int ErrorResponseLength = 13;
+
+		public const string CommandTerminator = "\r\n";
 
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(TextSocketHelper));
 
@@ -94,22 +97,6 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		}
 
 		/// <summary>
-		/// Sends the command to the server. The trailing \r\n is automatically appended.
-		/// </summary>
-		/// <param name="value">The command to be sent to the server.</param>
-		public static void SendCommand(PooledSocket socket, string value)
-		{
-			if (log.IsDebugEnabled)
-				log.Debug("SendCommand: " + value);
-
-			// send the whole command with only one Write
-			// since Nagle is disabled on the socket this is more efficient than
-			// Write(command), Write("\r\n")
-			var b = TextSocketHelper.GetCommandBuffer(value);
-			socket.Write(b.Array, b.Offset, b.Count);
-		}
-
-		/// <summary>
 		/// Gets the bytes representing the specified command. returned buffer can be used to streamline multiple writes into one Write on the Socket
 		/// using the <see cref="M:Enyim.Caching.Memcached.PooledSocket.Write(IList&lt;ArraySegment&lt;byte&gt;&gt;)"/>
 		/// </summary>
@@ -117,21 +104,20 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		/// <returns>The buffer containing the bytes representing the command. The returned buffer will be terminated with 13, 10 (\r\n)</returns>
 		/// <remarks>The Nagle algorithm is disabled on the socket to speed things up, so it's recommended to convert a command into a buffer
 		/// and use the <see cref="M:Enyim.Caching.Memcached.PooledSocket.Write(IList&lt;ArraySegment&lt;byte&gt;&gt;)"/> to send the command and the additional buffers in one transaction.</remarks>
-		public unsafe static ArraySegment<byte> GetCommandBuffer(string value)
+		public unsafe static IList<ArraySegment<byte>> GetCommandBuffer(string value)
 		{
-			int valueLength = value.Length;
-			byte[] data = new byte[valueLength + 2];
+			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(value));
 
-			fixed (byte* buffer = data)
-			fixed (char* chars = value)
-			{
-				Encoding.ASCII.GetBytes(chars, valueLength, buffer, valueLength);
+			return new ArraySegment<byte>[] { data };
+		}
 
-				buffer[valueLength] = 13;
-				buffer[valueLength + 1] = 10;
-			}
+		public unsafe static IList<ArraySegment<byte>> GetCommandBuffer(string value, IList<ArraySegment<byte>> list)
+		{
+			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(value));
 
-			return new ArraySegment<byte>(data);
+			list.Add(data);
+
+			return list;
 		}
 
 	}

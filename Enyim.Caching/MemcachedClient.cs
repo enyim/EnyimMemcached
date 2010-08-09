@@ -1,8 +1,11 @@
 using System;
+using System.Linq;
 using System.Configuration;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using System.Collections.Generic;
+using System.Threading;
+using System.Net;
 
 namespace Enyim.Caching
 {
@@ -15,18 +18,16 @@ namespace Enyim.Caching
 		/// Represents a value which indicates that an item should never expire.
 		/// </summary>
 		public static readonly TimeSpan Infinite = TimeSpan.Zero;
+		internal static readonly MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
 
-		internal static MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
-
-		private IProtocolImplementation protImpl;
+		private IMemcachedClientConfiguration config;
+		private IMemcachedKeyTransformer keyTransformer;
+		private ITranscoder transcoder;
 
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the default configuration section (enyim/memcached).
 		/// </summary>
-		public MemcachedClient()
-		{
-			this.Initialize(DefaultSettings);
-		}
+		public MemcachedClient() : this(DefaultSettings) { }
 
 		~MemcachedClient()
 		{
@@ -39,13 +40,15 @@ namespace Enyim.Caching
 		/// This overload allows to create multiple MemcachedClients with different pool configurations.
 		/// </summary>
 		/// <param name="sectionName">The name of the configuration section to be used for configuring the behavior of the client.</param>
-		public MemcachedClient(string sectionName)
+		public MemcachedClient(string sectionName) : this(GetSection(sectionName)) { }
+
+		private static IMemcachedClientConfiguration GetSection(string sectionName)
 		{
 			MemcachedClientSection section = (MemcachedClientSection)ConfigurationManager.GetSection(sectionName);
 			if (section == null)
 				throw new ConfigurationErrorsException("Section " + sectionName + " is not found.");
 
-			this.Initialize(section);
+			return section;
 		}
 
 		/// <summary>
@@ -57,7 +60,13 @@ namespace Enyim.Caching
 			if (configuration == null)
 				throw new ArgumentNullException("configuration");
 
-			this.Initialize(configuration);
+			this.config = configuration;
+
+			this.keyTransformer = configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
+			this.transcoder = configuration.CreateTranscoder() ?? new DefaultTranscoder();
+
+			this.pool = new DefaultServerPool(configuration);
+			this.pool.Start();
 		}
 
 		/// <summary>
@@ -66,67 +75,15 @@ namespace Enyim.Caching
 		/// <param name="pool">The server pool this client should use</param>
 		/// <param name="provider">The authentication provider this client should use. If null, the connections will not be authenticated.</param>
 		/// <param name="protocol">Soecifies which protocol the client should use to communicate with the servers.</param>
-		public MemcachedClient(IServerPool pool, ISaslAuthenticationProvider provider, MemcachedProtocol protocol)
+		public MemcachedClient(IServerPool pool)
 		{
 			if (pool == null)
 				throw new ArgumentNullException("pool");
 
-			this.Initialize(pool, provider, protocol);
+			this.pool = pool;
 		}
 
-		private static ISaslAuthenticationProvider GetProvider(IMemcachedClientConfiguration configuration)
-		{
-			// create&initialize the authenticator, if any
-			// we'll use this single instance everywhere, so it must be thread safe
-			IAuthenticationConfiguration auth = configuration.Authentication;
-			if (auth != null)
-			{
-				Type t = auth.Type;
-				var provider = (t == null) ? null : Enyim.Reflection.FastActivator2.Create(t) as ISaslAuthenticationProvider;
-
-				if (provider != null)
-				{
-					provider.Initialize(auth.Parameters);
-					return provider;
-				}
-			}
-
-			return null;
-		}
-
-		private void Initialize(IMemcachedClientConfiguration configuration)
-		{
-			ISaslAuthenticationProvider provider = GetProvider(configuration);
-			IServerPool pool = new DefaultServerPool(configuration);
-
-			this.Initialize(pool, provider, configuration.Protocol);
-		}
-
-		private void Initialize(IServerPool pool, ISaslAuthenticationProvider provider, MemcachedProtocol protocol)
-		{
-			IProtocolImplementation protImpl;
-
-			switch (protocol)
-			{
-				case MemcachedProtocol.Binary:
-					protImpl = new Enyim.Caching.Memcached.Operations.Binary.BinaryProtocol(pool);
-					break;
-
-				case MemcachedProtocol.Text:
-					protImpl = new Enyim.Caching.Memcached.Operations.Text.TextProtocol(pool);
-					break;
-
-				default: throw new ArgumentOutOfRangeException("Unknown protocol: " + protocol);
-			}
-
-			if (provider != null)
-				pool.Authenticator = protImpl.CreateAuthenticator(provider);
-
-			this.protImpl = protImpl;
-
-			// everything is initialized, start the pool
-			pool.Start();
-		}
+		private IServerPool pool;
 
 		/// <summary>
 		/// Retrieves the specified item from the cache.
@@ -135,7 +92,9 @@ namespace Enyim.Caching
 		/// <returns>The retrieved item, or <value>null</value> if the key was not found.</returns>
 		public object Get(string key)
 		{
-			return this.protImpl.Get(key);
+			object tmp;
+
+			return this.TryGet(key, out tmp) ? tmp : null;
 		}
 
 		/// <summary>
@@ -149,6 +108,74 @@ namespace Enyim.Caching
 
 			return TryGet(key, out tmp) ? (T)tmp : default(T);
 		}
+
+		//private IAsyncResult BeginExecute(IItemOperation op, AsyncCallback callback, object state)
+		//{
+		//    var node = this.pool.NodeLocator.Locate(op.Key);
+		//    if (node == null || !node.IsAlive)
+		//        return new FailedIAR(state, callback);
+
+		//    return node.BeginExecute(op, callback, state);
+		//}
+
+		//private bool EndExecute(IAsyncResult result)
+		//{
+		//    var fiar = result as FailedIAR;
+		//    if (fiar != null)
+		//    {
+		//        fiar.callback(fiar);
+
+		//        return false;
+		//    }
+
+
+		//    return (((IMemcachedNode)result
+		//}
+
+		#region FailedIAR
+		class FailedIAR : IAsyncResult, IDisposable
+		{
+			internal object state;
+			internal AsyncCallback callback;
+			internal ManualResetEvent handle;
+
+			public FailedIAR(object state, AsyncCallback callback)
+			{
+				this.state = state;
+				this.callback = callback;
+			}
+
+			object IAsyncResult.AsyncState
+			{
+				get { return this.state; }
+			}
+
+			WaitHandle IAsyncResult.AsyncWaitHandle
+			{
+				get { return this.handle ?? (this.handle = new ManualResetEvent(true)); }
+			}
+
+			bool IAsyncResult.CompletedSynchronously
+			{
+				get { return true; }
+			}
+
+			bool IAsyncResult.IsCompleted
+			{
+				get { return true; }
+			}
+
+			#region IDisposable Members
+
+			void IDisposable.Dispose()
+			{
+				((IDisposable)this.handle).Dispose();
+			}
+
+			#endregion
+		}
+		#endregion
+
 		/// <summary>
 		/// Tries to get an item from the cache.
 		/// </summary>
@@ -157,7 +184,23 @@ namespace Enyim.Caching
 		/// <returns>The <value>true</value> if the item was successfully retrieved.</returns>
 		public bool TryGet(string key, out object value)
 		{
-			return this.protImpl.TryGet(key, out value);
+			var hashedKey = this.keyTransformer.Transform(key);
+			var node = this.pool.Locate(hashedKey);
+
+			if (node != null)
+			{
+				var command = this.pool.OperationFactory.Get(hashedKey);
+				if (node.Execute(command))
+				{
+					value = this.transcoder.Deserialize(command.Result);
+
+					return true;
+				}
+			}
+
+			value = null;
+
+			return false;
 		}
 
 		/// <summary>
@@ -170,7 +213,7 @@ namespace Enyim.Caching
 		/// <returns>true if the item was successfully stored in the cache; false otherwise.</returns>
 		public bool Store(StoreMode mode, string key, object value)
 		{
-			return this.protImpl.Store(mode, key, value, 0);
+			return this.Store(mode, key, value, 0);
 		}
 
 		/// <summary>
@@ -183,7 +226,7 @@ namespace Enyim.Caching
 		/// <returns>true if the item was successfully stored in the cache; false otherwise.</returns>
 		public bool Store(StoreMode mode, string key, object value, TimeSpan validFor)
 		{
-			return this.protImpl.Store(mode, key, value, MemcachedClient.GetExpiration(validFor, null));
+			return this.Store(mode, key, value, MemcachedClient.GetExpiration(validFor, null));
 		}
 
 		/// <summary>
@@ -196,7 +239,23 @@ namespace Enyim.Caching
 		/// <returns>true if the item was successfully stored in the cache; false otherwise.</returns>
 		public bool Store(StoreMode mode, string key, object value, DateTime expiresAt)
 		{
-			return this.protImpl.Store(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt));
+			return this.Store(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt));
+		}
+
+		private bool Store(StoreMode mode, string key, object value, uint expires)
+		{
+			var hashedKey = this.keyTransformer.Transform(key);
+			var node = this.pool.Locate(hashedKey);
+
+			if (node != null)
+			{
+				var item = this.transcoder.Serialize(value);
+				var command = this.pool.OperationFactory.Store(mode, hashedKey, item, expires);
+
+				return node.Execute(command);
+			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -209,7 +268,23 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public ulong Increment(string key, ulong defaultValue, ulong delta)
 		{
-			return this.protImpl.Mutate(MutationMode.Increment, key, defaultValue, delta, 0);
+			return this.Mutate(MutationMode.Increment, key, defaultValue, delta, 0);
+		}
+
+		private ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+		{
+			var hashedKey = this.keyTransformer.Transform(key);
+			var node = this.pool.Locate(hashedKey);
+
+			if (node != null)
+			{
+				var command = this.pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires);
+
+				if (node.Execute(command))
+					return command.Result;
+			}
+
+			return 0;
 		}
 
 		/// <summary>
@@ -223,7 +298,7 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public ulong Increment(string key, ulong defaultValue, ulong delta, TimeSpan validFor)
 		{
-			return this.protImpl.Mutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null));
+			return this.Mutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null));
 		}
 
 		/// <summary>
@@ -237,7 +312,7 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public ulong Increment(string key, ulong defaultValue, ulong delta, DateTime expiresAt)
 		{
-			return this.protImpl.Mutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt));
+			return this.Mutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt));
 		}
 
 		/// <summary>
@@ -250,7 +325,7 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public ulong Decrement(string key, ulong defaultValue, ulong delta)
 		{
-			return this.protImpl.Mutate(MutationMode.Decrement, key, defaultValue, delta, 0);
+			return this.Mutate(MutationMode.Decrement, key, defaultValue, delta, 0);
 		}
 
 		/// <summary>
@@ -264,7 +339,7 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public ulong Decrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor)
 		{
-			return this.protImpl.Mutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null));
+			return this.Mutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null));
 		}
 
 		/// <summary>
@@ -278,7 +353,7 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public ulong Decrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt)
 		{
-			return this.protImpl.Mutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt));
+			return this.Mutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt));
 		}
 
 		/// <summary>
@@ -289,7 +364,7 @@ namespace Enyim.Caching
 		/// <returns>true if the data was successfully stored; false otherwise.</returns>
 		public bool Append(string key, ArraySegment<byte> data)
 		{
-			return this.protImpl.Concatenate(ConcatenationMode.Append, key, data);
+			return this.Concatenate(ConcatenationMode.Append, key, data);
 		}
 
 		/// <summary>
@@ -298,7 +373,22 @@ namespace Enyim.Caching
 		/// <returns>true if the data was successfully stored; false otherwise.</returns>
 		public bool Prepend(string key, ArraySegment<byte> data)
 		{
-			return this.protImpl.Concatenate(ConcatenationMode.Prepend, key, data);
+			return this.Concatenate(ConcatenationMode.Prepend, key, data);
+		}
+
+		public bool Concatenate(ConcatenationMode mode, string key, ArraySegment<byte> data)
+		{
+			var hashedKey = this.keyTransformer.Transform(key);
+			var node = this.pool.Locate(hashedKey);
+
+			if (node != null)
+			{
+				var command = this.pool.OperationFactory.Concat(mode, hashedKey, data);
+
+				return node.Execute(command);
+			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -306,7 +396,14 @@ namespace Enyim.Caching
 		/// </summary>
 		public void FlushAll()
 		{
-			this.protImpl.FlushAll();
+			var handles = new List<WaitHandle>();
+
+			foreach (var server in this.pool.GetServers())
+			{
+				var command = this.pool.OperationFactory.Flush();
+
+				server.Execute(command);
+			}
 		}
 
 		/// <summary>
@@ -315,7 +412,33 @@ namespace Enyim.Caching
 		/// <returns></returns>
 		public ServerStats Stats()
 		{
-			return this.protImpl.Stats();
+			var results = new Dictionary<IPEndPoint, Dictionary<string, string>>();
+			var handles = new List<WaitHandle>();
+
+			foreach (var server in this.pool.GetServers())
+			{
+				var cmd = this.pool.OperationFactory.Stats();
+				var mre = new ManualResetEvent(false);
+
+				Func<IOperation, bool> action = new Func<IOperation, bool>(server.Execute);
+
+				var iar = action.BeginInvoke(cmd, a =>
+					{
+						action.EndInvoke(a);
+
+						lock (results)
+							results[server.EndPoint] = cmd.Result;
+
+						((ManualResetEvent)a.AsyncState).Set();
+					}, mre);
+
+
+				handles.Add(mre);
+			}
+
+			WaitHandle.WaitAll(handles.ToArray());
+
+			return new ServerStats(results);
 		}
 
 		/// <summary>
@@ -325,7 +448,17 @@ namespace Enyim.Caching
 		/// <returns>true if the item was successfully removed from the cache; false otherwise.</returns>
 		public bool Remove(string key)
 		{
-			return this.protImpl.Remove(key);
+			var hashedKey = this.keyTransformer.Transform(key);
+			var node = this.pool.Locate(hashedKey);
+
+			if (node != null)
+			{
+				var command = this.pool.OperationFactory.Delete(hashedKey);
+
+				return node.Execute(command);
+			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -335,7 +468,8 @@ namespace Enyim.Caching
 		/// <returns>a Dictionary holding all items indexed by their key.</returns>
 		public IDictionary<string, object> Get(IEnumerable<string> keys)
 		{
-			return this.protImpl.Get(keys);
+			throw new NotImplementedException();
+			//return this.protImpl.Get(keys);
 		}
 
 		#region [ Expiration helper            ]
@@ -385,19 +519,19 @@ namespace Enyim.Caching
 		/// the AppPool shuts down all resources will be released correctly and no handles or such will remain in the memory.</remarks>
 		public void Dispose()
 		{
-			if (this.protImpl != null)
-			{
-				GC.SuppressFinalize(this);
+			//if (this.protImpl != null)
+			//{
+			//    GC.SuppressFinalize(this);
 
-				try
-				{
-					this.protImpl.Dispose();
-				}
-				finally
-				{
-					this.protImpl = null;
-				}
-			}
+			//    try
+			//    {
+			//        this.protImpl.Dispose();
+			//    }
+			//    finally
+			//    {
+			//        this.protImpl = null;
+			//    }
+			//}
 		}
 		#endregion
 	}

@@ -1,34 +1,20 @@
 using System;
 using System.Globalization;
+using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal sealed class DecrementOperation : ItemOperation
+	internal class MutatorOperation : ItemOperation2, IMutatorOperation
 	{
+		private MutationMode mode;
 		private ulong delta;
 		private ulong result;
 
-		internal DecrementOperation(IServerPool pool, string key, ulong delta)
-			: base(pool, key)
+		internal MutatorOperation(MutationMode mode, string key, ulong delta)
+			: base(key)
 		{
 			this.delta = delta;
-		}
-
-		protected override bool ExecuteAction()
-		{
-			PooledSocket socket = this.Socket;
-			if (socket == null)
-				return false;
-
-			TextSocketHelper.SendCommand(socket, String.Concat("decr ", this.HashedKey, " ", this.delta.ToString(CultureInfo.InvariantCulture)));
-
-			string response = TextSocketHelper.ReadResponse(socket);
-
-			//maybe we should throw an exception when the item is not found?
-			if (String.Compare(response, "NOT_FOUND", StringComparison.Ordinal) == 0)
-				return false;
-
-			return UInt64.TryParse(response, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite, CultureInfo.InvariantCulture, out this.result);
+			this.mode = mode;
 		}
 
 		public ulong Result
@@ -38,12 +24,34 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 		protected override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
 		{
-			throw new NotImplementedException();
+			var command = (this.mode == MutationMode.Increment ? "incr " : "decr ")
+							+ this.Key
+							+ " "
+							+ this.delta.ToString(CultureInfo.InvariantCulture)
+							+ TextSocketHelper.CommandTerminator;
+
+			return TextSocketHelper.GetCommandBuffer(command);
 		}
 
 		protected override bool ReadResponse(PooledSocket socket)
 		{
-			throw new NotImplementedException();
+			string response = TextSocketHelper.ReadResponse(socket);
+
+			//maybe we should throw an exception when the item is not found?
+			if (String.Compare(response, "NOT_FOUND", StringComparison.Ordinal) == 0)
+				return false;
+
+			return UInt64.TryParse(response, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite, CultureInfo.InvariantCulture, out this.result);
+		}
+
+		MutationMode IMutatorOperation.Mode
+		{
+			get { return this.mode; }
+		}
+
+		ulong IMutatorOperation.Result
+		{
+			get { return this.result; }
 		}
 	}
 }

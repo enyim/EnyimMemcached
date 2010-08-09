@@ -1,37 +1,20 @@
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal sealed class FlushOperation : Operation
+	internal sealed class FlushOperation : Operation, IFlushOperation
 	{
-		public FlushOperation(IServerPool pool) : base(pool) { }
-
-		protected override bool ExecuteAction()
-		{
-			foreach (IMemcachedNode server in this.ServerPool.GetServers())
-			{
-				if (!server.IsAlive) continue;
-
-				using (PooledSocket socket = server.Acquire())
-				{
-					if (socket != null)
-					{
-						TextSocketHelper.SendCommand(socket, "flush_all");
-						TextSocketHelper.ReadResponse(socket); // No-op the response to avoid data hanging around.
-					}
-				}
-			}
-
-			return true;
-		}
+		public FlushOperation() { }
 
 		protected override System.Collections.Generic.IList<System.ArraySegment<byte>> GetBuffer()
 		{
-			throw new System.NotImplementedException();
+			return TextSocketHelper.GetCommandBuffer("flush_all" + TextSocketHelper.CommandTerminator);
 		}
 
 		protected override bool ReadResponse(PooledSocket socket)
 		{
-			throw new System.NotImplementedException();
+			TextSocketHelper.ReadResponse(socket);
+
+			return true;
 		}
 	}
 }
