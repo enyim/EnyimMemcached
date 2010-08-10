@@ -1,26 +1,26 @@
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.Text;
 
-namespace Enyim.Caching.Memcached.Operations
+namespace Enyim.Caching.Memcached.Operations.Binary
 {
 	/// <summary>
-	/// Base class for implementing operations working with keyed items.
+	/// Starts the SASL auth sequence.
 	/// </summary>
-	internal abstract class ItemOperation : Operation, IItemOperation
+	internal class SaslStart : SaslStep
 	{
-		protected ItemOperation(string key)
-		{
-			this.Key = key;
-		}
+		public SaslStart(ISaslAuthenticationProvider provider) : base(provider) { }
 
-		public string Key { get; private set; }
-
-		/// <summary>
-		/// The item key of the current operation.
-		/// </summary>
-		string IItemOperation.Key
+		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
-			get { return this.Key; }
+			// create a Sasl Start command
+			var request = new BinaryRequest(OpCode.SaslStart)
+			{
+				Key = this.Provider.Type,
+				Data = new ArraySegment<byte>(this.Provider.Authenticate())
+			};
+
+			return request.CreateBuffer();
 		}
 	}
 }

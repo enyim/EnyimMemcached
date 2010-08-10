@@ -6,44 +6,44 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 	/// <summary>
 	/// Memcached client.
 	/// </summary>
-	internal class BinaryOperationFactory : IOpFactory
+	internal class BinaryOperationFactory : IOperationFactory
 	{
-		IGetOperation IOpFactory.Get(string key)
+		IGetOperation IOperationFactory.Get(string key)
 		{
 			return new GetOperation(key);
 		}
 
-		IMultiGetOperation IOpFactory.MultiGet(IList<string> keys)
+		IMultiGetOperation IOperationFactory.MultiGet(IList<string> keys)
 		{
 			return new MultiGetOperation(keys);
 		}
 
-		IStoreOperation IOpFactory.Store(StoreMode mode, string key, CacheItem value, uint expires)
+		IStoreOperation IOperationFactory.Store(StoreMode mode, string key, CacheItem value, uint expires)
 		{
 			return new StoreOperation(mode, key, value, expires);
 		}
 
-		IDeleteOperation IOpFactory.Delete(string key)
+		IDeleteOperation IOperationFactory.Delete(string key)
 		{
 			return new DeleteOperation(key);
 		}
 
-		IMutatorOperation IOpFactory.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+		IMutatorOperation IOperationFactory.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
 		{
 			return new MutatorOperation(mode, key, defaultValue, delta, expires);
 		}
 
-		IConcatOperation IOpFactory.Concat(ConcatenationMode mode, string key, ArraySegment<byte> data)
+		IConcatOperation IOperationFactory.Concat(ConcatenationMode mode, string key, ArraySegment<byte> data)
 		{
-			return new ConcatenationOperation(mode, key, data);
+			return new ConcatOperation(mode, key, data);
 		}
 
-		IStatsOperation IOpFactory.Stats()
+		IStatsOperation IOperationFactory.Stats()
 		{
 			return new StatsOperation();
 		}
 
-		IFlushOperation IOpFactory.Flush()
+		IFlushOperation IOperationFactory.Flush()
 		{
 			return new FlushOperation();
 		}

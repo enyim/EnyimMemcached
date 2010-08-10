@@ -7,14 +7,14 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 	{
 		public FlushOperation() { }
 
-		protected override IList<ArraySegment<byte>> GetBuffer()
+		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
 			var request = new BinaryRequest(OpCode.Flush);
 
 			return request.CreateBuffer();
 		}
 
-		protected override bool ReadResponse(PooledSocket socket)
+		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			var response = new BinaryResponse();
 

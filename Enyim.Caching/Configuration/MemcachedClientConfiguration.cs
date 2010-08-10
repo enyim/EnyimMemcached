@@ -108,7 +108,7 @@ namespace Enyim.Caching.Configuration
 			return this.Transcoder;
 		}
 
-		IOpFactory IMemcachedClientConfiguration.CreateOperationFactory()
+		IOperationFactory IMemcachedClientConfiguration.CreateOperationFactory()
 		{
 			return this.Protocol == MemcachedProtocol.Binary
 					? new BinaryOperationFactory()

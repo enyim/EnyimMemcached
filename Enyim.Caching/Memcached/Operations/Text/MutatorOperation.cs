@@ -1,10 +1,11 @@
 using System;
 using System.Globalization;
 using System.Text;
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal class MutatorOperation : ItemOperation2, IMutatorOperation
+	internal class MutatorOperation : ItemOperation, IMutatorOperation
 	{
 		private MutationMode mode;
 		private ulong delta;
@@ -22,7 +23,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			get { return this.result; }
 		}
 
-		protected override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
+		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
 			var command = (this.mode == MutationMode.Increment ? "incr " : "decr ")
 							+ this.Key
@@ -33,7 +34,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			return TextSocketHelper.GetCommandBuffer(command);
 		}
 
-		protected override bool ReadResponse(PooledSocket socket)
+		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			string response = TextSocketHelper.ReadResponse(socket);
 

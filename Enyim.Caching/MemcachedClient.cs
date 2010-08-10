@@ -6,6 +6,7 @@ using Enyim.Caching.Memcached;
 using System.Collections.Generic;
 using System.Threading;
 using System.Net;
+using System.Diagnostics;
 
 namespace Enyim.Caching
 {
@@ -19,6 +20,7 @@ namespace Enyim.Caching
 		/// </summary>
 		public static readonly TimeSpan Infinite = TimeSpan.Zero;
 		internal static readonly MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
+		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MemcachedClient));
 
 		private IMemcachedClientConfiguration config;
 		private IMemcachedKeyTransformer keyTransformer;
@@ -33,6 +35,9 @@ namespace Enyim.Caching
 		{
 			try { ((IDisposable)this).Dispose(); }
 			catch { }
+
+
+
 		}
 
 		/// <summary>
@@ -429,8 +434,8 @@ namespace Enyim.Caching
 						lock (results)
 							results[server.EndPoint] = cmd.Result;
 
-						((ManualResetEvent)a.AsyncState).Set();
-					}, mre);
+						mre.Set();
+					}, null);
 
 
 				handles.Add(mre);
@@ -468,8 +473,52 @@ namespace Enyim.Caching
 		/// <returns>a Dictionary holding all items indexed by their key.</returns>
 		public IDictionary<string, object> Get(IEnumerable<string> keys)
 		{
-			throw new NotImplementedException();
-			//return this.protImpl.Get(keys);
+			// transform the keys and indexd them by hashed => original
+			// the mget results will be mapped using this index
+			var hashed = keys.ToDictionary(key => this.keyTransformer.Transform(key));
+			var byServer = hashed.Keys.ToLookup(key => this.pool.Locate(key));
+
+			var retval = new Dictionary<string, object>(hashed.Count);
+			var handles = new List<WaitHandle>();
+
+			//execute each list of keys on their respective node
+			foreach (var slice in byServer)
+			{
+				var node = slice.Key;
+				var nodeKeys = slice.ToArray();
+				var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
+
+				Func<IOperation, bool> exec = new Func<IOperation, bool>(node.Execute);
+				var mre = new ManualResetEvent(false);
+				handles.Add(mre);
+
+				//execute the mgets parallel
+				exec.BeginInvoke(mget, iar =>
+				{
+					if (exec.EndInvoke(iar))
+					{
+						foreach (var kvp in mget.Result)
+						{
+							string original;
+							var tryget = hashed.TryGetValue(kvp.Key, out original);
+
+							Debug.Assert(tryget, "MGet returned unexpected key: " + kvp.Key);
+
+							// the lock will serialize the merges,
+							// but at least the commands were not waiting on each other
+							lock (retval)
+								retval[original] = kvp.Value;
+						}
+					}
+
+					// indicate that we finished processing
+					mre.Set();
+				}, null);
+			}
+
+			WaitHandle.WaitAll(handles.ToArray());
+
+			return retval;
 		}
 
 		#region [ Expiration helper            ]

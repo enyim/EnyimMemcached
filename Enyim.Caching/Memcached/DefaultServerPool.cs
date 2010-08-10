@@ -18,7 +18,7 @@ namespace Enyim.Caching.Memcached
 		//		private IMemcachedKeyTransformer keyTransformer;
 		private IMemcachedNodeLocator nodeLocator;
 		//		private ITranscoder transcoder;
-		private IOpFactory factory;
+		private IOperationFactory factory;
 
 		public IEnumerable<IMemcachedNode> GetServers()
 		{
@@ -156,7 +156,7 @@ namespace Enyim.Caching.Memcached
 			this.Start();
 		}
 
-		IOpFactory IServerPool.OperationFactory
+		IOperationFactory IServerPool.OperationFactory
 		{
 			get { return this.factory; }
 		}

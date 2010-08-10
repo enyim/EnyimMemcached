@@ -43,7 +43,7 @@ namespace Enyim.Caching.Configuration
 		/// <summary>
 		/// Gets or sets the type of the communication between client and server.
 		/// </summary>
-		IOpFactory CreateOperationFactory();
+		IOperationFactory CreateOperationFactory();
 	}
 }
 

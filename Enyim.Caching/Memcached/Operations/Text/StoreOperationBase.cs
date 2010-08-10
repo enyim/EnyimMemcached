@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal class StoreOperationBase : ItemOperation2
+	internal class StoreOperationBase : ItemOperation
 	{
 		private static readonly ArraySegment<byte> DataTerminator = new ArraySegment<byte>(new byte[2] { (byte)'\r', (byte)'\n' });
 		private StoreCommand command;
@@ -22,7 +22,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			this.cas = cas;
 		}
 
-		protected override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
+		protected internal override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
 		{
 			// todo adjust the size to fit a request using a fnv hashed key
 			var sb = new StringBuilder(128);
@@ -62,7 +62,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			return buffers;
 		}
 
-		protected override bool ReadResponse(PooledSocket socket)
+		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			return String.Compare(TextSocketHelper.ReadResponse(socket), "STORED", StringComparison.Ordinal) == 0;
 		}

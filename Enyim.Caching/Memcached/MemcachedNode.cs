@@ -6,6 +6,7 @@ using System.Threading;
 using Enyim.Caching.Configuration;
 using Enyim.Collections;
 using System.Security;
+using Enyim.Caching.Memcached.Operations.Binary;
 
 namespace Enyim.Caching.Memcached
 {
@@ -733,7 +734,7 @@ namespace Enyim.Caching.Memcached
 		{
 			var retval = base.CreateSocket();
 
-			if (this.ap != null && !Enyim.Caching.Memcached.Operations.Binary.BinaryAuthenticator.Authenticate(retval, this.ap))
+			if (this.ap != null && !this.Auth(retval))
 			{
 				if (log.IsErrorEnabled) log.Error("Authentication failed: " + this.EndPoint);
 
@@ -741,6 +742,33 @@ namespace Enyim.Caching.Memcached
 			}
 
 			return retval;
+		}
+
+		private bool Auth(PooledSocket socket)
+		{
+			SaslStep currentStep = new SaslStart(this.ap);
+
+			socket.Write(currentStep.GetBuffer());
+
+			while (!currentStep.ReadResponse(socket))
+			{
+				// challenge-response authentication
+				if (currentStep.StatusCode == 0x21)
+				{
+					currentStep = new SaslContinue(this.ap, currentStep.Data);
+					socket.Write(currentStep.GetBuffer());
+				}
+				else
+				{
+					if (log.IsWarnEnabled)
+						log.WarnFormat("Authentication failed, return code: 0x{0:x}", currentStep.StatusCode);
+
+					// invalid credentials or other error
+					return false;
+				}
+			}
+
+			return true;
 		}
 	}
 

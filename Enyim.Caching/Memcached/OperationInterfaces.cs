@@ -5,21 +5,59 @@ using Enyim.Caching.Memcached.Operations;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IMemcachedNode : IDisposable
+	public interface IOperation
 	{
-		IPEndPoint EndPoint { get; }
-		bool IsAlive { get; }
-		bool Ping();
-		PooledSocket Acquire();
+		IList<ArraySegment<byte>> GetBuffer();
+		bool ReadResponse(PooledSocket socket);
+	}
 
+	public interface IConcatOperation : IOperation
+	{
+		ConcatenationMode Mode { get; }
+	}
 
-		// TEMP HACK
-		int Bucket { get; }
+	public interface IStatsOperation : IOperation
+	{
+		Dictionary<string, string> Result { get; }
+	}
 
-		bool Execute(IOperation op);
+	public interface IMutatorOperation : IItemOperation
+	{
+		MutationMode Mode { get; }
+		ulong Result { get; }
+	}
 
-		IAsyncResult BeginExecute(IOperation op, AsyncCallback callback, object state);
-		bool EndExecute(IAsyncResult result);
+	public interface IGetOperation : IItemOperation
+	{
+		CacheItem Result { get; }
+	}
+
+	public interface IMultiGetOperation : IOperation
+	{
+		Dictionary<string, CacheItem> Result { get; }
+	}
+
+	public interface IDeleteOperation : IItemOperation
+	{
+	}
+
+	public interface IStoreOperation : IItemOperation
+	{
+		StoreMode Mode { get; }
+	}
+
+	public interface IFlushOperation : IOperation
+	{
+	}
+
+	public interface IItemOperation : IOperation
+	{
+		string Key { get; }
+	}
+
+	public interface IMultiItemOperation : IOperation
+	{
+		IList<string> Keys { get; }
 	}
 }
 

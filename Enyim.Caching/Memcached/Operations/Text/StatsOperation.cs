@@ -12,12 +12,12 @@ namespace Enyim.Caching.Memcached.Operations.Text
 
 		public StatsOperation() { }
 
-		protected override IList<ArraySegment<byte>> GetBuffer()
+		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
 			return TextSocketHelper.GetCommandBuffer("stats" + TextSocketHelper.CommandTerminator);
 		}
 
-		protected override bool ReadResponse(PooledSocket socket)
+		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			var serverData = new Dictionary<string, string>();
 

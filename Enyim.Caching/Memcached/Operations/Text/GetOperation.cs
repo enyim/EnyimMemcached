@@ -1,20 +1,20 @@
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal class GetOperation : ItemOperation2, IGetOperation
+	internal class GetOperation : ItemOperation, IGetOperation
 	{
 		private CacheItem result;
 
 		internal GetOperation(string key) : base(key) { }
 
-		protected override System.Collections.Generic.IList<System.ArraySegment<byte>> GetBuffer()
+		protected internal override System.Collections.Generic.IList<System.ArraySegment<byte>> GetBuffer()
 		{
 			var command = "get " + this.Key + TextSocketHelper.CommandTerminator;
 
 			return TextSocketHelper.GetCommandBuffer(command);
 		}
 
-		protected override bool ReadResponse(PooledSocket socket)
+		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			GetResponse r = GetHelper.ReadItem(socket);
 

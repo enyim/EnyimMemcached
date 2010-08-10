@@ -97,7 +97,12 @@
     <Compile Include="HashkitOneAtATime.cs" />
     <Compile Include="IUIntHashAlgorithm.cs" />
     <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs" />
+    <Compile Include="Memcached\IOperationFactory.cs" />
+    <Compile Include="Memcached\OperationInterfaces.cs" />
     <Compile Include="Memcached\Operations\Binary\BinaryOperationFactory.cs" />
+    <Compile Include="Memcached\Operations\Binary\SaslContinue.cs" />
+    <Compile Include="Memcached\Operations\Binary\SaslStart.cs" />
+    <Compile Include="Memcached\Operations\MultiItemOperation.cs" />
     <Compile Include="Memcached\Operations\Text\TextOperationFactory.cs" />
     <Compile Include="Memcached\Operations\Text\ConcateOperation.cs" />
     <Compile Include="Memcached\Operations\Text\StoreOperationBase.cs" />
@@ -137,7 +142,7 @@
     <Compile Include="Memcached\ISaslAuthenticationProvider.cs" />
     <Compile Include="Memcached\Enums.cs" />
     <Compile Include="Memcached\KetamaNodeLocator.cs" />
-    <Compile Include="Memcached\Operations\Binary\ConcatenationOperation.cs" />
+    <Compile Include="Memcached\Operations\Binary\ConcatOperation.cs" />
     <Compile Include="Memcached\Operations\Binary\MultiGetOperation.cs" />
     <Compile Include="Memcached\Operations\Binary\SaslAuthenticator.cs" />
     <Compile Include="Memcached\Operations\Binary\FlushOperation.cs" />

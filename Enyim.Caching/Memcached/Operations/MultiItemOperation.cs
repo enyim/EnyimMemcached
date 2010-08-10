@@ -1,44 +1,23 @@
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
-using System.Text;
 
-namespace Enyim.Caching.Memcached.Operations.Binary
+namespace Enyim.Caching.Memcached.Operations
 {
-	internal class ConcatenationOperation : ItemOperation2, IConcatOperation
+	/// <summary>
+	/// Base class for implementing operations working with multiple items.
+	/// </summary>
+	internal abstract class MultiItemOperation : Operation, IMultiItemOperation
 	{
-		private ArraySegment<byte> data;
-		private ConcatenationMode mode;
-
-		public ConcatenationOperation(ConcatenationMode mode, string key, ArraySegment<byte> data)
-			: base(key)
+		public MultiItemOperation(IList<string> keys)
 		{
-			this.data = data;
-			this.mode = mode;
+			this.Keys = keys;
 		}
 
-		protected override IList<ArraySegment<byte>> GetBuffer()
-		{
-			var request = new BinaryRequest((OpCode)this.mode)
-			{
-				Key = this.Key,
-				Data = this.data
-			};
-
-			return request.CreateBuffer();
-		}
-
-		protected override bool ReadResponse(PooledSocket socket)
-		{
-			var response = new BinaryResponse();
-
-			return response.Read(socket);
-		}
-
-		ConcatenationMode IConcatOperation.Mode
-		{
-			get { return this.mode; }
-		}
+		public IList<string> Keys { get; private set; }
+		IList<string> IMultiItemOperation.Keys { get { return this.Keys; } }
 	}
+
 }
 
 #region [ License information          ]

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
-	internal class StoreOperation : ItemOperation2, IStoreOperation
+	internal class StoreOperation : ItemOperation, IStoreOperation
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
 
@@ -19,7 +19,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			this.expires = expires;
 		}
 
-		protected override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
+		protected internal override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
 		{
 			OpCode op;
 			switch (this.mode)
@@ -44,7 +44,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 		}
 
 
-		protected override bool ReadResponse(PooledSocket socket)
+		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			var response = new BinaryResponse();
 			var retval = response.Read(socket);

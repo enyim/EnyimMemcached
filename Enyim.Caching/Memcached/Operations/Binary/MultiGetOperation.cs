@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
-	internal class MultiGetOperation : MultiItemOperation2, IMultiGetOperation
+	internal class MultiGetOperation : MultiItemOperation, IMultiGetOperation
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(MultiGetOperation));
 
@@ -14,7 +14,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 		public MultiGetOperation(IList<string> keys) : base(keys) { }
 
-		protected override IList<ArraySegment<byte>> GetBuffer()
+		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
 			var keys = this.Keys;
 
@@ -47,7 +47,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			return buffers;
 		}
 
-		protected override bool ReadResponse(PooledSocket socket)
+		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			var response = new BinaryResponse();
 

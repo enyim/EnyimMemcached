@@ -1,11 +1,12 @@
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
-	internal class DeleteOperation : ItemOperation2, IDeleteOperation
+	internal class DeleteOperation : ItemOperation, IDeleteOperation
 	{
 		public DeleteOperation(string key) : base(key) { }
 
-		protected override System.Collections.Generic.IList<System.ArraySegment<byte>> GetBuffer()
+		protected internal override IList<System.ArraySegment<byte>> GetBuffer()
 		{
 			var request = new BinaryRequest(OpCode.Delete)
 			{
@@ -15,7 +16,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			return request.CreateBuffer();
 		}
 
-		protected override bool ReadResponse(PooledSocket socket)
+		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			var response = new BinaryResponse();
 

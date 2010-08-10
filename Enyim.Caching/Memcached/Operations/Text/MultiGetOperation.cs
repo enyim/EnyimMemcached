@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal class MultiGetOperation : MultiItemOperation2, IMultiGetOperation
+	internal class MultiGetOperation : MultiItemOperation, IMultiGetOperation
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(MultiGetOperation));
 
@@ -19,7 +19,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			get { return this.casValues; }
 		}
 
-		protected override IList<ArraySegment<byte>> GetBuffer()
+		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
 			// gets key1 key2 key3 ... keyN\r\n
 			var commandBuilder = new StringBuilder("gets");
@@ -32,7 +32,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 			return TextSocketHelper.GetCommandBuffer(commandBuilder.ToString());
 		}
 
-		protected override bool ReadResponse(PooledSocket socket)
+		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			var retval = new Dictionary<string, CacheItem>();
 			var cas = new Dictionary<string, ulong>();

@@ -106,27 +106,15 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			if (keyLength > 0) retval.Add(new ArraySegment<byte>(keyData));
 			if (bodyLength > 0) retval.Add(body);
 
-			return retval;
-		}
-
-		public ushort Reserved;
-		public ArraySegment<byte> Extra;
-		public ArraySegment<byte> Data;
-
-		public void Write(PooledSocket socket)
-		{
-			IList<ArraySegment<byte>> buffer = this.CreateBuffer();
 #if DEBUG_PROTOCOL
 			if (log.IsDebugEnabled)
 			{
-				log.Debug("Sending binary request");
-				ArraySegment<byte> header = buffer[0];
-
+				log.Debug("Building binary request");
 				StringBuilder sb = new StringBuilder(128).AppendLine();
 
-				for (int i = 0; i < header.Count; i++)
+				for (int i = 0; i < header.Length; i++)
 				{
-					byte value = header.Array[i + header.Offset];
+					byte value = header[i];
 					sb.Append(value < 16 ? "0x0" : "0x").Append(value.ToString("X"));
 
 					if (i % 4 == 3) sb.AppendLine(); else sb.Append(" ");
@@ -135,8 +123,13 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 				log.Debug(sb.ToString());
 			}
 #endif
-			socket.Write(buffer);
+
+			return retval;
 		}
+
+		public ushort Reserved;
+		public ArraySegment<byte> Extra;
+		public ArraySegment<byte> Data;
 	}
 }
 

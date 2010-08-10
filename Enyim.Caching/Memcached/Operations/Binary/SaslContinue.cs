@@ -1,51 +1,57 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Net;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
-	internal class StatsOperation : Operation, IStatsOperation
+	/// <summary>
+	/// SASL auth step.
+	/// </summary>
+	internal class SaslContinue : SaslStep
 	{
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
+		private byte[] continuation;
 
-		private Dictionary<string, string> result;
-
-		public StatsOperation() { }
+		public SaslContinue(ISaslAuthenticationProvider provider, byte[] continuation)
+			: base(provider)
+		{
+			this.continuation = continuation;
+		}
 
 		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
-			var request = new BinaryRequest(OpCode.Stat);
+			var request = new BinaryRequest(OpCode.SaslStep)
+			{
+				Key = this.Provider.Type,
+				Data = new ArraySegment<byte>(this.Provider.Continue(this.continuation))
+			};
 
 			return request.CreateBuffer();
 		}
+	}
+
+	internal abstract class SaslStep : Operation
+	{
+		protected SaslStep(ISaslAuthenticationProvider provider)
+		{
+			this.Provider = provider;
+		}
+
+		protected ISaslAuthenticationProvider Provider { get; private set; }
 
 		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			var response = new BinaryResponse();
-			var serverData = new Dictionary<string, string>();
-			var retval = false;
 
-			while (response.Read(socket) && response.KeyLength > 0)
-			{
-				retval = true;
+			var retval = response.Read(socket);
 
-				var data = response.Data;
-				var key = BinaryConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
-				var value = BinaryConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
-
-				serverData[key] = value;
-			}
-
-			this.result = serverData;
+			this.StatusCode = response.StatusCode;
+			this.Data = response.Data.Array;
 
 			return retval;
 		}
 
-		Dictionary<string, string> IStatsOperation.Result
-		{
-			get { return this.result; }
-		}
+		public int StatusCode { get; private set; }
+		public byte[] Data { get; private set; }
 	}
 }
 

@@ -127,7 +127,7 @@ namespace Enyim.Caching.Configuration
 			get { return this.Authentication; }
 		}
 
-		IOpFactory IMemcachedClientConfiguration.CreateOperationFactory()
+		IOperationFactory IMemcachedClientConfiguration.CreateOperationFactory()
 		{
 			return this.Protocol == MemcachedProtocol.Binary
 					? new Enyim.Caching.Memcached.Operations.Binary.BinaryOperationFactory()

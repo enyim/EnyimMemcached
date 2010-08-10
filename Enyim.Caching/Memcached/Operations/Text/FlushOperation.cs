@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
@@ -5,12 +6,12 @@ namespace Enyim.Caching.Memcached.Operations.Text
 	{
 		public FlushOperation() { }
 
-		protected override System.Collections.Generic.IList<System.ArraySegment<byte>> GetBuffer()
+		protected internal override IList<System.ArraySegment<byte>> GetBuffer()
 		{
 			return TextSocketHelper.GetCommandBuffer("flush_all" + TextSocketHelper.CommandTerminator);
 		}
 
-		protected override bool ReadResponse(PooledSocket socket)
+		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			TextSocketHelper.ReadResponse(socket);
 

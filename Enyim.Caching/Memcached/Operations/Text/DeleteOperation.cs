@@ -2,18 +2,18 @@ using System;
 
 namespace Enyim.Caching.Memcached.Operations.Text
 {
-	internal sealed class DeleteOperation : ItemOperation2, IDeleteOperation
+	internal sealed class DeleteOperation : ItemOperation, IDeleteOperation
 	{
 		internal DeleteOperation(string key) : base(key) { }
 
-		protected override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
+		protected internal override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
 		{
 			var command = "delete " + this.Key + TextSocketHelper.CommandTerminator;
 
 			return TextSocketHelper.GetCommandBuffer(command);
 		}
 
-		protected override bool ReadResponse(PooledSocket socket)
+		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			return String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0;
 		}

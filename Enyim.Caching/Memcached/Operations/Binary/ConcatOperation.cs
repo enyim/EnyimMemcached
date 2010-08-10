@@ -1,26 +1,45 @@
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.Text;
 
-namespace Enyim.Caching.Memcached.Operations
+namespace Enyim.Caching.Memcached.Operations.Binary
 {
 	/// <summary>
-	/// Base class for implementing operations working with keyed items.
+	/// Implements append/prepend.
 	/// </summary>
-	internal abstract class ItemOperation : Operation, IItemOperation
+	internal class ConcatOperation : ItemOperation, IConcatOperation
 	{
-		protected ItemOperation(string key)
+		private ArraySegment<byte> data;
+		private ConcatenationMode mode;
+
+		public ConcatOperation(ConcatenationMode mode, string key, ArraySegment<byte> data)
+			: base(key)
 		{
-			this.Key = key;
+			this.data = data;
+			this.mode = mode;
 		}
 
-		public string Key { get; private set; }
-
-		/// <summary>
-		/// The item key of the current operation.
-		/// </summary>
-		string IItemOperation.Key
+		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
-			get { return this.Key; }
+			var request = new BinaryRequest((OpCode)this.mode)
+			{
+				Key = this.Key,
+				Data = this.data
+			};
+
+			return request.CreateBuffer();
+		}
+
+		protected internal override bool ReadResponse(PooledSocket socket)
+		{
+			var response = new BinaryResponse();
+
+			return response.Read(socket);
+		}
+
+		ConcatenationMode IConcatOperation.Mode
+		{
+			get { return this.mode; }
 		}
 	}
 }
