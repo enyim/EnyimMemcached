@@ -5,15 +5,16 @@ using System.Text;
 namespace Enyim.Caching.Memcached
 {
 	/// <summary>
-	/// Implements the default plain text ("PLAIN") Memcached authentication. It expects "userName" and "password" parameters during initalization.
+	/// Implements the default plain text ("PLAIN") Memcached authentication.
 	/// </summary>
+	/// <remarks>Either use the parametrized constructor, or pass the "userName" and "password" parameters during initalization.</remarks>
 	public sealed class PlainTextAuthenticator : ISaslAuthenticationProvider
 	{
 		private byte[] authData;
 
 		public PlainTextAuthenticator() { }
 
-		public PlainTextAuthenticator(string zone, string userName, string password) 
+		public PlainTextAuthenticator(string zone, string userName, string password)
 		{
 			this.authData = CreateAuthData(zone, userName, password);
 		}
@@ -25,11 +26,14 @@ namespace Enyim.Caching.Memcached
 
 		void ISaslAuthenticationProvider.Initialize(Dictionary<string, object> parameters)
 		{
-			string zone = (string)parameters["zone"];
-			string userName = (string)parameters["userName"];
-			string password = (string)parameters["password"];
+			if (parameters != null)
+			{
+				string zone = (string)parameters["zone"];
+				string userName = (string)parameters["userName"];
+				string password = (string)parameters["password"];
 
-			this.authData = CreateAuthData(zone, userName, password);
+				this.authData = CreateAuthData(zone, userName, password);
+			}
 		}
 
 		byte[] ISaslAuthenticationProvider.Authenticate()

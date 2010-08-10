@@ -41,7 +41,7 @@ namespace Enyim.Caching.Memcached
 					: null;
 		}
 
-		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetAll()
+		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetWorkingNodes()
 		{
 			return this.node.IsAlive
 					? new IMemcachedNode[] { this.node }

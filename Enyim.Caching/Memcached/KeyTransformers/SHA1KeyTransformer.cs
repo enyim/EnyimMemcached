@@ -9,7 +9,7 @@ namespace Enyim.Caching.Memcached
 	/// </summary>
 	public class SHA1KeyTransformer : KeyTransformerBase
 	{
-		public override string  Transform(string key)
+		public override string Transform(string key)
 		{
 			SHA1Managed sh = new SHA1Managed();
 			byte[] data = sh.ComputeHash(Encoding.Unicode.GetBytes(key));

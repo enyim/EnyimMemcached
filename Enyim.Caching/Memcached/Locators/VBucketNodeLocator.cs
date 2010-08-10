@@ -89,7 +89,7 @@ namespace Enyim.Caching.Memcached
 			return this.buckets[index];
 		}
 
-		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetAll()
+		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetWorkingNodes()
 		{
 			var nodes = this.nodes;
 			var retval = new IMemcachedNode[nodes.Length];

@@ -93,7 +93,7 @@ namespace Enyim.Caching.Memcached
 
 		IEnumerable<IMemcachedNode> IServerPool.GetWorkingNodes()
 		{
-			return this.nodeLocator.GetAll();
+			return this.nodeLocator.GetWorkingNodes();
 		}
 
 		void IServerPool.Start()

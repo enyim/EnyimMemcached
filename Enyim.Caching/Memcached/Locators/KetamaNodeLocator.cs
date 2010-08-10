@@ -113,7 +113,7 @@ namespace Enyim.Caching.Memcached
 			return retval.IsAlive ? retval : null;
 		}
 
-		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetAll()
+		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetWorkingNodes()
 		{
 			var ld = this.lookupData;
 

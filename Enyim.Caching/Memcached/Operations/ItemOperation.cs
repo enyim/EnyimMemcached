@@ -6,7 +6,7 @@ namespace Enyim.Caching.Memcached.Operations
 	/// <summary>
 	/// Base class for implementing operations working with keyed items.
 	/// </summary>
-	internal abstract class ItemOperation : Operation, IItemOperation
+	internal abstract class ItemOperation : Operation, ISingleItemOperation
 	{
 		protected ItemOperation(string key)
 		{
@@ -18,7 +18,7 @@ namespace Enyim.Caching.Memcached.Operations
 		/// <summary>
 		/// The item key of the current operation.
 		/// </summary>
-		string IItemOperation.Key
+		string ISingleItemOperation.Key
 		{
 			get { return this.Key; }
 		}

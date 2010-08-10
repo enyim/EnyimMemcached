@@ -24,7 +24,7 @@ namespace Enyim.Caching.Memcached
 		/// </summary>
 		/// <remarks>It should return an instance which is safe to enumerate multiple times and provides the same results.</remarks>
 		/// <returns></returns>
-		IEnumerable<IMemcachedNode> GetAll();
+		IEnumerable<IMemcachedNode> GetWorkingNodes();
 	}
 }
 

@@ -11,23 +11,17 @@ namespace Enyim.Caching.Memcached
 		bool ReadResponse(PooledSocket socket);
 	}
 
-	public interface IConcatOperation : IOperation
+	public interface ISingleItemOperation : IOperation
 	{
-		ConcatenationMode Mode { get; }
+		string Key { get; }
 	}
 
-	public interface IStatsOperation : IOperation
+	public interface IMultiItemOperation : IOperation
 	{
-		Dictionary<string, string> Result { get; }
+		IList<string> Keys { get; }
 	}
 
-	public interface IMutatorOperation : IItemOperation
-	{
-		MutationMode Mode { get; }
-		ulong Result { get; }
-	}
-
-	public interface IGetOperation : IItemOperation
+	public interface IGetOperation : ISingleItemOperation
 	{
 		CacheItem Result { get; }
 	}
@@ -37,27 +31,33 @@ namespace Enyim.Caching.Memcached
 		Dictionary<string, CacheItem> Result { get; }
 	}
 
-	public interface IDeleteOperation : IItemOperation
-	{
-	}
-
-	public interface IStoreOperation : IItemOperation
+	public interface IStoreOperation : ISingleItemOperation
 	{
 		StoreMode Mode { get; }
 	}
 
+	public interface IDeleteOperation : ISingleItemOperation
+	{
+	}
+
+	public interface IConcatOperation : IOperation
+	{
+		ConcatenationMode Mode { get; }
+	}
+
+	public interface IMutatorOperation : ISingleItemOperation
+	{
+		MutationMode Mode { get; }
+		ulong Result { get; }
+	}
+
+	public interface IStatsOperation : IOperation
+	{
+		Dictionary<string, string> Result { get; }
+	}
+
 	public interface IFlushOperation : IOperation
 	{
-	}
-
-	public interface IItemOperation : IOperation
-	{
-		string Key { get; }
-	}
-
-	public interface IMultiItemOperation : IOperation
-	{
-		IList<string> Keys { get; }
 	}
 }
 

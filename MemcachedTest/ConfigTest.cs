@@ -198,7 +198,7 @@ namespace MemcachedTest
 			return null;
 		}
 
-		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetAll()
+		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetWorkingNodes()
 		{
 			return this.nodes.ToArray();
 		}
