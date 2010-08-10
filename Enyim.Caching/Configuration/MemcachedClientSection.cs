@@ -127,11 +127,15 @@ namespace Enyim.Caching.Configuration
 			get { return this.Authentication; }
 		}
 
-		IOperationFactory IMemcachedClientConfiguration.CreateOperationFactory()
+		IServerPool IMemcachedClientConfiguration.CreatePool()
 		{
-			return this.Protocol == MemcachedProtocol.Binary
-					? new Enyim.Caching.Memcached.Operations.Binary.BinaryOperationFactory()
-					: null;
+			switch (this.Protocol)
+			{
+				case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Operations.Text.TextOperationFactory());
+				case MemcachedProtocol.Binary: return new Enyim.Caching.Memcached.Operations.Binary.BinaryPool(this);
+			}
+
+			throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);
 		}
 
 		#endregion

@@ -88,6 +88,17 @@ namespace Enyim.Caching.Memcached
 
 			return this.buckets[index];
 		}
+
+		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetAll()
+		{
+			var nodes = this.nodes;
+			var retval = new IMemcachedNode[nodes.Length];
+
+			Array.Copy(nodes, retval, retval.Length);
+
+			return retval;
+		}
+
 		#endregion
 		#region [ hashFactory                  ]
 

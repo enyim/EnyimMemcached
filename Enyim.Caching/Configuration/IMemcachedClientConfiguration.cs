@@ -40,10 +40,7 @@ namespace Enyim.Caching.Configuration
 		/// </summary>
 		ITranscoder CreateTranscoder();
 
-		/// <summary>
-		/// Gets or sets the type of the communication between client and server.
-		/// </summary>
-		IOperationFactory CreateOperationFactory();
+		IServerPool CreatePool();
 	}
 }
 

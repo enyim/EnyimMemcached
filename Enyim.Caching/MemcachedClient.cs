@@ -35,9 +35,6 @@ namespace Enyim.Caching
 		{
 			try { ((IDisposable)this).Dispose(); }
 			catch { }
-
-
-
 		}
 
 		/// <summary>
@@ -70,7 +67,7 @@ namespace Enyim.Caching
 			this.keyTransformer = configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
 			this.transcoder = configuration.CreateTranscoder() ?? new DefaultTranscoder();
 
-			this.pool = new DefaultServerPool(configuration);
+			this.pool = configuration.CreatePool();
 			this.pool.Start();
 		}
 
@@ -79,7 +76,7 @@ namespace Enyim.Caching
 		/// </summary>
 		/// <param name="pool">The server pool this client should use</param>
 		/// <param name="provider">The authentication provider this client should use. If null, the connections will not be authenticated.</param>
-		/// <param name="protocol">Soecifies which protocol the client should use to communicate with the servers.</param>
+		/// <param name="protocol">Specifies which protocol the client should use to communicate with the servers.</param>
 		public MemcachedClient(IServerPool pool)
 		{
 			if (pool == null)

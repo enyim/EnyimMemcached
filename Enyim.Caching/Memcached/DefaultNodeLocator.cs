@@ -105,6 +105,20 @@ namespace Enyim.Caching.Memcached
 			return this.Locate(key);
 		}
 
+		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetAll()
+		{
+			this.serverAccessLock.EnterReadLock();
+
+			try
+			{
+				return this.allServers.Except(this.deadServers.Keys).ToArray();
+			}
+			finally
+			{
+				this.serverAccessLock.ExitReadLock();
+			}
+		}
+
 		private IMemcachedNode Locate(string key)
 		{
 			this.serverAccessLock.EnterUpgradeableReadLock();

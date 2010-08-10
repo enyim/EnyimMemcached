@@ -10,11 +10,6 @@ namespace Enyim.Caching.Memcached
 		IPEndPoint EndPoint { get; }
 		bool IsAlive { get; }
 		bool Ping();
-		PooledSocket Acquire();
-
-
-		// TEMP HACK
-		int Bucket { get; }
 
 		bool Execute(IOperation op);
 

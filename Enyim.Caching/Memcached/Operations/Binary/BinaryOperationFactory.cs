@@ -6,7 +6,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 	/// <summary>
 	/// Memcached client.
 	/// </summary>
-	internal class BinaryOperationFactory : IOperationFactory
+	public class BinaryOperationFactory : IOperationFactory
 	{
 		IGetOperation IOperationFactory.Get(string key)
 		{

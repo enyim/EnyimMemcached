@@ -113,6 +113,19 @@ namespace Enyim.Caching.Memcached
 			return retval.IsAlive ? retval : null;
 		}
 
+		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetAll()
+		{
+			var ld = this.lookupData;
+
+			if (ld.servers == null || ld.servers.Length == 0)
+				return Enumerable.Empty<IMemcachedNode>();
+
+			var retval = new IMemcachedNode[ld.servers.Length];
+			Array.Copy(ld.servers, retval, retval.Length);
+
+			return retval;
+		}
+
 		private static IMemcachedNode LocateNode(LookupData ld, uint itemKeyHash)
 		{
 			// get the index of the server assigned to this hash

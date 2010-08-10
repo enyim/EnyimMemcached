@@ -25,9 +25,8 @@ namespace Enyim.Caching.Memcached
 		private IPEndPoint endPoint;
 		private ISocketPoolConfiguration config;
 		private InternalPoolImpl internalPoolImpl;
-		private IAuthenticator authenticator;
 
-		public MemcachedNode(IPEndPoint endpoint, ISocketPoolConfiguration socketPoolConfig, IAuthenticator authenticator)
+		public MemcachedNode(IPEndPoint endpoint, ISocketPoolConfiguration socketPoolConfig)
 		{
 			this.endPoint = endpoint;
 			this.config = socketPoolConfig;
@@ -39,7 +38,6 @@ namespace Enyim.Caching.Memcached
 			if (socketPoolConfig.ConnectionTimeout.TotalMilliseconds >= Int32.MaxValue)
 				throw new InvalidOperationException("ConnectionTimeout must be < Int32.MaxValue");
 
-			this.authenticator = authenticator;
 			this.internalPoolImpl = new InternalPoolImpl(this, socketPoolConfig);
 		}
 
@@ -146,8 +144,6 @@ namespace Enyim.Caching.Memcached
 			this.Dispose();
 		}
 
-		public int Bucket { get; set; }
-
 		#region [ InternalPoolImpl             ]
 		private class InternalPoolImpl : IDisposable
 		{
@@ -164,9 +160,7 @@ namespace Enyim.Caching.Memcached
 
 			private int minItems;
 			private int maxItems;
-#if DEBUG_PROTOCOL
-			private int workingCount = 0;
-#endif
+
 			private MemcachedNode ownerNode;
 			private IPEndPoint endPoint;
 			private ISocketPoolConfiguration config;
@@ -227,22 +221,6 @@ namespace Enyim.Caching.Memcached
 				return ps;
 			}
 
-			//private PooledSocket CreateSocket()
-			//{
-			//    PooledSocket retval = new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, this.ReleaseSocket);
-			//    retval.OwnerNode = this.ownerNode;
-
-			//    if (this.ownerNode.authenticator != null)
-			//        if (!this.ownerNode.authenticator.Authenticate(retval))
-			//        {
-			//            if (log.IsErrorEnabled) log.Error("Authentication failed: " + this.endPoint);
-
-			//            throw new SecurityException("auth failed: " + this.endPoint);
-			//        }
-
-			//    return retval;
-			//}
-
 			public bool IsAlive
 			{
 				get { return this.isAlive; }
@@ -278,7 +256,7 @@ namespace Enyim.Caching.Memcached
 					throw new TimeoutException();
 				}
 
-				// maye we died while waiting
+				// maybe we died while waiting
 				if (!this.isAlive)
 				{
 					if (log.IsDebugEnabled) log.Debug("Pool is dead, returning null.");
@@ -295,9 +273,7 @@ namespace Enyim.Caching.Memcached
 						retval.Reset();
 
 						if (log.IsDebugEnabled) log.Debug("Socket was reset. " + retval.InstanceId);
-#if DEBUG_PROTOCOL
-						Interlocked.Increment(ref this.workingCount);
-#endif
+
 						return retval;
 					}
 					catch (Exception e)
@@ -318,9 +294,6 @@ namespace Enyim.Caching.Memcached
 				{
 					// okay, create the new item
 					retval = this.CreateSocket();
-#if DEBUG_PROTOCOL
-					Interlocked.Increment(ref this.workingCount);
-#endif
 				}
 				catch (Exception e)
 				{
@@ -362,9 +335,7 @@ namespace Enyim.Caching.Memcached
 					{
 						// mark the item as free
 						this.freeItems.Enqueue(socket);
-#if DEBUG_PROTOCOL
-						Interlocked.Decrement(ref this.workingCount);
-#endif
+
 						// signal the event so if someone is waiting for it can reuse this item
 						this.semaphore.Release();
 					}
@@ -454,71 +425,10 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 		#endregion
-		#region [ NodeFactory                  ]
-		//internal sealed class NodeFactory
-		//{
-		//    private Dictionary<string, MemcachedNode> nodeCache = new Dictionary<string, MemcachedNode>(StringComparer.OrdinalIgnoreCase);
-
-		//    internal NodeFactory()
-		//    {
-		//        AppDomain.CurrentDomain.DomainUnload += DestroyPool;
-		//    }
-
-		//    public MemcachedNode Get(IPEndPoint endpoint, IMemcachedClientConfiguration config, IMemcachedAuthenticator authenticator)
-		//    {
-		//        ISocketPoolConfiguration ispc = config.SocketPool;
-
-		//        string cacheKey = String.Concat(endpoint.ToString(), "-",
-		//                                            ispc.ConnectionTimeout.Ticks, "-",
-		//                                            ispc.DeadTimeout.Ticks, "-",
-		//                                            ispc.MaxPoolSize, "-",
-		//                                            ispc.MinPoolSize, "-",
-		//                                            ispc.ReceiveTimeout.Ticks);
-
-		//        MemcachedNode node;
-
-		//        if (!nodeCache.TryGetValue(cacheKey, out node))
-		//        {
-		//            lock (nodeCache)
-		//            {
-		//                if (!nodeCache.TryGetValue(cacheKey, out node))
-		//                {
-		//                    node = new MemcachedNode(endpoint, config);
-
-		//                    nodeCache[cacheKey] = node;
-		//                }
-		//            }
-		//        }
-
-		//        return node;
-		//    }
-
-		//    private void DestroyPool(object sender, EventArgs e)
-		//    {
-		//        lock (this.nodeCache)
-		//        {
-		//            foreach (MemcachedNode node in this.nodeCache.Values)
-		//            {
-		//                node.Dispose();
-		//            }
-
-		//            this.nodeCache.Clear();
-		//        }
-		//    }
-		//}
-		#endregion
 
 		protected internal virtual PooledSocket CreateSocket()
 		{
 			PooledSocket retval = new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout);
-
-			if (this.authenticator != null)
-				if (!this.authenticator.Authenticate(retval))
-				{
-					if (log.IsErrorEnabled) log.Error("Authentication failed: " + this.endPoint);
-
-					throw new SecurityException("auth failed: " + this.endPoint);
-				}
 
 			return retval;
 		}
@@ -665,38 +575,22 @@ namespace Enyim.Caching.Memcached
 
 		IPEndPoint IMemcachedNode.EndPoint
 		{
-			get { throw new NotImplementedException(); }
+			get { return this.EndPoint; }
 		}
 
 		bool IMemcachedNode.IsAlive
 		{
-			get { throw new NotImplementedException(); }
+			get { return this.IsAlive; }
 		}
 
 		bool IMemcachedNode.Ping()
 		{
-			throw new NotImplementedException();
+			return this.Ping();
 		}
-
-		PooledSocket IMemcachedNode.Acquire()
-		{
-			throw new NotImplementedException();
-		}
-
-		int IMemcachedNode.Bucket
-		{
-			get { throw new NotImplementedException(); }
-		}
-
-
-		#endregion
-
-		#region IMemcachedNode Members
-
 
 		bool IMemcachedNode.Execute(IOperation op)
 		{
-			throw new NotImplementedException();
+			return this.Execute(op);
 		}
 
 		IAsyncResult IMemcachedNode.BeginExecute(IOperation op, AsyncCallback callback, object state)
@@ -704,112 +598,12 @@ namespace Enyim.Caching.Memcached
 			throw new NotImplementedException();
 		}
 
-		#endregion
-
-		#region IMemcachedNode Members
-
-
 		bool IMemcachedNode.EndExecute(IAsyncResult result)
 		{
 			throw new NotImplementedException();
 		}
 
 		#endregion
-	}
-
-
-	public class BinaryNode : MemcachedNode
-	{
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(BinaryNode));
-
-		ISaslAuthenticationProvider ap;
-
-		public BinaryNode(IPEndPoint endpoint, ISocketPoolConfiguration config, ISaslAuthenticationProvider ap)
-			: base(endpoint, config, null)
-		{
-			this.ap = ap;
-		}
-
-		protected internal override PooledSocket CreateSocket()
-		{
-			var retval = base.CreateSocket();
-
-			if (this.ap != null && !this.Auth(retval))
-			{
-				if (log.IsErrorEnabled) log.Error("Authentication failed: " + this.EndPoint);
-
-				throw new SecurityException("auth failed: " + this.EndPoint);
-			}
-
-			return retval;
-		}
-
-		private bool Auth(PooledSocket socket)
-		{
-			SaslStep currentStep = new SaslStart(this.ap);
-
-			socket.Write(currentStep.GetBuffer());
-
-			while (!currentStep.ReadResponse(socket))
-			{
-				// challenge-response authentication
-				if (currentStep.StatusCode == 0x21)
-				{
-					currentStep = new SaslContinue(this.ap, currentStep.Data);
-					socket.Write(currentStep.GetBuffer());
-				}
-				else
-				{
-					if (log.IsWarnEnabled)
-						log.WarnFormat("Authentication failed, return code: 0x{0:x}", currentStep.StatusCode);
-
-					// invalid credentials or other error
-					return false;
-				}
-			}
-
-			return true;
-		}
-	}
-
-
-	class BinaryPool : DefaultServerPool
-	{
-		ISaslAuthenticationProvider ap;
-		IMemcachedClientConfiguration configuration;
-
-		public BinaryPool(IMemcachedClientConfiguration configuration)
-			: base(configuration)
-		{
-			this.ap = GetProvider(configuration);
-			this.configuration = configuration;
-		}
-
-		protected override IMemcachedNode CreateNode(IPEndPoint endpoint)
-		{
-			return new BinaryNode(endpoint, this.configuration.SocketPool, this.ap);
-		}
-
-		private static ISaslAuthenticationProvider GetProvider(IMemcachedClientConfiguration configuration)
-		{
-			// create&initialize the authenticator, if any
-			// we'll use this single instance everywhere, so it must be thread safe
-			IAuthenticationConfiguration auth = configuration.Authentication;
-			if (auth != null)
-			{
-				Type t = auth.Type;
-				var provider = (t == null) ? null : Enyim.Reflection.FastActivator2.Create(t) as ISaslAuthenticationProvider;
-
-				if (provider != null)
-				{
-					provider.Initialize(auth.Parameters);
-					return provider;
-				}
-			}
-
-			return null;
-		}
-
 	}
 }
 

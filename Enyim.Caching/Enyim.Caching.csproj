@@ -100,6 +100,8 @@
     <Compile Include="Memcached\IOperationFactory.cs" />
     <Compile Include="Memcached\OperationInterfaces.cs" />
     <Compile Include="Memcached\Operations\Binary\BinaryOperationFactory.cs" />
+    <Compile Include="Memcached\Operations\Binary\BinaryNode.cs" />
+    <Compile Include="Memcached\Operations\Binary\BinaryPool.cs" />
     <Compile Include="Memcached\Operations\Binary\SaslContinue.cs" />
     <Compile Include="Memcached\Operations\Binary\SaslStart.cs" />
     <Compile Include="Memcached\Operations\MultiItemOperation.cs" />

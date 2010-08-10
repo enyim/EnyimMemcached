@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Enyim.Caching.Memcached
 {
@@ -35,7 +36,16 @@ namespace Enyim.Caching.Memcached
 			if (!this.isInitialized)
 				throw new InvalidOperationException("You must call Initialize first");
 
-			return this.node;
+			return this.node.IsAlive
+					? this.node
+					: null;
+		}
+
+		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetAll()
+		{
+			return this.node.IsAlive
+					? new IMemcachedNode[] { this.node }
+					: Enumerable.Empty<IMemcachedNode>();
 		}
 	}
 }

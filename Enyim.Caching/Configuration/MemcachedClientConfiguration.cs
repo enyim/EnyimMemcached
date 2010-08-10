@@ -108,12 +108,17 @@ namespace Enyim.Caching.Configuration
 			return this.Transcoder;
 		}
 
-		IOperationFactory IMemcachedClientConfiguration.CreateOperationFactory()
+		IServerPool IMemcachedClientConfiguration.CreatePool()
 		{
-			return this.Protocol == MemcachedProtocol.Binary
-					? new BinaryOperationFactory()
-					: null;
+			switch (this.Protocol)
+			{
+				case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Operations.Text.TextOperationFactory());
+				case MemcachedProtocol.Binary: return new BinaryPool(this);
+			}
+
+			throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);
 		}
+
 		#endregion
 	}
 }

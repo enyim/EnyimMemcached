@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net;
@@ -11,32 +12,24 @@ namespace Enyim.Caching.Memcached
 	{
 		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(DefaultServerPool));
 
-		// holds all of the currently working servers
-		List<IMemcachedNode> workingServers;
+		private IMemcachedNode[] allNodes;
 
 		private IMemcachedClientConfiguration configuration;
-		//		private IMemcachedKeyTransformer keyTransformer;
-		private IMemcachedNodeLocator nodeLocator;
-		//		private ITranscoder transcoder;
 		private IOperationFactory factory;
+		private IMemcachedNodeLocator nodeLocator;
 
-		public IEnumerable<IMemcachedNode> GetServers()
+		public DefaultServerPool(IMemcachedClientConfiguration configuration, IOperationFactory opFactory)
 		{
-			return this.workingServers;
+			if (configuration == null) throw new ArgumentNullException("socketConfig");
+			if (opFactory == null) throw new ArgumentNullException("opFactory");
+
+			this.factory = opFactory;
 		}
 
-		public DefaultServerPool(IMemcachedClientConfiguration configuration)
+		~DefaultServerPool()
 		{
-			if (configuration == null)
-				throw new ArgumentNullException("configuration", "Invalid or missing pool configuration. Check if the enyim.com/memcached section or your custom section presents in the app/web.config.");
-
-			this.configuration = configuration;
-
-			//this.keyTransformer = this.configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
-			//this.transcoder = this.configuration.CreateTranscoder() ?? new DefaultTranscoder();
-			this.factory = this.configuration.CreateOperationFactory();
-
-			if (this.factory == null) throw new ArgumentException("Invalid op factory.", "configuration");
+			try { ((IDisposable)this).Dispose(); }
+			catch { }
 		}
 
 		/// <summary>
@@ -44,24 +37,16 @@ namespace Enyim.Caching.Memcached
 		/// </summary>
 		public void Start()
 		{
-			// initialize the server list
-			this.workingServers = new List<IMemcachedNode>();
-
-			foreach (IPEndPoint ip in this.configuration.Servers)
-			{
-				var node = this.CreateNode(ip);
-
-				this.workingServers.Add(node);
-			}
-
 			// initialize the locator
 			var locator = this.configuration.CreateNodeLocator();
-			locator.Initialize(this.workingServers);
+			var nodes = from ip in this.configuration.Servers
+						select this.CreateNode(ip);
 
+			this.allNodes = nodes.ToArray();
+
+			locator.Initialize(allNodes);
 			this.nodeLocator = locator;
 		}
-
-		public IAuthenticator Authenticator { get; set; }
 
 		/// <summary>
 		/// Finds the <see cref="T:MemcachedNode"/> which is responsible for the specified item
@@ -78,7 +63,7 @@ namespace Enyim.Caching.Memcached
 				return null;
 			}
 
-			// it's the locator's responsibility to reeturn only working nodes
+			// it's the locator's responsibility to return only working nodes
 			if (!node.IsAlive)
 			{
 				if (log.IsWarnEnabled) log.Warn("Locator returned a dead node " + node.EndPoint + " for " + itemKey);
@@ -88,72 +73,16 @@ namespace Enyim.Caching.Memcached
 			return node;
 		}
 
-		public virtual PooledSocket Acquire(string itemKey)
-		{
-			IMemcachedNode server = this.LocateNode(itemKey);
-
-			return server == null ? null : server.Acquire();
-		}
-
-		public IDictionary<IMemcachedNode, IList<string>> SplitKeys(IEnumerable<string> keys)
-		{
-			Dictionary<IMemcachedNode, IList<string>> keysByNode = new Dictionary<IMemcachedNode, IList<string>>(MemcachedNode.Comparer.Instance);
-
-			IList<string> nodeKeys;
-			IMemcachedNode node;
-
-			foreach (string key in keys)
-			{
-				node = this.LocateNode(key);
-
-				if (!keysByNode.TryGetValue(node, out nodeKeys))
-				{
-					nodeKeys = new List<string>();
-					keysByNode.Add(node, nodeKeys);
-				}
-
-				nodeKeys.Add(key);
-			}
-
-			return keysByNode;
-		}
-
-		~DefaultServerPool()
-		{
-			try { ((IDisposable)this).Dispose(); }
-			catch { }
-		}
-
 		protected virtual IMemcachedNode CreateNode(IPEndPoint endpoint)
 		{
-			return new MemcachedNode(endpoint, this.configuration.SocketPool, this.Authenticator);
+			return new MemcachedNode(endpoint, this.configuration.SocketPool);
 		}
 
 		#region [ IServerPool                  ]
 
-		//IMemcachedKeyTransformer IServerPool.KeyTransformer
-		//{
-		//    get { return this.keyTransformer; }
-		//}
-
-		//ITranscoder IServerPool.Transcoder
-		//{
-		//    get { return this.transcoder; }
-		//}
-
-		//IMemcachedNodeLocator IServerPool.NodeLocator
-		//{
-		//    get { return this.nodeLocator; }
-		//}
-
-		IEnumerable<IMemcachedNode> IServerPool.GetServers()
+		IMemcachedNode IServerPool.Locate(string key)
 		{
-			return this.GetServers();
-		}
-
-		void IServerPool.Start()
-		{
-			this.Start();
+			return this.nodeLocator.Locate(key);
 		}
 
 		IOperationFactory IServerPool.OperationFactory
@@ -161,56 +90,34 @@ namespace Enyim.Caching.Memcached
 			get { return this.factory; }
 		}
 
+		IEnumerable<IMemcachedNode> IServerPool.GetServers()
+		{
+			return this.nodeLocator.GetAll();
+		}
+
+		void IServerPool.Start()
+		{
+			this.Start();
+		}
+
 		#endregion
 		#region [ IDisposable                  ]
+
 		void IDisposable.Dispose()
 		{
-			//ReaderWriterLock rwl = this.serverAccessLock;
-
-			//if (Interlocked.CompareExchange(ref this.serverAccessLock, null, rwl) == null)
-			//    return;
-
 			GC.SuppressFinalize(this);
 
-			try
-			{
-				//rwl.UpgradeToWriterLock(Timeout.Infinite);
+			for (var i = 0; i < this.allNodes.Length; i++)
+				try { this.allNodes[i].Dispose(); }
+				catch { }
 
-				Action<IMemcachedNode> cleanupNode = node =>
-				{
-					//node.SocketConnected -= this.OnSocketConnected;
-					node.Dispose();
-				};
+			this.allNodes = null;
 
-				// dispose the nodes (they'll kill conenctions, etc.)
-				//this.deadServers.ForEach(cleanupNode);
-				this.workingServers.ForEach(cleanupNode);
+			var nd = this.nodeLocator as IDisposable;
+			if (nd != null)
+				nd.Dispose();
 
-				//this.deadServers.Clear();
-				this.workingServers.Clear();
-
-				var nd = this.nodeLocator as IDisposable;
-				if (nd != null)
-					nd.Dispose();
-
-				this.nodeLocator = null;
-
-				//this.isAliveTimer.Dispose();
-				//this.isAliveTimer = null;
-			}
-			finally
-			{
-				//rwl.ReleaseLock();
-			}
-		}
-		#endregion
-
-		#region IServerPool Members
-
-
-		IMemcachedNode IServerPool.Locate(string key)
-		{
-			return this.nodeLocator.Locate(key);
+			this.nodeLocator = null;
 		}
 
 		#endregion
