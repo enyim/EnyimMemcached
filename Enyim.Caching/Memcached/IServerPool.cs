@@ -10,7 +10,7 @@ namespace Enyim.Caching.Memcached
 	{
 		IMemcachedNode Locate(string key);
 		IOperationFactory OperationFactory { get; }
-		IEnumerable<IMemcachedNode> GetServers();
+		IEnumerable<IMemcachedNode> GetWorkingNodes();
 
 		void Start();
 	}

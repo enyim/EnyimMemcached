@@ -101,7 +101,7 @@ namespace Enyim.Caching.Memcached.Operations.Text
 		/// using the <see cref="M:Enyim.Caching.Memcached.PooledSocket.Write(IList&lt;ArraySegment&lt;byte&gt;&gt;)"/>
 		/// </summary>
 		/// <param name="value">The command to be converted.</param>
-		/// <returns>The buffer containing the bytes representing the command. The returned buffer will be terminated with 13, 10 (\r\n)</returns>
+		/// <returns>The buffer containing the bytes representing the command. The command must be terminated by \r\n.</returns>
 		/// <remarks>The Nagle algorithm is disabled on the socket to speed things up, so it's recommended to convert a command into a buffer
 		/// and use the <see cref="M:Enyim.Caching.Memcached.PooledSocket.Write(IList&lt;ArraySegment&lt;byte&gt;&gt;)"/> to send the command and the additional buffers in one transaction.</remarks>
 		public unsafe static IList<ArraySegment<byte>> GetCommandBuffer(string value)

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using Enyim.Caching;
@@ -185,13 +186,21 @@ namespace MemcachedTest
 
 	class TestLocator : IMemcachedNodeLocator
 	{
+		private IList<IMemcachedNode> nodes;
+
 		void IMemcachedNodeLocator.Initialize(IList<IMemcachedNode> nodes)
 		{
+			this.nodes = nodes;
 		}
 
 		IMemcachedNode IMemcachedNodeLocator.Locate(string key)
 		{
 			return null;
+		}
+
+		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetAll()
+		{
+			return this.nodes.ToArray();
 		}
 	}
 

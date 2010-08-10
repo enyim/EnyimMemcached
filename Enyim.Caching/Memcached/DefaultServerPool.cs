@@ -23,6 +23,7 @@ namespace Enyim.Caching.Memcached
 			if (configuration == null) throw new ArgumentNullException("socketConfig");
 			if (opFactory == null) throw new ArgumentNullException("opFactory");
 
+			this.configuration = configuration;
 			this.factory = opFactory;
 		}
 
@@ -90,7 +91,7 @@ namespace Enyim.Caching.Memcached
 			get { return this.factory; }
 		}
 
-		IEnumerable<IMemcachedNode> IServerPool.GetServers()
+		IEnumerable<IMemcachedNode> IServerPool.GetWorkingNodes()
 		{
 			return this.nodeLocator.GetAll();
 		}

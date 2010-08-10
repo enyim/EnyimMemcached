@@ -3296,12 +3296,42 @@ namespace MemcachedTest
 		}
 
 		public IPEndPoint EndPoint { get; private set; }
-		public int Bucket { get; set; }
 
-		public bool IsAlive { get { return true; } }
-		public bool Ping() { return true; }
-		public PooledSocket Acquire() { return null; }
 		public void Dispose() { }
+
+		#region IMemcachedNode Members
+
+		IPEndPoint IMemcachedNode.EndPoint
+		{
+			get { return this.EndPoint; }
+		}
+
+		bool IMemcachedNode.IsAlive
+		{
+			get { return true; }
+		}
+
+		bool IMemcachedNode.Ping()
+		{
+			return true;
+		}
+
+		bool IMemcachedNode.Execute(IOperation op)
+		{
+			return true;
+		}
+
+		IAsyncResult IMemcachedNode.BeginExecute(IOperation op, AsyncCallback callback, object state)
+		{
+			throw new NotImplementedException();
+		}
+
+		bool IMemcachedNode.EndExecute(IAsyncResult result)
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
 	}
 }
 

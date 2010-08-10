@@ -49,6 +49,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 		protected internal override bool ReadResponse(PooledSocket socket)
 		{
+			this.result = new Dictionary<string, CacheItem>();
 			var response = new BinaryResponse();
 
 			while (response.Read(socket))

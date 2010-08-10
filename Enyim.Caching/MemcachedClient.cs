@@ -22,6 +22,7 @@ namespace Enyim.Caching
 		internal static readonly MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
 		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MemcachedClient));
 
+		private IServerPool pool;
 		private IMemcachedClientConfiguration config;
 		private IMemcachedKeyTransformer keyTransformer;
 		private ITranscoder transcoder;
@@ -30,12 +31,6 @@ namespace Enyim.Caching
 		/// Initializes a new MemcachedClient instance using the default configuration section (enyim/memcached).
 		/// </summary>
 		public MemcachedClient() : this(DefaultSettings) { }
-
-		~MemcachedClient()
-		{
-			try { ((IDisposable)this).Dispose(); }
-			catch { }
-		}
 
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the specified configuration section. 
@@ -71,21 +66,11 @@ namespace Enyim.Caching
 			this.pool.Start();
 		}
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:MemcachedClient"/> using a custom server pool implementation.
-		/// </summary>
-		/// <param name="pool">The server pool this client should use</param>
-		/// <param name="provider">The authentication provider this client should use. If null, the connections will not be authenticated.</param>
-		/// <param name="protocol">Specifies which protocol the client should use to communicate with the servers.</param>
-		public MemcachedClient(IServerPool pool)
+		~MemcachedClient()
 		{
-			if (pool == null)
-				throw new ArgumentNullException("pool");
-
-			this.pool = pool;
+			try { ((IDisposable)this).Dispose(); }
+			catch { }
 		}
-
-		private IServerPool pool;
 
 		/// <summary>
 		/// Retrieves the specified item from the cache.
@@ -110,73 +95,6 @@ namespace Enyim.Caching
 
 			return TryGet(key, out tmp) ? (T)tmp : default(T);
 		}
-
-		//private IAsyncResult BeginExecute(IItemOperation op, AsyncCallback callback, object state)
-		//{
-		//    var node = this.pool.NodeLocator.Locate(op.Key);
-		//    if (node == null || !node.IsAlive)
-		//        return new FailedIAR(state, callback);
-
-		//    return node.BeginExecute(op, callback, state);
-		//}
-
-		//private bool EndExecute(IAsyncResult result)
-		//{
-		//    var fiar = result as FailedIAR;
-		//    if (fiar != null)
-		//    {
-		//        fiar.callback(fiar);
-
-		//        return false;
-		//    }
-
-
-		//    return (((IMemcachedNode)result
-		//}
-
-		#region FailedIAR
-		class FailedIAR : IAsyncResult, IDisposable
-		{
-			internal object state;
-			internal AsyncCallback callback;
-			internal ManualResetEvent handle;
-
-			public FailedIAR(object state, AsyncCallback callback)
-			{
-				this.state = state;
-				this.callback = callback;
-			}
-
-			object IAsyncResult.AsyncState
-			{
-				get { return this.state; }
-			}
-
-			WaitHandle IAsyncResult.AsyncWaitHandle
-			{
-				get { return this.handle ?? (this.handle = new ManualResetEvent(true)); }
-			}
-
-			bool IAsyncResult.CompletedSynchronously
-			{
-				get { return true; }
-			}
-
-			bool IAsyncResult.IsCompleted
-			{
-				get { return true; }
-			}
-
-			#region IDisposable Members
-
-			void IDisposable.Dispose()
-			{
-				((IDisposable)this.handle).Dispose();
-			}
-
-			#endregion
-		}
-		#endregion
 
 		/// <summary>
 		/// Tries to get an item from the cache.
@@ -251,7 +169,16 @@ namespace Enyim.Caching
 
 			if (node != null)
 			{
-				var item = this.transcoder.Serialize(value);
+				CacheItem item;
+
+				try { item = this.transcoder.Serialize(value); }
+				catch (Exception e)
+				{
+					log.Error(e);
+
+					return false;
+				}
+
 				var command = this.pool.OperationFactory.Store(mode, hashedKey, item, expires);
 
 				return node.Execute(command);
@@ -271,22 +198,6 @@ namespace Enyim.Caching
 		public ulong Increment(string key, ulong defaultValue, ulong delta)
 		{
 			return this.Mutate(MutationMode.Increment, key, defaultValue, delta, 0);
-		}
-
-		private ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
-		{
-			var hashedKey = this.keyTransformer.Transform(key);
-			var node = this.pool.Locate(hashedKey);
-
-			if (node != null)
-			{
-				var command = this.pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires);
-
-				if (node.Execute(command))
-					return command.Result;
-			}
-
-			return 0;
 		}
 
 		/// <summary>
@@ -358,6 +269,22 @@ namespace Enyim.Caching
 			return this.Mutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt));
 		}
 
+		private ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+		{
+			var hashedKey = this.keyTransformer.Transform(key);
+			var node = this.pool.Locate(hashedKey);
+
+			if (node != null)
+			{
+				var command = this.pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires);
+
+				if (node.Execute(command))
+					return command.Result;
+			}
+
+			return 0;
+		}
+
 		/// <summary>
 		/// Appends the data to the end of the specified item's data on the server.
 		/// </summary>
@@ -378,7 +305,7 @@ namespace Enyim.Caching
 			return this.Concatenate(ConcatenationMode.Prepend, key, data);
 		}
 
-		public bool Concatenate(ConcatenationMode mode, string key, ArraySegment<byte> data)
+		private bool Concatenate(ConcatenationMode mode, string key, ArraySegment<byte> data)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
@@ -400,11 +327,11 @@ namespace Enyim.Caching
 		{
 			var handles = new List<WaitHandle>();
 
-			foreach (var server in this.pool.GetServers())
+			foreach (var node in this.pool.GetWorkingNodes())
 			{
 				var command = this.pool.OperationFactory.Flush();
 
-				server.Execute(command);
+				node.Execute(command);
 			}
 		}
 
@@ -417,23 +344,22 @@ namespace Enyim.Caching
 			var results = new Dictionary<IPEndPoint, Dictionary<string, string>>();
 			var handles = new List<WaitHandle>();
 
-			foreach (var server in this.pool.GetServers())
+			foreach (var node in this.pool.GetWorkingNodes())
 			{
 				var cmd = this.pool.OperationFactory.Stats();
 				var mre = new ManualResetEvent(false);
 
-				Func<IOperation, bool> action = new Func<IOperation, bool>(server.Execute);
+				Func<IOperation, bool> action = new Func<IOperation, bool>(node.Execute);
 
-				var iar = action.BeginInvoke(cmd, a =>
-					{
-						action.EndInvoke(a);
+				action.BeginInvoke(cmd, iar =>
+				{
+					action.EndInvoke(iar);
 
-						lock (results)
-							results[server.EndPoint] = cmd.Result;
+					lock (results)
+						results[node.EndPoint] = cmd.Result;
 
-						mre.Set();
-					}, null);
-
+					mre.Set();
+				}, null);
 
 				handles.Add(mre);
 			}
@@ -470,7 +396,7 @@ namespace Enyim.Caching
 		/// <returns>a Dictionary holding all items indexed by their key.</returns>
 		public IDictionary<string, object> Get(IEnumerable<string> keys)
 		{
-			// transform the keys and indexd them by hashed => original
+			// transform the keys and index them by hashed => original
 			// the mget results will be mapped using this index
 			var hashed = keys.ToDictionary(key => this.keyTransformer.Transform(key));
 			var byServer = hashed.Keys.ToLookup(key => this.pool.Locate(key));
@@ -485,6 +411,7 @@ namespace Enyim.Caching
 				var nodeKeys = slice.ToArray();
 				var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
 
+				// we'll use the delegate's BeginInvoke/EndInvoke to run the gets parallel
 				Func<IOperation, bool> exec = new Func<IOperation, bool>(node.Execute);
 				var mre = new ManualResetEvent(false);
 				handles.Add(mre);
@@ -492,24 +419,29 @@ namespace Enyim.Caching
 				//execute the mgets parallel
 				exec.BeginInvoke(mget, iar =>
 				{
-					if (exec.EndInvoke(iar))
+					try
 					{
-						foreach (var kvp in mget.Result)
+						if (exec.EndInvoke(iar))
 						{
-							string original;
-							var tryget = hashed.TryGetValue(kvp.Key, out original);
+							foreach (var kvp in mget.Result)
+							{
+								string original;
+								var tryget = hashed.TryGetValue(kvp.Key, out original);
 
-							Debug.Assert(tryget, "MGet returned unexpected key: " + kvp.Key);
+								Debug.Assert(tryget, "MGet returned unexpected key: " + kvp.Key);
 
-							// the lock will serialize the merges,
-							// but at least the commands were not waiting on each other
-							lock (retval)
-								retval[original] = kvp.Value;
+								// the lock will serialize the merges,
+								// but at least the commands were not waiting on each other
+								lock (retval)
+									retval[original] = this.transcoder.Deserialize(kvp.Value);
+							}
 						}
 					}
-
-					// indicate that we finished processing
-					mre.Set();
+					finally
+					{
+						// indicate that we finished processing
+						mre.Set();
+					}
 				}, null);
 			}
 
@@ -519,6 +451,7 @@ namespace Enyim.Caching
 		}
 
 		#region [ Expiration helper            ]
+
 		private const int MaxSeconds = 60 * 60 * 24 * 30;
 		private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1);
 
@@ -551,8 +484,10 @@ namespace Enyim.Caching
 
 			return (uint)ts.TotalSeconds;
 		}
+
 		#endregion
 		#region [ IDisposable                  ]
+
 		void IDisposable.Dispose()
 		{
 			this.Dispose();
@@ -561,24 +496,24 @@ namespace Enyim.Caching
 		/// <summary>
 		/// Releases all resources allocated by this instance
 		/// </summary>
-		/// <remarks>Technically it's not really neccesary to call this, since the client does not create "really" disposable objects, so it's safe to assume that when 
-		/// the AppPool shuts down all resources will be released correctly and no handles or such will remain in the memory.</remarks>
+		/// <remarks>You should only call this when you are not using static instances of the client, so it can close all conections and release the sockets.</remarks>
 		public void Dispose()
 		{
-			//if (this.protImpl != null)
-			//{
-			//    GC.SuppressFinalize(this);
+			if (this.pool != null)
+			{
+				GC.SuppressFinalize(this);
 
-			//    try
-			//    {
-			//        this.protImpl.Dispose();
-			//    }
-			//    finally
-			//    {
-			//        this.protImpl = null;
-			//    }
-			//}
+				try
+				{
+					this.pool.Dispose();
+				}
+				finally
+				{
+					this.pool = null;
+				}
+			}
 		}
+
 		#endregion
 	}
 }

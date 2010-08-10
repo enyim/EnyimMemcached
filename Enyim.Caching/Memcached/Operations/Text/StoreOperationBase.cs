@@ -55,6 +55,8 @@ namespace Enyim.Caching.Memcached.Operations.Text
 				sb.Append(Convert.ToString(this.cas, CultureInfo.InvariantCulture));
 			}
 
+			sb.Append(TextSocketHelper.CommandTerminator);
+
 			TextSocketHelper.GetCommandBuffer(sb.ToString(), buffers);
 			buffers.Add(data);
 			buffers.Add(StoreOperationBase.DataTerminator);
