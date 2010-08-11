@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public class StoreOperation : SingleItemOperation, IStoreOperation
+	public class StoreOperation : BinarySingleItemOperation, IStoreOperation
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
 
@@ -19,7 +19,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			this.expires = expires;
 		}
 
-		protected internal override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
+		protected override BinaryRequest Build()
 		{
 			OpCode op;
 			switch (this.mode)
@@ -40,9 +40,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			request.Data = this.value.Data;
 			request.Key = this.Key;
 
-			return request.CreateBuffer();
+			return request;
 		}
-
 
 		protected internal override bool ReadResponse(PooledSocket socket)
 		{

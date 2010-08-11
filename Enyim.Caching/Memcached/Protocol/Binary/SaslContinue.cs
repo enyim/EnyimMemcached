@@ -17,7 +17,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			this.continuation = continuation;
 		}
 
-		protected internal override IList<ArraySegment<byte>> GetBuffer()
+		protected override BinaryRequest Build()
 		{
 			var request = new BinaryRequest(OpCode.SaslStep)
 			{
@@ -25,7 +25,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 				Data = new ArraySegment<byte>(this.Provider.Continue(this.continuation))
 			};
 
-			return request.CreateBuffer();
+			return request;
 		}
 	}
 }

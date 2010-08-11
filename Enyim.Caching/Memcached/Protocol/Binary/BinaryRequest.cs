@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	internal class BinaryRequest
+	public class BinaryRequest
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(BinaryRequest));
 		private static int InstanceCounter;

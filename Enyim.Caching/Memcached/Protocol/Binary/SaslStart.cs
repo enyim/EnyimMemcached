@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 	{
 		public SaslStart(ISaslAuthenticationProvider provider) : base(provider) { }
 
-		protected internal override IList<ArraySegment<byte>> GetBuffer()
+		protected override BinaryRequest Build()
 		{
 			// create a Sasl Start command
 			var request = new BinaryRequest(OpCode.SaslStart)
@@ -20,7 +20,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 				Data = new ArraySegment<byte>(this.Provider.Authenticate())
 			};
 
-			return request.CreateBuffer();
+			return request;
 		}
 	}
 }

@@ -2,18 +2,18 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public class DeleteOperation : SingleItemOperation, IDeleteOperation
+	public class DeleteOperation : BinarySingleItemOperation, IDeleteOperation
 	{
 		public DeleteOperation(string key) : base(key) { }
 
-		protected internal override IList<System.ArraySegment<byte>> GetBuffer()
+		protected override BinaryRequest Build()
 		{
 			var request = new BinaryRequest(OpCode.Delete)
 			{
 				Key = this.Key
 			};
 
-			return request.CreateBuffer();
+			return request;
 		}
 
 		protected internal override bool ReadResponse(PooledSocket socket)

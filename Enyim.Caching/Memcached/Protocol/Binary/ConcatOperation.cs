@@ -7,7 +7,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 	/// <summary>
 	/// Implements append/prepend.
 	/// </summary>
-	public class ConcatOperation : SingleItemOperation, IConcatOperation
+	public class ConcatOperation : BinarySingleItemOperation, IConcatOperation
 	{
 		private ArraySegment<byte> data;
 		private ConcatenationMode mode;
@@ -19,7 +19,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			this.mode = mode;
 		}
 
-		protected internal override IList<ArraySegment<byte>> GetBuffer()
+		protected override BinaryRequest Build()
 		{
 			var request = new BinaryRequest((OpCode)this.mode)
 			{
@@ -27,7 +27,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 				Data = this.data
 			};
 
-			return request.CreateBuffer();
+			return request;
 		}
 
 		protected internal override bool ReadResponse(PooledSocket socket)

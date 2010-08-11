@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public class MultiGetOperation : MultiItemOperation, IMultiGetOperation
+	public class MultiGetOperation : BinaryMultiItemOperation, IMultiGetOperation
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(MultiGetOperation));
 
@@ -13,6 +13,16 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		private int noopId;
 
 		public MultiGetOperation(IList<string> keys) : base(keys) { }
+
+		protected override BinaryRequest Build(string key)
+		{
+			var request = new BinaryRequest(OpCode.GetQ)
+			{
+				Key = key
+			};
+
+			return request;
+		}
 
 		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
@@ -27,10 +37,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 			foreach (var key in keys)
 			{
-				var request = new BinaryRequest(OpCode.GetQ)
-				{
-					Key = key
-				};
+				var request = this.Build(key);
 
 				request.CreateBuffer(buffers);
 

@@ -2,20 +2,20 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public class GetOperation : SingleItemOperation, IGetOperation
+	public class GetOperation : BinarySingleItemOperation, IGetOperation
 	{
 		private CacheItem result;
 
 		public GetOperation(string key) : base(key) { }
 
-		protected internal override IList<System.ArraySegment<byte>> GetBuffer()
+		protected override BinaryRequest Build()
 		{
 			var request = new BinaryRequest(OpCode.Get)
 			{
 				Key = this.Key
 			};
 
-			return request.CreateBuffer();
+			return request;
 		}
 
 		protected internal override bool ReadResponse(PooledSocket socket)

@@ -5,7 +5,7 @@ using System.Net;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public class StatsOperation : Operation, IStatsOperation
+	public class StatsOperation : BinaryOperation, IStatsOperation
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
 
@@ -13,11 +13,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 		public StatsOperation() { }
 
-		protected internal override IList<ArraySegment<byte>> GetBuffer()
+		protected override BinaryRequest Build()
 		{
-			var request = new BinaryRequest(OpCode.Stat);
-
-			return request.CreateBuffer();
+			return new BinaryRequest(OpCode.Stat);
 		}
 
 		protected internal override bool ReadResponse(PooledSocket socket)

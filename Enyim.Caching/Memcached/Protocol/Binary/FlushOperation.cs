@@ -3,15 +3,15 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public class FlushOperation : Operation, IFlushOperation
+	public class FlushOperation : BinaryOperation, IFlushOperation
 	{
 		public FlushOperation() { }
 
-		protected internal override IList<ArraySegment<byte>> GetBuffer()
+		protected override BinaryRequest Build()
 		{
 			var request = new BinaryRequest(OpCode.Flush);
 
-			return request.CreateBuffer();
+			return request;
 		}
 
 		protected internal override bool ReadResponse(PooledSocket socket)

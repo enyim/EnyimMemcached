@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public abstract class SaslStep : Operation
+	public abstract class SaslStep : BinaryOperation
 	{
 		protected SaslStep(ISaslAuthenticationProvider provider)
 		{

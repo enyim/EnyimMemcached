@@ -2,7 +2,7 @@ using System;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public class MutatorOperation : SingleItemOperation, IMutatorOperation
+	public class MutatorOperation : BinarySingleItemOperation, IMutatorOperation
 	{
 		private ulong defaultValue;
 		private ulong delta;
@@ -21,7 +21,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			this.mode = mode;
 		}
 
-		private unsafe void UpdateExtra(BinaryRequest request)
+		protected unsafe void UpdateExtra(BinaryRequest request)
 		{
 			byte[] extra = new byte[20];
 
@@ -36,14 +36,16 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			request.Extra = new ArraySegment<byte>(extra);
 		}
 
-		protected internal override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
+		protected override BinaryRequest Build()
 		{
-			var request = new BinaryRequest((OpCode)this.mode);
-			request.Key = this.Key;
+			var request = new BinaryRequest((OpCode)this.mode)
+			{
+				Key = this.Key
+			};
 
 			this.UpdateExtra(request);
 
-			return request.CreateBuffer();
+			return request;
 		}
 
 		protected internal override bool ReadResponse(PooledSocket socket)

@@ -102,6 +102,9 @@
     <Compile Include="Memcached\Protocol\Binary\BinaryOperationFactory.cs" />
     <Compile Include="Memcached\Protocol\Binary\BinaryNode.cs" />
     <Compile Include="Memcached\Protocol\Binary\BinaryPool.cs" />
+    <Compile Include="Memcached\Protocol\Binary\BinaryMultiItemOperation.cs" />
+    <Compile Include="Memcached\Protocol\Binary\BinaryOperation.cs" />
+    <Compile Include="Memcached\Protocol\Binary\BinarySingleItemOperation.cs" />
     <Compile Include="Memcached\Protocol\Binary\SaslStep.cs" />
     <Compile Include="Memcached\Protocol\Binary\SaslContinue.cs" />
     <Compile Include="Memcached\Protocol\Binary\SaslStart.cs" />
