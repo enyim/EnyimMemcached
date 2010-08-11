@@ -26,7 +26,10 @@ namespace NorthScale.Store
 
 			var hrw = retval as HttpWebRequest;
 			if (hrw != null)
+			{
 				hrw.ReadWriteTimeout = this.ReadWriteTimeout;
+				hrw.KeepAlive = false;
+			}
 
 			return retval;
 		}
