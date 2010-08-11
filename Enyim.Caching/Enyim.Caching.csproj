@@ -141,7 +141,6 @@
     <Compile Include="Memcached\IAuthenticator.cs" />
     <Compile Include="Memcached\IMemcachedNode.cs" />
     <Compile Include="Memcached\IServerPool.cs" />
-    <Compile Include="Memcached\IProtocolImplementation.cs" />
     <Compile Include="Memcached\ISaslAuthenticationProvider.cs" />
     <Compile Include="Memcached\Enums.cs" />
     <Compile Include="Memcached\Locators\KetamaNodeLocator.cs" />

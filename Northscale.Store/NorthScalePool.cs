@@ -25,7 +25,7 @@ namespace NorthScale.Store
 		private IOperationFactory operationFactory;
 
 		private string bucketName;
-		private IEnumerable<IMemcachedNode> currentNodes;
+		private IMemcachedNode[] currentNodes;
 
 		public NorthScalePool(INorthScaleClientConfiguration configuration) : this(configuration, null) { }
 
@@ -69,12 +69,15 @@ namespace NorthScale.Store
 
 		private void InitNodes(ClusterConfig config)
 		{
+			// these should be disposed after we've been reinitialized
+			var oldNodes = this.currentNodes;
+
 			// default bucket does not require authentication
 			var auth = this.bucketName == null
 						? null
 						: new PlainTextAuthenticator(null, this.bucketName, this.bucketName);
 
-			IEnumerable<IPEndPoint> endpoints;
+			IEnumerable<IMemcachedNode> nodes;
 			IMemcachedNodeLocator locator;
 
 			if (config == null || config.vBucketServerMap == null)
@@ -82,15 +85,15 @@ namespace NorthScale.Store
 				// no vbucket config, use the node list and the ports
 				var portType = this.configuration.Port;
 
-				endpoints = config == null
-							? Enumerable.Empty<IPEndPoint>()
+				nodes = config == null
+						? Enumerable.Empty<IMemcachedNode>()
 							: (from node in config.nodes
+							   let ip = new IPEndPoint(IPAddress.Parse(node.hostname),
+														(portType == BucketPortType.Proxy
+															? node.ports.proxy
+															: node.ports.direct))
 							   where node.status == "healthy"
-							   select new IPEndPoint(
-											IPAddress.Parse(node.hostname),
-											(portType == BucketPortType.Proxy
-												? node.ports.proxy
-												: node.ports.direct)));
+							   select (IMemcachedNode)(new BinaryNode(ip, this.configuration.SocketPool, auth)));
 
 				locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator();
 			}
@@ -101,19 +104,32 @@ namespace NorthScale.Store
 				// but the order is significicant (because of the bucket indexes),
 				// so we we'll use this for initializing the locator
 				var vbsm = config.vBucketServerMap;
-				endpoints = from server in vbsm.serverList
-							let parts = server.Split(':')
-							select new IPEndPoint(IPAddress.Parse(parts[0]), Int32.Parse(parts[1]));
+				var endpoints = (from server in vbsm.serverList
+								 let parts = server.Split(':')
+								 select new IPEndPoint(IPAddress.Parse(parts[0]), Int32.Parse(parts[1])));
 
-				locator = new VBucketNodeLocator(vbsm.hashAlgorithm, vbsm.vBucketMap.Select(a => new VBucket(a[0], a.Skip(1).ToArray())).ToArray());
+				var epa = endpoints.ToArray();
+				var buckets = vbsm.vBucketMap.Select(a => new VBucket(a[0], a.Skip(1).ToArray())).ToArray();
+				var bucketNodeMap = buckets.ToLookup(vb => epa[vb.Master]);
+
+				// assign the first bucket index to the servers until 
+				// we can solve how to assign the appropriate vbucket index to each command buffer
+				nodes = from ip in endpoints
+						let bucket = Array.IndexOf(buckets, bucketNodeMap[ip].FirstOrDefault())
+						select (IMemcachedNode)(new VBucketAwareNode(ip, this.configuration.SocketPool, auth) { BucketIndex = bucket });
+
+				locator = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
 			}
 
-			var mcNodes = endpoints.Select((ip, idx) => new BinaryNode(ip, this.configuration.SocketPool, auth)).ToArray();
-
+			var mcNodes = nodes.ToArray();
 			locator.Initialize(mcNodes);
 
-			Interlocked.Exchange(ref this.currentNodes, new ReadOnlyCollection<IMemcachedNode>(mcNodes));
+			Interlocked.Exchange(ref this.currentNodes, mcNodes);
 			Interlocked.Exchange(ref this.nodeLocator, locator);
+
+			if (oldNodes != null)
+				for (var i = 0; i < oldNodes.Length; i++)
+					oldNodes[i].Dispose();
 		}
 
 		void IDisposable.Dispose()
@@ -124,6 +140,17 @@ namespace NorthScale.Store
 					this.configListener.Stop();
 
 				this.configListener = null;
+
+				var currentNodes = this.currentNodes;
+
+				// close the pools
+				if (currentNodes != null)
+				{
+					for (var i = 0; i < currentNodes.Length; i++)
+						currentNodes[i].Dispose();
+
+					this.currentNodes = null;
+				}
 			}
 		}
 

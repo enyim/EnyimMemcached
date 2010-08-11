@@ -1,10 +1,8 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("Northscale.Store")]
-[assembly: AssemblyProduct("Northscale.Store")]
-[assembly: AssemblyDescription("")]
-
+[assembly: AssemblyTitle("NorthScale.Store")]
+[assembly: AssemblyProduct("NorthScale.Store")]
 
 [assembly: AssemblyCompany("enyim.com")]
 [assembly: AssemblyCopyright("Copyright © enyim.com, Attila Kiskó 2007-2010")]
