@@ -24,21 +24,12 @@ namespace NorthScale.Store
 
 		public NorthScaleClient(INorthScaleClientConfiguration configuration, string bucketName) :
 			base(new NorthScalePool(configuration, IsDefaultBucket(bucketName) ? null : bucketName),
-					CreateAuthProvider(configuration, bucketName),
-					MemcachedProtocol.Binary) { }
+					configuration.CreateKeyTransformer(),
+					configuration.CreateTranscoder()) { }
 
 		private static bool IsDefaultBucket(string name)
 		{
 			return String.IsNullOrEmpty(name) || name == "default";
-		}
-
-		private static ISaslAuthenticationProvider CreateAuthProvider(INorthScaleClientConfiguration configuration, string bucketName)
-		{
-			if (IsDefaultBucket(bucketName) && IsDefaultBucket(bucketName = configuration.Bucket))
-				return null;
-
-			// moxi (when using the proxy port) only accepts an empty authzid
-			return new PlainTextAuthenticator(null, bucketName, bucketName);
 		}
 	}
 }

@@ -16,7 +16,7 @@ namespace NorthScale.Store.Configuration
 		private ISocketPoolConfiguration socketPool;
 		private ICredentials credentials;
 		private string bucket;
-		private BucketPortType port = BucketPortType.Proxy;
+		private BucketPortType port = BucketPortType.Direct;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
@@ -63,7 +63,7 @@ namespace NorthScale.Store.Configuration
 		/// <summary>
 		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
 		/// </summary>
-		public IMemcachedNodeLocator NodeLocator { get; set;}
+		public IMemcachedNodeLocator NodeLocator { get; set; }
 
 		/// <summary>
 		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.

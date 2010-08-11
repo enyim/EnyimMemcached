@@ -23,7 +23,6 @@ namespace Enyim.Caching
 		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MemcachedClient));
 
 		private IServerPool pool;
-		private IMemcachedClientConfiguration config;
 		private IMemcachedKeyTransformer keyTransformer;
 		private ITranscoder transcoder;
 
@@ -57,12 +56,23 @@ namespace Enyim.Caching
 			if (configuration == null)
 				throw new ArgumentNullException("configuration");
 
-			this.config = configuration;
-
 			this.keyTransformer = configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
 			this.transcoder = configuration.CreateTranscoder() ?? new DefaultTranscoder();
 
 			this.pool = configuration.CreatePool();
+			this.pool.Start();
+		}
+
+		public MemcachedClient(IServerPool pool, IMemcachedKeyTransformer keyTransformer, ITranscoder transcoder)
+		{
+			if (pool == null) throw new ArgumentNullException("pool");
+			if (keyTransformer == null) throw new ArgumentNullException("keyTransformer");
+			if (transcoder == null) throw new ArgumentNullException("transcoder");
+
+			this.keyTransformer = keyTransformer;
+			this.transcoder = transcoder;
+
+			this.pool = pool;
 			this.pool.Start();
 		}
 
