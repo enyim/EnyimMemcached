@@ -1,231 +1,235 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{D438C0B3-A168-40B8-BDDD-61F0939DFF35}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Enyim.Caching</RootNamespace>
-    <AssemblyName>Enyim.Caching</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <UpgradeBackupLocation />
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <RunCodeAnalysis>false</RunCodeAnalysis>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRules>
-    </CodeAnalysisRules>
-    <CodeAnalysisRuleSet>Migrated rules for Enyim.Caching.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;SIGN</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>bin\Release\Enyim.Caching.XML</DocumentationFile>
-    <RunCodeAnalysis>false</RunCodeAnalysis>
-    <CodeAnalysisRules>
-    </CodeAnalysisRules>
-    <CodeAnalysisRuleSet>Migrated rules for Enyim.Caching (2).ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\binaries\log4net.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.configuration" />
-    <Reference Include="System.Configuration.Install" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data" />
-    <Reference Include="System.Web" />
-    <Reference Include="System.Web.Extensions">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Configuration\AuthenticationConfiguration.cs" />
-    <Compile Include="Configuration\ConfigurationElementException.cs" />
-    <Compile Include="Configuration\ConfigurationHelper.cs" />
-    <Compile Include="Configuration\AuthenticationElement.cs" />
-    <Compile Include="Configuration\TextElement.cs" />
-    <Compile Include="Configuration\ProviderElement.cs" />
-    <Compile Include="Configuration\IAuthenticationConfiguration.cs" />
-    <Compile Include="Configuration\IVBucketConfiguration.cs" />
-    <Compile Include="Configuration\JsonVBucketConfig.cs" />
-    <Compile Include="Configuration\SocketPoolConfiguration.cs" />
-    <Compile Include="MemcachedClient.cs" />
-    <Compile Include="HashkitCrc32.cs" />
-    <Compile Include="HashkitMurmur.cs" />
-    <Compile Include="HashkitOneAtATime.cs" />
-    <Compile Include="IUIntHashAlgorithm.cs" />
-    <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs" />
-    <Compile Include="Memcached\IOperationFactory.cs" />
-    <Compile Include="Memcached\OperationInterfaces.cs" />
-    <Compile Include="Memcached\Protocol\Binary\BinaryOperationFactory.cs" />
-    <Compile Include="Memcached\Protocol\Binary\BinaryNode.cs" />
-    <Compile Include="Memcached\Protocol\Binary\BinaryPool.cs" />
-    <Compile Include="Memcached\Protocol\Binary\BinaryMultiItemOperation.cs" />
-    <Compile Include="Memcached\Protocol\Binary\BinaryOperation.cs" />
-    <Compile Include="Memcached\Protocol\Binary\BinarySingleItemOperation.cs" />
-    <Compile Include="Memcached\Protocol\Binary\SaslStep.cs" />
-    <Compile Include="Memcached\Protocol\Binary\SaslContinue.cs" />
-    <Compile Include="Memcached\Protocol\Binary\SaslStart.cs" />
-    <Compile Include="Memcached\Protocol\MultiItemOperation.cs" />
-    <Compile Include="Memcached\Protocol\Text\TextOperationFactory.cs" />
-    <Compile Include="Memcached\Protocol\Text\ConcateOperation.cs" />
-    <Compile Include="Memcached\Protocol\Text\StoreOperationBase.cs" />
-    <Compile Include="Memcached\Protocol\Text\MutatorOperation.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Memcached\Protocol\Text\DeleteOperation.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Memcached\Protocol\Text\FlushOperation.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Memcached\Protocol\Text\GetHelper.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Memcached\Protocol\Text\GetOperation.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Memcached\Protocol\Text\MultiGetOperation.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Memcached\Protocol\Text\StatsOperation.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Memcached\Protocol\Text\StoreOperation.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Memcached\Protocol\Text\TextSocketHelper.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Memcached\Locators\VBucketNodeLocatorFactory.cs" />
-    <Compile Include="Memcached\IProviderFactory.cs" />
-    <Compile Include="Memcached\IAuthenticator.cs" />
-    <Compile Include="Memcached\IMemcachedNode.cs" />
-    <Compile Include="Memcached\IServerPool.cs" />
-    <Compile Include="Memcached\ISaslAuthenticationProvider.cs" />
-    <Compile Include="Memcached\Enums.cs" />
-    <Compile Include="Memcached\Locators\KetamaNodeLocator.cs" />
-    <Compile Include="Memcached\Protocol\Binary\ConcatOperation.cs" />
-    <Compile Include="Memcached\Protocol\Binary\MultiGetOperation.cs" />
-    <Compile Include="Memcached\Protocol\Binary\FlushOperation.cs" />
-    <Compile Include="Memcached\Protocol\Binary\StatsOperation.cs" />
-    <Compile Include="HashCodeCombiner.cs" />
-    <Compile Include="InterlockedQueue.cs" />
-    <Compile Include="Memcached\CommandNotSupportedException.cs" />
-    <Compile Include="Memcached\IMemcachedKeyTransformer.cs" />
-    <Compile Include="Memcached\KeyTransformers\Base64KeyTransformer.cs" />
-    <Compile Include="Memcached\KeyTransformers\DefaultKeyTransformer.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Memcached\KeyTransformers\KeyTransformerBase.cs" />
-    <Compile Include="Memcached\KeyTransformers\SHA1KeyTransformer.cs" />
-    <Compile Include="Memcached\KeyTransformers\TigerHashKeyTransformer.cs" />
-    <Compile Include="Memcached\MemcachedNode.cs" />
-    <Compile Include="Memcached\Protocol\Binary\BinaryRequest.cs" />
-    <Compile Include="Memcached\Protocol\Binary\BinaryResponse.cs" />
-    <Compile Include="Memcached\Protocol\Binary\BinaryConverter.cs" />
-    <Compile Include="Memcached\Protocol\Binary\MutatorOperation.cs" />
-    <Compile Include="Memcached\Protocol\Binary\DeleteOperation.cs" />
-    <Compile Include="Memcached\Protocol\Binary\GetOperation.cs" />
-    <Compile Include="Memcached\Protocol\Binary\OpCode.cs" />
-    <Compile Include="Memcached\Protocol\Binary\StoreOperation.cs" />
-    <Compile Include="Memcached\Protocol\ItemOperation.cs" />
-    <Compile Include="Memcached\Protocol\Operation.cs" />
-    <Compile Include="Memcached\Locators\SingleNodeLocator.cs" />
-    <Compile Include="Memcached\StatItem.cs" />
-    <Compile Include="Memcached\Transcoders\DefaultTranscoder.cs" />
-    <Compile Include="Configuration\IMemcachedClientConfiguration.cs" />
-    <Compile Include="Configuration\EndPointElement.cs" />
-    <Compile Include="Configuration\InterfaceValidator.cs" />
-    <Compile Include="Configuration\ISocketPoolConfiguration.cs" />
-    <Compile Include="Configuration\MemcachedClientConfiguration.cs" />
-    <Compile Include="Configuration\SocketPoolElement.cs" />
-    <Compile Include="Configuration\EndPointElementCollection.cs" />
-    <Compile Include="FastActivator.cs" />
-    <Compile Include="IFastObjectFacory.cs" />
-    <Compile Include="Memcached\Locators\DefaultNodeLocator.cs" />
-    <Compile Include="Memcached\IMemcachedNodeLocator.cs" />
-    <Compile Include="FnvHash.cs" />
-    <Compile Include="Memcached\MemcachedClientException.cs" />
-    <Compile Include="Configuration\MemcachedClientSection.cs" />
-    <Compile Include="Memcached\MemcachedException.cs" />
-    <Compile Include="Memcached\PooledSocket.cs" />
-    <Compile Include="Memcached\ServerStats.cs" />
-    <Compile Include="Memcached\ThrowHelper.cs" />
-    <Compile Include="Memcached\Transcoders\CacheItem.cs" />
-    <Compile Include="Memcached\Transcoders\ITranscoder.cs" />
-    <Compile Include="Memcached\Locators\VBucketNodeLocator.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Memcached\DefaultServerPool.cs" />
-    <Compile Include="Memcached\StoreMode.cs" />
-    <Compile Include="TigerHash.cs" />
-    <Compile Include="UIntEqualityComparer.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
-      <Visible>False</Visible>
-      <ProductName>Windows Installer 3.1</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-  </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
+	<PropertyGroup>
+		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+		<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+		<ProductVersion>9.0.30729</ProductVersion>
+		<SchemaVersion>2.0</SchemaVersion>
+		<ProjectGuid>{D438C0B3-A168-40B8-BDDD-61F0939DFF35}</ProjectGuid>
+		<OutputType>Library</OutputType>
+		<AppDesignerFolder>Properties</AppDesignerFolder>
+		<RootNamespace>Enyim.Caching</RootNamespace>
+		<AssemblyName>Enyim.Caching</AssemblyName>
+		<TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+		<FileUpgradeFlags>
+		</FileUpgradeFlags>
+		<OldToolsVersion>3.5</OldToolsVersion>
+		<UpgradeBackupLocation />
+		<PublishUrl>publish\</PublishUrl>
+		<Install>true</Install>
+		<InstallFrom>Disk</InstallFrom>
+		<UpdateEnabled>false</UpdateEnabled>
+		<UpdateMode>Foreground</UpdateMode>
+		<UpdateInterval>7</UpdateInterval>
+		<UpdateIntervalUnits>Days</UpdateIntervalUnits>
+		<UpdatePeriodically>false</UpdatePeriodically>
+		<UpdateRequired>false</UpdateRequired>
+		<MapFileExtensions>true</MapFileExtensions>
+		<ApplicationRevision>0</ApplicationRevision>
+		<ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+		<IsWebBootstrapper>false</IsWebBootstrapper>
+		<UseApplicationTrust>false</UseApplicationTrust>
+		<BootstrapperEnabled>true</BootstrapperEnabled>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>full</DebugType>
+		<Optimize>false</Optimize>
+		<OutputPath>bin\Debug\</OutputPath>
+		<DefineConstants>DEBUG;TRACE</DefineConstants>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>4</WarningLevel>
+		<RunCodeAnalysis>false</RunCodeAnalysis>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<CodeAnalysisRules>
+		</CodeAnalysisRules>
+		<CodeAnalysisRuleSet>Migrated rules for Enyim.Caching.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<DebugType>pdbonly</DebugType>
+		<Optimize>true</Optimize>
+		<OutputPath>bin\Release\</OutputPath>
+		<DefineConstants>TRACE;SIGN</DefineConstants>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>4</WarningLevel>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<DocumentationFile>bin\Release\Enyim.Caching.XML</DocumentationFile>
+		<RunCodeAnalysis>false</RunCodeAnalysis>
+		<CodeAnalysisRules>
+		</CodeAnalysisRules>
+		<CodeAnalysisRuleSet>Migrated rules for Enyim.Caching (2).ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<ItemGroup>
+		<Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
+			<SpecificVersion>False</SpecificVersion>
+			<HintPath>..\binaries\log4net.dll</HintPath>
+		</Reference>
+		<Reference Include="System" />
+		<Reference Include="System.configuration" />
+		<Reference Include="System.Configuration.Install" />
+		<Reference Include="System.Core">
+			<RequiredTargetFramework>3.5</RequiredTargetFramework>
+		</Reference>
+		<Reference Include="System.Data" />
+		<Reference Include="System.Web" />
+		<Reference Include="System.Web.Extensions">
+			<RequiredTargetFramework>3.5</RequiredTargetFramework>
+		</Reference>
+		<Reference Include="System.Xml" />
+		<Reference Include="System.Xml.Linq">
+			<RequiredTargetFramework>3.5</RequiredTargetFramework>
+		</Reference>
+	</ItemGroup>
+	<ItemGroup>
+		<Compile Include="Configuration\AuthenticationConfiguration.cs" />
+		<Compile Include="Configuration\ConfigurationElementException.cs" />
+		<Compile Include="Configuration\ConfigurationHelper.cs" />
+		<Compile Include="Configuration\AuthenticationElement.cs" />
+		<Compile Include="Configuration\TextElement.cs" />
+		<Compile Include="Configuration\ProviderElement.cs" />
+		<Compile Include="Configuration\IAuthenticationConfiguration.cs" />
+		<Compile Include="Configuration\IVBucketConfiguration.cs" />
+		<Compile Include="Configuration\JsonVBucketConfig.cs" />
+		<Compile Include="Configuration\SocketPoolConfiguration.cs" />
+		<Compile Include="MemcachedClient.cs" />
+		<Compile Include="HashkitCrc32.cs" />
+		<Compile Include="HashkitMurmur.cs" />
+		<Compile Include="HashkitOneAtATime.cs" />
+		<Compile Include="IUIntHashAlgorithm.cs" />
+		<Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs" />
+		<Compile Include="Memcached\IOperationFactory.cs" />
+		<Compile Include="Memcached\OperationInterfaces.cs" />
+		<Compile Include="Memcached\Protocol\Binary\BinaryOperationFactory.cs" />
+		<Compile Include="Memcached\Protocol\Binary\BinaryNode.cs" />
+		<Compile Include="Memcached\Protocol\Binary\BinaryPool.cs" />
+		<Compile Include="Memcached\Protocol\Binary\BinaryMultiItemOperation.cs" />
+		<Compile Include="Memcached\Protocol\Binary\BinaryOperation.cs" />
+		<Compile Include="Memcached\Protocol\Binary\BinarySingleItemOperation.cs" />
+		<Compile Include="Memcached\Protocol\Binary\SaslStep.cs" />
+		<Compile Include="Memcached\Protocol\Binary\SaslContinue.cs" />
+		<Compile Include="Memcached\Protocol\Binary\SaslStart.cs" />
+		<Compile Include="Memcached\Protocol\MultiItemOperation.cs" />
+		<Compile Include="Memcached\Protocol\Text\TextOperationFactory.cs" />
+		<Compile Include="Memcached\Protocol\Text\ConcateOperation.cs" />
+		<Compile Include="Memcached\Protocol\Text\StoreOperationBase.cs" />
+		<Compile Include="Memcached\Protocol\Text\MutatorOperation.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Include="Memcached\Protocol\Text\DeleteOperation.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Include="Memcached\Protocol\Text\FlushOperation.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Include="Memcached\Protocol\Text\GetHelper.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Include="Memcached\Protocol\Text\GetOperation.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Include="Memcached\Protocol\Text\MultiGetOperation.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Include="Memcached\Protocol\Text\StatsOperation.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Include="Memcached\Protocol\Text\StoreOperation.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Include="Memcached\Protocol\Text\TextSocketHelper.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Include="Memcached\Locators\VBucketNodeLocatorFactory.cs" />
+		<Compile Include="Memcached\IProviderFactory.cs" />
+		<Compile Include="Memcached\IAuthenticator.cs" />
+		<Compile Include="Memcached\IMemcachedNode.cs" />
+		<Compile Include="Memcached\IServerPool.cs" />
+		<Compile Include="Memcached\ISaslAuthenticationProvider.cs" />
+		<Compile Include="Memcached\Enums.cs" />
+		<Compile Include="Memcached\Locators\KetamaNodeLocator.cs" />
+		<Compile Include="Memcached\Protocol\Binary\ConcatOperation.cs" />
+		<Compile Include="Memcached\Protocol\Binary\MultiGetOperation.cs" />
+		<Compile Include="Memcached\Protocol\Binary\FlushOperation.cs" />
+		<Compile Include="Memcached\Protocol\Binary\StatsOperation.cs" />
+		<Compile Include="HashCodeCombiner.cs" />
+		<Compile Include="InterlockedQueue.cs" />
+		<Compile Include="Memcached\CommandNotSupportedException.cs" />
+		<Compile Include="Memcached\IMemcachedKeyTransformer.cs" />
+		<Compile Include="Memcached\KeyTransformers\Base64KeyTransformer.cs" />
+		<Compile Include="Memcached\KeyTransformers\DefaultKeyTransformer.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Include="Memcached\KeyTransformers\KeyTransformerBase.cs" />
+		<Compile Include="Memcached\KeyTransformers\SHA1KeyTransformer.cs" />
+		<Compile Include="Memcached\KeyTransformers\TigerHashKeyTransformer.cs" />
+		<Compile Include="Memcached\MemcachedNode.cs" />
+		<Compile Include="Memcached\Protocol\Binary\BinaryRequest.cs" />
+		<Compile Include="Memcached\Protocol\Binary\BinaryResponse.cs" />
+		<Compile Include="Memcached\Protocol\Binary\BinaryConverter.cs" />
+		<Compile Include="Memcached\Protocol\Binary\MutatorOperation.cs" />
+		<Compile Include="Memcached\Protocol\Binary\DeleteOperation.cs" />
+		<Compile Include="Memcached\Protocol\Binary\GetOperation.cs" />
+		<Compile Include="Memcached\Protocol\Binary\OpCode.cs" />
+		<Compile Include="Memcached\Protocol\Binary\StoreOperation.cs" />
+		<Compile Include="Memcached\Protocol\ItemOperation.cs" />
+		<Compile Include="Memcached\Protocol\Operation.cs" />
+		<Compile Include="Memcached\Locators\SingleNodeLocator.cs" />
+		<Compile Include="Memcached\StatItem.cs" />
+		<Compile Include="Memcached\Transcoders\DefaultTranscoder.cs" />
+		<Compile Include="Configuration\IMemcachedClientConfiguration.cs" />
+		<Compile Include="Configuration\EndPointElement.cs" />
+		<Compile Include="Configuration\InterfaceValidator.cs" />
+		<Compile Include="Configuration\ISocketPoolConfiguration.cs" />
+		<Compile Include="Configuration\MemcachedClientConfiguration.cs" />
+		<Compile Include="Configuration\SocketPoolElement.cs" />
+		<Compile Include="Configuration\EndPointElementCollection.cs" />
+		<Compile Include="FastActivator.cs" />
+		<Compile Include="IFastObjectFacory.cs" />
+		<Compile Include="Memcached\Locators\DefaultNodeLocator.cs" />
+		<Compile Include="Memcached\IMemcachedNodeLocator.cs" />
+		<Compile Include="FnvHash.cs" />
+		<Compile Include="Memcached\MemcachedClientException.cs" />
+		<Compile Include="Configuration\MemcachedClientSection.cs" />
+		<Compile Include="Memcached\MemcachedException.cs" />
+		<Compile Include="Memcached\PooledSocket.cs" />
+		<Compile Include="Memcached\ServerStats.cs" />
+		<Compile Include="Memcached\ThrowHelper.cs" />
+		<Compile Include="Memcached\Transcoders\CacheItem.cs" />
+		<Compile Include="Memcached\Transcoders\ITranscoder.cs" />
+		<Compile Include="Memcached\Locators\VBucketNodeLocator.cs" />
+		<Compile Include="Properties\AssemblyInfo.cs" />
+		<Compile Include="Memcached\DefaultServerPool.cs" />
+		<Compile Include="Memcached\StoreMode.cs" />
+		<Compile Include="TigerHash.cs" />
+		<Compile Include="UIntEqualityComparer.cs" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="App.config" />
+	</ItemGroup>
+	<ItemGroup>
+		<BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+			<Visible>False</Visible>
+			<ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+			<Install>false</Install>
+		</BootstrapperPackage>
+		<BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+			<Visible>False</Visible>
+			<ProductName>.NET Framework 3.5 SP1</ProductName>
+			<Install>true</Install>
+		</BootstrapperPackage>
+		<BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+			<Visible>False</Visible>
+			<ProductName>Windows Installer 3.1</ProductName>
+			<Install>true</Install>
+		</BootstrapperPackage>
+	</ItemGroup>
+	<Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+	<PropertyGroup>
+		<GitTagMatch>emc*</GitTagMatch>
+	</PropertyGroup>
+	<Import Project="..\VersionInfo.targets" />
+	<!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+	   Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>
   <Target Name="AfterBuild">

@@ -6,7 +6,7 @@
 
 	<Target Name="Compile" DependsOnTargets="BeforeBuild">
 		<MSBuild Projects="Enyim.Caching\Enyim.Caching.csproj" Targets="Rebuild" Properties="Configuration=Release;DefineConstants=SIGN=true" />
-		<MSBuild Projects="NorthScale.Store\NorthScale.Store.csproj" Targets="Rebuild" Properties="Configuration=Release;DefineConstants=SIGN=true" />
+		<MSBuild Projects="NorthScale.Store\NorthScale.Store.csproj" Targets="Rebuild" Properties="Configuration=Release;" />
 	</Target>
 
 	<Target Name="PrepareFiles">
@@ -32,8 +32,8 @@
 			<Output ItemName="NorthScaleItems" TaskParameter="Include" />
 		</CreateItem>
 
-		<Zip Files="@(EnyimItems)" ZipFileName="Enyim.Caching.$([System.Text.RegularExpressions.regex]::Replace(%(EnyimCachingInfo.Version), `\.\d+\.\d+$`, ``)).zip" ZipLevel="9" Flatten="true" />
-		<Zip Files="@(NorthScaleItems)" ZipFileName="NorthScale.Store.$([System.Text.RegularExpressions.regex]::Replace(%(NorthScaleStoreInfo.Version), `\.\d+\.\d+$`, ``)).zip" ZipLevel="9" Flatten="true" />
+		<Zip Files="@(EnyimItems)" ZipFileName="Enyim.Caching.$([System.Text.RegularExpressions.Regex]::Replace(%(EnyimCachingInfo.Version), `\.\d+\.\d+$`, ``)).zip" ZipLevel="9" Flatten="true" />
+		<Zip Files="@(NorthScaleItems)" ZipFileName="NorthScale.Store.$([System.Text.RegularExpressions.Regex]::Replace(%(NorthScaleStoreInfo.Version), `\.\d+\.\d+$`, ``)).zip" ZipLevel="9" Flatten="true" />
 	</Target>
 
 	<Target Name="Build" DependsOnTargets="Compile;PrepareFiles;Pack"></Target>
