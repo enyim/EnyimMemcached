@@ -413,6 +413,7 @@ namespace Enyim.Caching
 
 			var retval = new Dictionary<string, object>(hashed.Count);
 			var handles = new List<WaitHandle>();
+			var i = 0;
 
 			//execute each list of keys on their respective node
 			foreach (var slice in byServer)
@@ -426,6 +427,41 @@ namespace Enyim.Caching
 				var mre = new ManualResetEvent(false);
 				handles.Add(mre);
 
+				Console.WriteLine(i + " Expecting: " + nodeKeys.Length);
+
+#if NO_PARALLEL
+				//execute the mgets parallel
+				if (node.Execute(mget))
+				{
+					try
+					{
+						Console.WriteLine(i + " Success: " + mget.Result.Count);
+						foreach (var kvp in mget.Result)
+						{
+							string original;
+							var tryget = hashed.TryGetValue(kvp.Key, out original);
+
+							Debug.Assert(tryget, "MGet returned unexpected key: " + kvp.Key);
+
+							// the lock will serialize the merges,
+							// but at least the commands were not waiting on each other
+							lock (retval)
+								retval[original] = this.transcoder.Deserialize(kvp.Value);
+						}
+					}
+					catch (Exception e)
+					{
+						Console.WriteLine(e);
+						System.Diagnostics.Debugger.Break();
+						log.Error(e);
+					}
+					finally
+					{
+						// indicate that we finished processing
+						mre.Set();
+					}
+				};
+#else
 				//execute the mgets parallel
 				exec.BeginInvoke(mget, iar =>
 				{
@@ -433,6 +469,7 @@ namespace Enyim.Caching
 					{
 						if (exec.EndInvoke(iar))
 						{
+							Console.WriteLine(iar.AsyncState + " Success: " + mget.Result.Count);
 							foreach (var kvp in mget.Result)
 							{
 								string original;
@@ -447,12 +484,21 @@ namespace Enyim.Caching
 							}
 						}
 					}
+					catch (Exception e)
+					{
+						Console.WriteLine(e);
+						System.Diagnostics.Debugger.Break();
+						log.Error(e);
+					}
 					finally
 					{
 						// indicate that we finished processing
 						mre.Set();
 					}
-				}, null);
+				}, i);
+#endif
+
+				i++;
 			}
 
 			WaitHandle.WaitAll(handles.ToArray());

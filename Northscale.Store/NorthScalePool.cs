@@ -36,9 +36,6 @@ namespace NorthScale.Store
 
 			if (String.IsNullOrEmpty(bucketName) || bucketName == "default")
 				bucketName = null;
-
-			// we only support the binary protocol
-			this.operationFactory = new Enyim.Caching.Memcached.Protocol.Binary.BinaryOperationFactory();
 		}
 
 		~NorthScalePool()
@@ -96,6 +93,8 @@ namespace NorthScale.Store
 							   select (IMemcachedNode)(new BinaryNode(ip, this.configuration.SocketPool, auth)));
 
 				locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator();
+
+				this.operationFactory = new Enyim.Caching.Memcached.Protocol.Binary.BinaryOperationFactory();
 			}
 			else
 			{
@@ -116,9 +115,11 @@ namespace NorthScale.Store
 				// we can solve how to assign the appropriate vbucket index to each command buffer
 				nodes = from ip in endpoints
 						let bucket = Array.IndexOf(buckets, bucketNodeMap[ip].FirstOrDefault())
-						select (IMemcachedNode)(new VBucketAwareNode(ip, this.configuration.SocketPool, auth) { BucketIndex = bucket });
+						select (IMemcachedNode)(new VBucketAwareNode(ip, this.configuration.SocketPool, auth) { BucketIndex = (ushort)bucket });
 
 				locator = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
+
+				this.operationFactory = new VBucketAwareOperationFactory();
 			}
 
 			var mcNodes = nodes.ToArray();

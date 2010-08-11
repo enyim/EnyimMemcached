@@ -65,6 +65,8 @@
   <ItemGroup>
     <Compile Include="BinaryMemcachedClientTest.cs" />
     <Compile Include="ConfigTest.cs" />
+    <Compile Include="NorthScaleMembaseClientTest.cs" />
+    <Compile Include="NorthScaleMemcachedClientTest.cs" />
     <Compile Include="KetamaTest.cs" />
     <Compile Include="TextMemcachedClientTest.cs" />
     <Compile Include="MemcachedClientTest.cs" />
@@ -75,6 +77,10 @@
     <ProjectReference Include="..\Enyim.Caching\Enyim.Caching.csproj">
       <Project>{D438C0B3-A168-40B8-BDDD-61F0939DFF35}</Project>
       <Name>Enyim.Caching</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Northscale.Store\NorthScale.Store.csproj">
+      <Project>{708A2350-A26C-444D-B975-8164263951A7}</Project>
+      <Name>NorthScale.Store</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

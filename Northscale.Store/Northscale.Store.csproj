@@ -88,10 +88,12 @@
     <Compile Include="Configuration\UriElement.cs" />
     <Compile Include="Configuration\UriElementCollection.cs" />
     <Compile Include="Configuration\UriValidator.cs" />
+    <Compile Include="IVBucketAwareOperation.cs" />
     <Compile Include="Deserialization.cs" />
     <Compile Include="MessageStreamListener.cs" />
     <Compile Include="NorthScaleClient.cs" />
     <Compile Include="NorthScalePool.cs" />
+    <Compile Include="VBucketAwareOperationFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="VBucketAwareNode.cs" />
     <Compile Include="WebClientWithTimeout.cs">

@@ -62,7 +62,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			while (response.Read(socket))
 			{
 				// found the noop, quit
-				if (response.CorrelationId == this.noopId) return true;
+				if (response.CorrelationId == this.noopId)
+					return true;
 
 				string key;
 

@@ -1,29 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Enyim.Caching.Memcached.Protocol.Binary;
-using System.Net;
-using Enyim.Caching.Configuration;
-using Enyim.Caching.Memcached;
+using Enyim.Caching;
+using NUnit.Framework;
 
-namespace NorthScale.Store
+namespace MemcachedTest
 {
-	internal class VBucketAwareNode : BinaryNode
+	/// <summary>
+	///This is a test class for Enyim.Caching.MemcachedClient and is intended
+	///to contain all Enyim.Caching.MemcachedClient Unit Tests
+	///</summary>
+	[TestFixture]
+	public class NorthScaleMembaseClientTest : BinaryMemcachedClientTest
 	{
-		public VBucketAwareNode(IPEndPoint endpoint, ISocketPoolConfiguration config, ISaslAuthenticationProvider authenticationProvider)
-			: base(endpoint, config, authenticationProvider) { }
-
-		public ushort BucketIndex { get; set; }
-
-		public override bool Execute(IOperation op)
+		protected override MemcachedClient GetClient()
 		{
-			var ivbop = op as IVBucketAwareOperation;
+			var client = new NorthScale.Store.NorthScaleClient("test/northscaleMembase", null);
+			client.FlushAll();
 
-			if (ivbop != null)
-				ivbop.Index = this.BucketIndex;
+			return client;
+		}
 
-			return base.Execute(op);
+		[TestFixtureSetUp]
+		public void Init()
+		{
+			log4net.Config.XmlConfigurator.Configure();
+		}
+
+		[TestCase]
+		public override void MultiGetTest()
+		{
+			base.MultiGetTest();
 		}
 	}
 }
@@ -31,7 +35,7 @@ namespace NorthScale.Store
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk�, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
