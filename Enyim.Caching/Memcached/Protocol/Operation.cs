@@ -1,20 +1,29 @@
 using System;
-using System.Net;
 using System.Collections.Generic;
-using Enyim.Caching.Memcached.Protocol;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Protocol
 {
-	public interface IOperationFactory
+	/// <summary>
+	/// Base class for implementing operations.
+	/// </summary>
+	public abstract class Operation : IOperation
 	{
-		IGetOperation Get(string key);
-		IMultiGetOperation MultiGet(IList<string> keys);
-		IStoreOperation Store(StoreMode mode, string key, CacheItem value, uint expires);
-		IDeleteOperation Delete(string key);
-		IMutatorOperation Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires);
-		IConcatOperation Concat(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		IStatsOperation Stats();
-		IFlushOperation Flush();
+		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(Operation));
+
+		protected Operation() { }
+
+		internal protected abstract IList<ArraySegment<byte>> GetBuffer();
+		internal protected abstract bool ReadResponse(PooledSocket socket);
+
+		IList<ArraySegment<byte>> IOperation.GetBuffer()
+		{
+			return this.GetBuffer();
+		}
+
+		bool IOperation.ReadResponse(PooledSocket socket)
+		{
+			return this.ReadResponse(socket);
+		}
 	}
 }
 

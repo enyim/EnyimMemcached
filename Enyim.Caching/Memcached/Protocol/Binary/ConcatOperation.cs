@@ -1,20 +1,46 @@
 using System;
-using System.Net;
 using System.Collections.Generic;
-using Enyim.Caching.Memcached.Protocol;
+using System.Text;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public interface IOperationFactory
+	/// <summary>
+	/// Implements append/prepend.
+	/// </summary>
+	public class ConcatOperation : SingleItemOperation, IConcatOperation
 	{
-		IGetOperation Get(string key);
-		IMultiGetOperation MultiGet(IList<string> keys);
-		IStoreOperation Store(StoreMode mode, string key, CacheItem value, uint expires);
-		IDeleteOperation Delete(string key);
-		IMutatorOperation Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires);
-		IConcatOperation Concat(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		IStatsOperation Stats();
-		IFlushOperation Flush();
+		private ArraySegment<byte> data;
+		private ConcatenationMode mode;
+
+		public ConcatOperation(ConcatenationMode mode, string key, ArraySegment<byte> data)
+			: base(key)
+		{
+			this.data = data;
+			this.mode = mode;
+		}
+
+		protected internal override IList<ArraySegment<byte>> GetBuffer()
+		{
+			var request = new BinaryRequest((OpCode)this.mode)
+			{
+				Key = this.Key,
+				Data = this.data
+			};
+
+			return request.CreateBuffer();
+		}
+
+		protected internal override bool ReadResponse(PooledSocket socket)
+		{
+			var response = new BinaryResponse();
+
+			return response.Read(socket);
+		}
+
+		ConcatenationMode IConcatOperation.Mode
+		{
+			get { return this.mode; }
+		}
 	}
 }
 

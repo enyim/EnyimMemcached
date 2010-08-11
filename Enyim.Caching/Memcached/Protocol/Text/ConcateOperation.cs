@@ -1,20 +1,26 @@
 using System;
-using System.Net;
+using System.Globalization;
+using System.Text;
 using System.Collections.Generic;
-using Enyim.Caching.Memcached.Protocol;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Protocol.Text
 {
-	public interface IOperationFactory
+	public class ConcateOperation : StoreOperationBase, IConcatOperation
 	{
-		IGetOperation Get(string key);
-		IMultiGetOperation MultiGet(IList<string> keys);
-		IStoreOperation Store(StoreMode mode, string key, CacheItem value, uint expires);
-		IDeleteOperation Delete(string key);
-		IMutatorOperation Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires);
-		IConcatOperation Concat(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		IStatsOperation Stats();
-		IFlushOperation Flush();
+		private ConcatenationMode mode;
+
+		internal ConcateOperation(ConcatenationMode mode, string key, ArraySegment<byte> data)
+			: base(mode == ConcatenationMode.Append
+					? StoreCommand.Append
+					: StoreCommand.Prepend, key, new CacheItem() { Data = data, Flags = 0 }, 0, 0)
+		{
+			this.mode = mode;
+		}
+
+		ConcatenationMode IConcatOperation.Mode
+		{
+			get { return this.mode; }
+		}
 	}
 }
 

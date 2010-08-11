@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using Enyim.Caching.Memcached;
 using Enyim.Reflection;
-using Enyim.Caching.Memcached.Operations.Binary;
+using Enyim.Caching.Memcached.Protocol.Binary;
 
 namespace Enyim.Caching.Configuration
 {
@@ -112,7 +112,7 @@ namespace Enyim.Caching.Configuration
 		{
 			switch (this.Protocol)
 			{
-				case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Operations.Text.TextOperationFactory());
+				case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory());
 				case MemcachedProtocol.Binary: return new BinaryPool(this);
 			}
 

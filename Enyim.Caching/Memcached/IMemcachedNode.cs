@@ -1,7 +1,7 @@
 using System;
 using System.Net;
 using System.Collections.Generic;
-using Enyim.Caching.Memcached.Operations;
+using Enyim.Caching.Memcached.Protocol;
 
 namespace Enyim.Caching.Memcached
 {

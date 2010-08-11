@@ -1,20 +1,35 @@
-using System;
-using System.Net;
-using System.Collections.Generic;
-using Enyim.Caching.Memcached.Protocol;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Protocol.Text
 {
-	public interface IOperationFactory
+	public class GetOperation : SingleItemOperation, IGetOperation
 	{
-		IGetOperation Get(string key);
-		IMultiGetOperation MultiGet(IList<string> keys);
-		IStoreOperation Store(StoreMode mode, string key, CacheItem value, uint expires);
-		IDeleteOperation Delete(string key);
-		IMutatorOperation Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires);
-		IConcatOperation Concat(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		IStatsOperation Stats();
-		IFlushOperation Flush();
+		private CacheItem result;
+
+		internal GetOperation(string key) : base(key) { }
+
+		protected internal override System.Collections.Generic.IList<System.ArraySegment<byte>> GetBuffer()
+		{
+			var command = "get " + this.Key + TextSocketHelper.CommandTerminator;
+
+			return TextSocketHelper.GetCommandBuffer(command);
+		}
+
+		protected internal override bool ReadResponse(PooledSocket socket)
+		{
+			GetResponse r = GetHelper.ReadItem(socket);
+
+			if (r == null) return false;
+
+			this.result = r.Item;
+			GetHelper.FinishCurrent(socket);
+
+			return true;
+		}
+
+		CacheItem IGetOperation.Result
+		{
+			get { return this.result; }
+		}
 	}
 }
 

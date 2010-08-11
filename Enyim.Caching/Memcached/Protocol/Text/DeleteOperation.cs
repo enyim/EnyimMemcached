@@ -1,20 +1,22 @@
 using System;
-using System.Net;
-using System.Collections.Generic;
-using Enyim.Caching.Memcached.Protocol;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Protocol.Text
 {
-	public interface IOperationFactory
+	public class DeleteOperation : SingleItemOperation, IDeleteOperation
 	{
-		IGetOperation Get(string key);
-		IMultiGetOperation MultiGet(IList<string> keys);
-		IStoreOperation Store(StoreMode mode, string key, CacheItem value, uint expires);
-		IDeleteOperation Delete(string key);
-		IMutatorOperation Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires);
-		IConcatOperation Concat(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		IStatsOperation Stats();
-		IFlushOperation Flush();
+		internal DeleteOperation(string key) : base(key) { }
+
+		protected internal override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
+		{
+			var command = "delete " + this.Key + TextSocketHelper.CommandTerminator;
+
+			return TextSocketHelper.GetCommandBuffer(command);
+		}
+
+		protected internal override bool ReadResponse(PooledSocket socket)
+		{
+			return String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0;
+		}
 	}
 }
 

@@ -1,20 +1,27 @@
 using System;
-using System.Net;
-using System.Collections.Generic;
-using Enyim.Caching.Memcached.Protocol;
+using System.Diagnostics;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Protocol
 {
-	public interface IOperationFactory
+	/// <summary>
+	/// Base class for implementing operations working with keyed items.
+	/// </summary>
+	public abstract class SingleItemOperation : Operation, ISingleItemOperation
 	{
-		IGetOperation Get(string key);
-		IMultiGetOperation MultiGet(IList<string> keys);
-		IStoreOperation Store(StoreMode mode, string key, CacheItem value, uint expires);
-		IDeleteOperation Delete(string key);
-		IMutatorOperation Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires);
-		IConcatOperation Concat(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		IStatsOperation Stats();
-		IFlushOperation Flush();
+		protected SingleItemOperation(string key)
+		{
+			this.Key = key;
+		}
+
+		public string Key { get; private set; }
+
+		/// <summary>
+		/// The item key of the current operation.
+		/// </summary>
+		string ISingleItemOperation.Key
+		{
+			get { return this.Key; }
+		}
 	}
 }
 

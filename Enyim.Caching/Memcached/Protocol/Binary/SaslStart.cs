@@ -1,20 +1,27 @@
 using System;
-using System.Net;
 using System.Collections.Generic;
-using Enyim.Caching.Memcached.Protocol;
+using System.Text;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public interface IOperationFactory
+	/// <summary>
+	/// Starts the SASL auth sequence.
+	/// </summary>
+	public class SaslStart : SaslStep
 	{
-		IGetOperation Get(string key);
-		IMultiGetOperation MultiGet(IList<string> keys);
-		IStoreOperation Store(StoreMode mode, string key, CacheItem value, uint expires);
-		IDeleteOperation Delete(string key);
-		IMutatorOperation Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires);
-		IConcatOperation Concat(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		IStatsOperation Stats();
-		IFlushOperation Flush();
+		public SaslStart(ISaslAuthenticationProvider provider) : base(provider) { }
+
+		protected internal override IList<ArraySegment<byte>> GetBuffer()
+		{
+			// create a Sasl Start command
+			var request = new BinaryRequest(OpCode.SaslStart)
+			{
+				Key = this.Provider.Type,
+				Data = new ArraySegment<byte>(this.Provider.Authenticate())
+			};
+
+			return request.CreateBuffer();
+		}
 	}
 }
 

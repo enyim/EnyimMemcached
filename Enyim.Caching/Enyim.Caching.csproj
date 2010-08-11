@@ -99,40 +99,41 @@
     <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs" />
     <Compile Include="Memcached\IOperationFactory.cs" />
     <Compile Include="Memcached\OperationInterfaces.cs" />
-    <Compile Include="Memcached\Operations\Binary\BinaryOperationFactory.cs" />
-    <Compile Include="Memcached\Operations\Binary\BinaryNode.cs" />
-    <Compile Include="Memcached\Operations\Binary\BinaryPool.cs" />
-    <Compile Include="Memcached\Operations\Binary\SaslContinue.cs" />
-    <Compile Include="Memcached\Operations\Binary\SaslStart.cs" />
-    <Compile Include="Memcached\Operations\MultiItemOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\TextOperationFactory.cs" />
-    <Compile Include="Memcached\Operations\Text\ConcateOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\StoreOperationBase.cs" />
-    <Compile Include="Memcached\Operations\Text\MutatorOperation.cs">
+    <Compile Include="Memcached\Protocol\Binary\BinaryOperationFactory.cs" />
+    <Compile Include="Memcached\Protocol\Binary\BinaryNode.cs" />
+    <Compile Include="Memcached\Protocol\Binary\BinaryPool.cs" />
+    <Compile Include="Memcached\Protocol\Binary\SaslStep.cs" />
+    <Compile Include="Memcached\Protocol\Binary\SaslContinue.cs" />
+    <Compile Include="Memcached\Protocol\Binary\SaslStart.cs" />
+    <Compile Include="Memcached\Protocol\MultiItemOperation.cs" />
+    <Compile Include="Memcached\Protocol\Text\TextOperationFactory.cs" />
+    <Compile Include="Memcached\Protocol\Text\ConcateOperation.cs" />
+    <Compile Include="Memcached\Protocol\Text\StoreOperationBase.cs" />
+    <Compile Include="Memcached\Protocol\Text\MutatorOperation.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\Operations\Text\DeleteOperation.cs">
+    <Compile Include="Memcached\Protocol\Text\DeleteOperation.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\Operations\Text\FlushOperation.cs">
+    <Compile Include="Memcached\Protocol\Text\FlushOperation.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\Operations\Text\GetHelper.cs">
+    <Compile Include="Memcached\Protocol\Text\GetHelper.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\Operations\Text\GetOperation.cs">
+    <Compile Include="Memcached\Protocol\Text\GetOperation.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\Operations\Text\MultiGetOperation.cs">
+    <Compile Include="Memcached\Protocol\Text\MultiGetOperation.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\Operations\Text\StatsOperation.cs">
+    <Compile Include="Memcached\Protocol\Text\StatsOperation.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\Operations\Text\StoreOperation.cs">
+    <Compile Include="Memcached\Protocol\Text\StoreOperation.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\Operations\Text\TextSocketHelper.cs">
+    <Compile Include="Memcached\Protocol\Text\TextSocketHelper.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Memcached\Locators\VBucketNodeLocatorFactory.cs" />
@@ -144,10 +145,10 @@
     <Compile Include="Memcached\ISaslAuthenticationProvider.cs" />
     <Compile Include="Memcached\Enums.cs" />
     <Compile Include="Memcached\Locators\KetamaNodeLocator.cs" />
-    <Compile Include="Memcached\Operations\Binary\ConcatOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\MultiGetOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\FlushOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\StatsOperation.cs" />
+    <Compile Include="Memcached\Protocol\Binary\ConcatOperation.cs" />
+    <Compile Include="Memcached\Protocol\Binary\MultiGetOperation.cs" />
+    <Compile Include="Memcached\Protocol\Binary\FlushOperation.cs" />
+    <Compile Include="Memcached\Protocol\Binary\StatsOperation.cs" />
     <Compile Include="HashCodeCombiner.cs" />
     <Compile Include="InterlockedQueue.cs" />
     <Compile Include="Memcached\CommandNotSupportedException.cs" />
@@ -160,16 +161,16 @@
     <Compile Include="Memcached\KeyTransformers\SHA1KeyTransformer.cs" />
     <Compile Include="Memcached\KeyTransformers\TigerHashKeyTransformer.cs" />
     <Compile Include="Memcached\MemcachedNode.cs" />
-    <Compile Include="Memcached\Operations\Binary\BinaryRequest.cs" />
-    <Compile Include="Memcached\Operations\Binary\BinaryResponse.cs" />
-    <Compile Include="Memcached\Operations\Binary\BinaryConverter.cs" />
-    <Compile Include="Memcached\Operations\Binary\MutatorOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\DeleteOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\GetOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\OpCode.cs" />
-    <Compile Include="Memcached\Operations\Binary\StoreOperation.cs" />
-    <Compile Include="Memcached\Operations\ItemOperation.cs" />
-    <Compile Include="Memcached\Operations\Operation.cs" />
+    <Compile Include="Memcached\Protocol\Binary\BinaryRequest.cs" />
+    <Compile Include="Memcached\Protocol\Binary\BinaryResponse.cs" />
+    <Compile Include="Memcached\Protocol\Binary\BinaryConverter.cs" />
+    <Compile Include="Memcached\Protocol\Binary\MutatorOperation.cs" />
+    <Compile Include="Memcached\Protocol\Binary\DeleteOperation.cs" />
+    <Compile Include="Memcached\Protocol\Binary\GetOperation.cs" />
+    <Compile Include="Memcached\Protocol\Binary\OpCode.cs" />
+    <Compile Include="Memcached\Protocol\Binary\StoreOperation.cs" />
+    <Compile Include="Memcached\Protocol\ItemOperation.cs" />
+    <Compile Include="Memcached\Protocol\Operation.cs" />
     <Compile Include="Memcached\Locators\SingleNodeLocator.cs" />
     <Compile Include="Memcached\StatItem.cs" />
     <Compile Include="Memcached\Transcoders\DefaultTranscoder.cs" />

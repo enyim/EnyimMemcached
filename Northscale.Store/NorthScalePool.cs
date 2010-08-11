@@ -7,7 +7,7 @@ using System.Threading;
 using Enyim.Caching.Memcached;
 using NorthScale.Store.Configuration;
 using Enyim.Caching.Configuration;
-using Enyim.Caching.Memcached.Operations.Binary;
+using Enyim.Caching.Memcached.Protocol.Binary;
 
 namespace NorthScale.Store
 {
@@ -38,7 +38,7 @@ namespace NorthScale.Store
 				bucketName = null;
 
 			// we only support the binary protocol
-			this.operationFactory = new Enyim.Caching.Memcached.Operations.Binary.BinaryOperationFactory();
+			this.operationFactory = new Enyim.Caching.Memcached.Protocol.Binary.BinaryOperationFactory();
 		}
 
 		~NorthScalePool()

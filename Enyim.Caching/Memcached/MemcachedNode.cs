@@ -6,7 +6,7 @@ using System.Threading;
 using Enyim.Caching.Configuration;
 using Enyim.Collections;
 using System.Security;
-using Enyim.Caching.Memcached.Operations.Binary;
+using Enyim.Caching.Memcached.Protocol.Binary;
 
 namespace Enyim.Caching.Memcached
 {

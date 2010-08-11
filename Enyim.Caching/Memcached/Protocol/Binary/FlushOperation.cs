@@ -1,20 +1,25 @@
 using System;
-using System.Net;
 using System.Collections.Generic;
-using Enyim.Caching.Memcached.Protocol;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public interface IOperationFactory
+	public class FlushOperation : Operation, IFlushOperation
 	{
-		IGetOperation Get(string key);
-		IMultiGetOperation MultiGet(IList<string> keys);
-		IStoreOperation Store(StoreMode mode, string key, CacheItem value, uint expires);
-		IDeleteOperation Delete(string key);
-		IMutatorOperation Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires);
-		IConcatOperation Concat(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		IStatsOperation Stats();
-		IFlushOperation Flush();
+		public FlushOperation() { }
+
+		protected internal override IList<ArraySegment<byte>> GetBuffer()
+		{
+			var request = new BinaryRequest(OpCode.Flush);
+
+			return request.CreateBuffer();
+		}
+
+		protected internal override bool ReadResponse(PooledSocket socket)
+		{
+			var response = new BinaryResponse();
+
+			return response.Read(socket);
+		}
 	}
 }
 

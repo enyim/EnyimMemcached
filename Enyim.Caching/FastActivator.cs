@@ -13,7 +13,7 @@ namespace Enyim.Reflection
 	/// <para>Implements a very fast object factory for dynamic object creation. Dynamically generates a factory class which will use the new() constructor of the requested type.</para>
 	/// <para>Much faster than using Activator at the price of the first invocation being significantly slower than subsequent calls.</para>
 	/// </summary>
-	public static class FastActivator2
+	public static class FastActivator
 	{
 		private static Dictionary<Type, Func<object>> factoryCache = new Dictionary<Type, Func<object>>();
 

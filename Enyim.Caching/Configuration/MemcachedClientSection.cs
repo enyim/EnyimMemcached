@@ -131,8 +131,8 @@ namespace Enyim.Caching.Configuration
 		{
 			switch (this.Protocol)
 			{
-				case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Operations.Text.TextOperationFactory());
-				case MemcachedProtocol.Binary: return new Enyim.Caching.Memcached.Operations.Binary.BinaryPool(this);
+				case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory());
+				case MemcachedProtocol.Binary: return new Enyim.Caching.Memcached.Protocol.Binary.BinaryPool(this);
 			}
 
 			throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);
