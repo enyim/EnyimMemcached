@@ -1,9 +1,11 @@
 using System;
+using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations.Binary
 {
 	internal class StoreOperation : ItemOperation
 	{
+		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
 
 		private StoreCommand mode;
 		private object value;
@@ -32,6 +34,9 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			}
 
 			BinaryRequest request = new BinaryRequest(op);
+
+			request.Reserved = (ushort)this.Socket.OwnerNode.Bucket;
+
 			byte[] extra = new byte[8];
 
 			CacheItem item = this.ServerPool.Transcoder.Serialize(this.value);
@@ -51,7 +56,13 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 
 			BinaryResponse response = new BinaryResponse();
 
-			return response.Read(socket);
+			var retval = response.Read(socket);
+
+			if (!retval)
+				if (log.IsDebugEnabled)
+					log.DebugFormat("Store failed for key '{0}'. Reason: {1}", this.Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
+
+			return retval;
 		}
 	}
 }

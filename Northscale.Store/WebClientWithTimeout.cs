@@ -11,11 +11,11 @@ namespace NorthScale.Store
 	{
 		public WebClientWithTimeout()
 		{
-			this.Encoding = Encoding.UTF8;
+			//this.Encoding = Encoding.UTF8;
 
 			this.Headers[HttpRequestHeader.CacheControl] = "no-cache";
 			this.Headers[HttpRequestHeader.Accept] = "application/com.northscale.store+json";
-			// TODO mayvbe we should version this
+			// TODO maybe we should version this
 			this.Headers[HttpRequestHeader.UserAgent] = "enyim.com memcached client";
 		}
 

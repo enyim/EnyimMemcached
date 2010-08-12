@@ -90,14 +90,10 @@ namespace NorthScale.Store
 			if (this.poolUrls.Length == 0)
 				throw new InvalidOperationException("At least 1 pool url must be specified.");
 
-			var helper = new ConfigHelper
+			this.configListener = new BucketConfigListener(this.bucketName, this.poolUrls)
 			{
 				Credentials = this.configuration.Credentials,
-				Timeout = (int)this.configuration.SocketPool.ConnectionTimeout.TotalMilliseconds
-			};
-
-			this.configListener = new BucketConfigListener(this.bucketName, helper, this.poolUrls)
-			{
+				Timeout = (int)this.configuration.SocketPool.ConnectionTimeout.TotalMilliseconds,
 				DeadTimeout = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds
 			};
 
@@ -114,6 +110,7 @@ namespace NorthScale.Store
 
 			IEnumerable<IPEndPoint> endpoints;
 			IMemcachedNodeLocator locator;
+			IList<IMemcachedNode> nodes;
 
 			if (config == null || config.vBucketServerMap == null)
 			{
@@ -131,6 +128,7 @@ namespace NorthScale.Store
 												: node.ports.direct)));
 
 				locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator();
+				nodes = endpoints.Select(ip => new MemcachedNode(ip, this.configuration.SocketPool, auth)).ToArray();
 			}
 			else
 			{
@@ -139,19 +137,23 @@ namespace NorthScale.Store
 				// but the order is significicant (because of the bucket indexes),
 				// so we we'll use this for initializing the locator
 				var vbsm = config.vBucketServerMap;
-				endpoints = from server in vbsm.serverList
-							let parts = server.Split(':')
-							select new IPEndPoint(IPAddress.Parse(parts[0]), Int32.Parse(parts[1]));
+				endpoints = (from server in vbsm.serverList
+							 let parts = server.Split(':')
+							 select new IPEndPoint(IPAddress.Parse(parts[0]), Int32.Parse(parts[1])));
 
-				locator = new VBucketNodeLocator(vbsm.hashAlgorithm, vbsm.vBucketMap.Select(a => new VBucket(a[0], a.Skip(1).ToArray())).ToArray());
+				var epa = endpoints.ToArray();
+
+				var buckets = vbsm.vBucketMap.Select(a => new VBucket(a[0], a.Skip(1).ToArray())).ToArray();
+				locator = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
+
+				var bucketNodeMap = buckets.ToLookup(vb => epa[vb.Master]);
+
+				nodes = endpoints.Select(ip => new MemcachedNode(ip, this.configuration.SocketPool, auth) { Bucket = Array.IndexOf(buckets, bucketNodeMap[ip].FirstOrDefault()) }).ToArray();
 			}
 
-			var mcNodes = (from e in endpoints
-						   select new MemcachedNode(e, this.configuration.SocketPool, auth)).ToArray();
+			locator.Initialize(nodes);
 
-			locator.Initialize(mcNodes);
-
-			Interlocked.Exchange(ref this.currentNodes, new ReadOnlyCollection<IMemcachedNode>(mcNodes));
+			Interlocked.Exchange(ref this.currentNodes, new ReadOnlyCollection<IMemcachedNode>(nodes));
 			Interlocked.Exchange(ref this.nodeLocator, locator);
 		}
 
@@ -159,7 +161,9 @@ namespace NorthScale.Store
 		{
 			if (this.configListener != null)
 			{
-				this.configListener.Stop();
+				using (this.configListener)
+					this.configListener.Stop();
+
 				this.configListener = null;
 			}
 		}

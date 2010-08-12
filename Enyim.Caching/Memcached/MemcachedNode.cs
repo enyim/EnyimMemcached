@@ -13,7 +13,7 @@ namespace Enyim.Caching.Memcached
 	/// Represents a Memcached node in the pool.
 	/// </summary>
 	[DebuggerDisplay("{{MemcachedNode [ Address: {EndPoint}, IsAlive = {IsAlive} ]}}")]
-	public sealed class MemcachedNode : IMemcachedNode
+	public class MemcachedNode : IMemcachedNode
 	{
 		private static readonly object SyncRoot = new Object();
 
@@ -109,7 +109,6 @@ namespace Enyim.Caching.Memcached
 			return this.internalPoolImpl.Acquire();
 		}
 
-
 		~MemcachedNode()
 		{
 			try { ((IDisposable)this).Dispose(); }
@@ -144,6 +143,8 @@ namespace Enyim.Caching.Memcached
 		{
 			this.Dispose();
 		}
+
+		public int Bucket { get; set; }
 
 		#region [ InternalPoolImpl             ]
 		private class InternalPoolImpl : IDisposable

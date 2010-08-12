@@ -4,10 +4,11 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Web.Script.Serialization;
+using System.IO;
 
 namespace NorthScale.Store
 {
-	internal class ConfigHelper
+	internal class ConfigHelper : IDisposable
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(ConfigHelper));
 
@@ -22,6 +23,16 @@ namespace NorthScale.Store
 		{
 			get { return this.wcwt.Credentials; }
 			set { this.wcwt.Credentials = value; }
+		}
+
+		public int Timeout
+		{
+			get { return this.wcwt.Timeout; }
+			set
+			{
+				this.wcwt.Timeout = value;
+				this.wcwt.ReadWriteTimeout = value;
+			}
 		}
 
 		private T DeserializeUri<T>(Uri uri)
@@ -39,7 +50,7 @@ namespace NorthScale.Store
 			object tmp;
 			Dictionary<string, object> dict;
 
-			// get the buckets member whihc will hold the url of the bucket listing REST endpoint 
+			// get the buckets member which will hold the url of the bucket listing REST endpoint 
 			if (!poolInfo.TryGetValue("buckets", out tmp)
 				|| (dict = tmp as Dictionary<string, object>) == null)
 				throw new ArgumentException("invalid pool url: " + poolUri);
@@ -111,14 +122,19 @@ namespace NorthScale.Store
 			return null;
 		}
 
-		public int Timeout
+		void IDisposable.Dispose()
 		{
-			get { return this.wcwt.Timeout; }
-			set
+			if (this.wcwt != null)
 			{
-				this.wcwt.Timeout = value;
-				this.wcwt.ReadWriteTimeout = value;
+				this.wcwt.Dispose();
+				this.wcwt = null;
+				GC.SuppressFinalize(this);
 			}
+		}
+
+		~ConfigHelper()
+		{
+			((IDisposable)this).Dispose();
 		}
 	}
 }

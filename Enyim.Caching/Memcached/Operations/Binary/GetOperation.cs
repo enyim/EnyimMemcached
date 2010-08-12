@@ -11,6 +11,7 @@ namespace Enyim.Caching.Memcached.Operations.Binary
 			if (socket == null) return false;
 
 			BinaryRequest request = new BinaryRequest(OpCode.Get);
+			request.Reserved = (ushort)socket.OwnerNode.Bucket;
 			request.Key = this.HashedKey;
 			request.Write(socket);
 

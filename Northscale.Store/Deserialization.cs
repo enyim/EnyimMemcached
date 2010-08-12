@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Net;
 
 namespace NorthScale.Store
 {
 #pragma warning disable 649
-	class ClusterConfig
+	internal class ClusterConfig
 	{
 		public string name;
 
@@ -15,17 +16,51 @@ namespace NorthScale.Store
 		public ClusterNode[] nodes;
 
 		public VBucketConfig vBucketServerMap;
+
+		public override int GetHashCode()
+		{
+			var cnehc = new Enyim.HashCodeCombiner();
+
+			for (var i = 0; i < nodes.Length; i++)
+				cnehc.Add(nodes[i].GetHashCode());
+
+			return this.vBucketServerMap == null
+					? Enyim.HashCodeCombiner.Combine(this.name.GetHashCode(), this.streamingUri.GetHashCode(), cnehc.CurrentHash)
+					: Enyim.HashCodeCombiner.Combine(this.name.GetHashCode(), this.streamingUri.GetHashCode(), cnehc.CurrentHash, this.vBucketServerMap.GetHashCode());
+		}
 	}
 
-	class VBucketConfig
+	internal class VBucketConfig
 	{
 		public string hashAlgorithm;
 		public int numReplicas;
 		public string[] serverList;
 		public int[][] vBucketMap;
+
+		public override int GetHashCode()
+		{
+			var ehc = new Enyim.HashCodeCombiner(this.hashAlgorithm.GetHashCode());
+			ehc.Add(this.numReplicas);
+
+			for (var i = 0; i < this.serverList.Length; i++)
+				ehc.Add(this.serverList[i].GetHashCode());
+
+			for (var i = 0; i < vBucketMap.Length; i++)
+			{
+				var ehc2 = new Enyim.HashCodeCombiner();
+				var tmp = vBucketMap[i];
+
+				for (var j = 0; j < tmp.Length; j++)
+					ehc2.Add(tmp[j]);
+
+				ehc.Add(ehc2.CurrentHash);
+			}
+
+			return ehc.CurrentHash;
+		}
 	}
 
-	class ClusterNode
+	internal class ClusterNode
 	{
 		private string _hostname;
 
@@ -47,10 +82,18 @@ namespace NorthScale.Store
 				this._hostname = tmp;
 			}
 		}
+
 		public string status;
 		public ClusterNodePorts ports;
 
-		internal static readonly IEqualityComparer<ClusterNode> ComparerInstance = new Comparer();
+		public string version;
+
+		public override int GetHashCode()
+		{
+			return Enyim.HashCodeCombiner.Combine(this._hostname.GetHashCode(), this.status.GetHashCode(), ports.GetHashCode());
+		}
+
+		public static readonly IEqualityComparer<ClusterNode> ComparerInstance = new Comparer();
 
 		#region [ Comparer                     ]
 		private class Comparer : IEqualityComparer<ClusterNode>
@@ -71,7 +114,7 @@ namespace NorthScale.Store
 		#endregion
 	}
 
-	class ClusterNodePorts
+	internal class ClusterNodePorts
 	{
 		public int direct;
 		public int proxy;
@@ -83,7 +126,7 @@ namespace NorthScale.Store
 
 		public override int GetHashCode()
 		{
-			return this.ToString().GetHashCode();
+			return Enyim.HashCodeCombiner.Combine(this.direct, this.proxy);
 		}
 	}
 #pragma warning restore 649

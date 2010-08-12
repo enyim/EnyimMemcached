@@ -106,7 +106,8 @@ namespace NorthScale.Store
 
 				while (this.stopCounter == 0)
 				{
-					Uri currentUrl = null;
+					Uri key = null;
+					Uri connectTo = null;
 
 					int urlIndex = 0;
 
@@ -119,7 +120,9 @@ namespace NorthScale.Store
 					{
 						if (log.IsDebugEnabled) log.Debug("finding the first (still) working pool.");
 
-						currentUrl = null;
+						key = null;
+						connectTo = null;
+
 						int i = urlIndex;
 
 						// find the first working url
@@ -134,13 +137,12 @@ namespace NorthScale.Store
 								try
 								{
 									// resolve the url
-									var realUrl = realUrls[nextUrl] ?? this.ResolveUri(nextUrl);
+									connectTo = realUrls[nextUrl] ?? (realUrls[nextUrl] = this.ResolveUri(nextUrl));
 
-									if (realUrl != null)
+									if (connectTo != null)
 									{
-										currentUrl = realUrl;
-
-										if (log.IsDebugEnabled) log.Debug("Found pool url " + currentUrl);
+										key = nextUrl;
+										if (log.IsDebugEnabled) log.Debug("Found pool url " + connectTo + " for " + key);
 
 										break;
 									}
@@ -160,7 +162,7 @@ namespace NorthScale.Store
 						#endregion
 
 						// the break here will go into the outer while, and reinitialize the lookup table and the indexer
-						if (currentUrl == null)
+						if (key == null)
 						{
 							if (log.IsWarnEnabled) log.Debug("Could not found a working pool url.");
 							break;
@@ -175,7 +177,7 @@ namespace NorthScale.Store
 
 							// start working on the current url
 							// if it fails in the meanwhile, we'll get another url
-							worker.Start(currentUrl);
+							worker.Start(connectTo);
 
 							if (log.IsDebugEnabled) log.Debug("MessageReader has exited");
 
@@ -193,10 +195,10 @@ namespace NorthScale.Store
 							if (e is IOException || e is System.Net.WebException)
 							{
 								// current worker failed, most probably the pool it was connected to went down
-								if (currentUrl != null)
-									statusPool[currentUrl] = false;
+								if (key != null)
+									statusPool[key] = false;
 
-								if (log.IsWarnEnabled) log.Warn("Current pool " + currentUrl + " has failed.");
+								if (log.IsWarnEnabled) log.Warn("Current pool " + key + " has failed.");
 							}
 							else
 							{
@@ -249,8 +251,8 @@ namespace NorthScale.Store
 			{
 				// the url is supposed to send data indefinitely
 				// but if it finishes normally somehow, this 'while' will  keep things working
-				// the only way out of here is either calling Stop() failing by an exception
-				while (true)
+				// the only way out of here is either calling Stop() or failing by an exception
+				while (this.stopCounter == 0)
 				{
 					// somehow stream.Dispose() hangs, so we skipping it for a while
 					var stream = this.client.OpenRead(uri);

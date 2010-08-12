@@ -3296,6 +3296,7 @@ namespace MemcachedTest
 		}
 
 		public IPEndPoint EndPoint { get; private set; }
+		public int Bucket { get; set; }
 
 		public bool IsAlive { get { return true; } }
 		public bool Ping() { return true; }
