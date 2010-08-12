@@ -12,48 +12,30 @@ namespace NorthScale.Store.Configuration
 	/// </summary>
 	public class NorthScaleClientConfiguration : INorthScaleClientConfiguration
 	{
-		private List<Uri> urls;
-		private ISocketPoolConfiguration socketPool;
-		private ICredentials credentials;
-		private string bucket;
-		private BucketPortType port = BucketPortType.Direct;
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
 		/// </summary>
 		public NorthScaleClientConfiguration()
 		{
-			this.urls = new List<Uri>();
-			this.socketPool = new SocketPoolConfiguration();
+			this.Urls = new List<Uri>();
+			this.Port = BucketPortType.Proxy;
+
+			this.SocketPool = new SocketPoolConfiguration();
 		}
 
-		public string Bucket
-		{
-			get { return this.bucket; }
-			set { this.bucket = value; }
-		}
+		public string Bucket { get; set; }
 
 		/// <summary>
 		/// Gets a list of <see cref="T:IPEndPoint"/> each representing a Memcached server in the pool.
 		/// </summary>
-		public IList<Uri> Urls
-		{
-			get { return this.urls; }
-		}
+		public IList<Uri> Urls { get; private set; }
 
-		public ICredentials Credentials
-		{
-			get { return this.credentials; }
-			set { this.credentials = value; }
-		}
+		public NetworkCredential Credentials { get; set; }
 
 		/// <summary>
 		/// Gets the configuration of the socket pool.
 		/// </summary>
-		public ISocketPoolConfiguration SocketPool
-		{
-			get { return this.socketPool; }
-		}
+		public ISocketPoolConfiguration SocketPool { get; private set; }
 
 		/// <summary>
 		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
@@ -73,11 +55,7 @@ namespace NorthScale.Store.Configuration
 		/// <summary>
 		/// Determines which port the client should use to connect to the nodes
 		/// </summary>
-		public BucketPortType Port
-		{
-			get { return this.port; }
-			set { this.port = value; }
-		}
+		public BucketPortType Port { get; set; }
 
 		#region [ interface                     ]
 		IList<Uri> INorthScaleClientConfiguration.Urls
@@ -85,7 +63,7 @@ namespace NorthScale.Store.Configuration
 			get { return this.Urls; }
 		}
 
-		ICredentials INorthScaleClientConfiguration.Credentials
+		NetworkCredential INorthScaleClientConfiguration.Credentials
 		{
 			get { return this.Credentials; }
 		}
@@ -112,12 +90,12 @@ namespace NorthScale.Store.Configuration
 
 		string INorthScaleClientConfiguration.Bucket
 		{
-			get { return this.bucket; }
+			get { return this.Bucket; }
 		}
 
 		BucketPortType INorthScaleClientConfiguration.Port
 		{
-			get { return this.port; }
+			get { return this.Port; }
 		}
 
 		#endregion

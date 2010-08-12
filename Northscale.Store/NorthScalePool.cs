@@ -51,9 +51,8 @@ namespace NorthScale.Store
 			if (this.poolUrls.Length == 0)
 				throw new InvalidOperationException("At least 1 pool url must be specified.");
 
-			this.configListener = new BucketConfigListener(this.bucketName, this.poolUrls)
+			this.configListener = new BucketConfigListener(this.poolUrls, this.bucketName, this.configuration.Credentials)
 			{
-				Credentials = this.configuration.Credentials,
 				Timeout = (int)this.configuration.SocketPool.ConnectionTimeout.TotalMilliseconds,
 				DeadTimeout = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds
 			};
@@ -137,8 +136,7 @@ namespace NorthScale.Store
 		{
 			if (this.configListener != null)
 			{
-				using (this.configListener)
-					this.configListener.Stop();
+				this.configListener.Stop();
 
 				this.configListener = null;
 

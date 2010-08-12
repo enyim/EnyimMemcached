@@ -4,68 +4,130 @@ using System.Linq;
 using System.Web.Script.Serialization;
 using System.Threading;
 using System.Net;
+using Enyim;
 
 namespace NorthScale.Store
 {
-	internal class BucketConfigListener : MessageStreamListener, IDisposable
+	internal class BucketConfigListener
 	{
 		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(BucketConfigListener));
 
-		private ConfigHelper helper;
+		private Uri[] poolUrls;
 		private string bucketName;
-		private int previousHash;
-		private ManualResetEvent initEvent;
+		private NetworkCredential credential;
+		private int? lastHash;
+		private ManualResetEvent mre;
+		private MessageStreamListener listener;
 
-		public BucketConfigListener(string bucketName, Uri[] poolUrls)
-			: base(poolUrls)
+		public BucketConfigListener(Uri[] poolUrls, string bucketName, NetworkCredential credential)
 		{
+			this.poolUrls = poolUrls;
 			this.bucketName = bucketName ?? "default";
+
+			this.credential = credential;
+
+			this.Timeout = 10000;
+			this.DeadTimeout = 20000;
 		}
 
-		public event Action<ClusterConfig> ClusterConfigChanged;
+		public int Timeout { get; set; }
+		public int DeadTimeout { get; set; }
 
-		protected override void OnMessageReceived(string message)
+		#region listener cache
+		static readonly object ListenerSync = new Object();
+		static Dictionary<int, MessageStreamListener> listeners = new Dictionary<int, MessageStreamListener>();
+		static Dictionary<MessageStreamListener, ListenerInfo> listenerRefs = new Dictionary<MessageStreamListener, ListenerInfo>();
+
+		class ListenerInfo
 		{
-			base.OnMessageReceived(message);
+			public int RefCount;
+			public int HashKey;
+		}
 
-			// everything failed
-			if (String.IsNullOrEmpty(message))
+		/// <summary>
+		/// Unsubscibes from a pooled listener, and destrpys it if no additionals subscribers are present.
+		/// </summary>
+		/// <param name="listener"></param>
+		private void ReleaseListener(MessageStreamListener listener)
+		{
+			lock (ListenerSync)
 			{
-				// only signal a config change when the last config was not empty
-				if (this.previousHash != Int32.MinValue)
+				listener.Unsubscribe(this.HandleMessage);
+
+				var info = listenerRefs[listener];
+				if (info.RefCount == 1)
 				{
-					this.previousHash = Int32.MinValue;
+					try
+					{ listener.Stop(); }
+					catch { }
 
-					this.RaiseConfigChanged(null);
+					listenerRefs.Remove(listener);
+					listeners.Remove(info.HashKey);
 				}
+				else
+				{
+					info.RefCount--;
+				}
+			}
+		}
 
-				return;
+		private MessageStreamListener GetPooledListener()
+		{
+			// create a unique key based on the parameters
+			// to find out if we already have a listener attached to this pool
+			var hcc = new HashCodeCombiner();
+
+			hcc.Add(this.Timeout);
+			hcc.Add(this.DeadTimeout);
+			hcc.Add(this.bucketName.GetHashCode());
+
+			if (credential != null)
+			{
+				hcc.Add((this.credential.UserName ?? String.Empty).GetHashCode());
+				hcc.Add((this.credential.Password ?? String.Empty).GetHashCode());
+				hcc.Add((this.credential.Domain ?? String.Empty).GetHashCode());
 			}
 
-			// deserialize the buckets
-			var jss = new JavaScriptSerializer();
-			var config = jss.Deserialize<ClusterConfig>(message);
+			for (var i = 0; i < this.poolUrls.Length; i++)
+				hcc.Add(this.poolUrls[i].GetHashCode());
 
-			var hc = config.GetHashCode();
-			if (hc == this.previousHash)
-				return;
+			var hash = hcc.CurrentHash;
 
-			this.previousHash = hc;
+			MessageStreamListener retval;
 
-			this.RaiseConfigChanged(config);
+			lock (ListenerSync)
+			{
+				if (!listeners.TryGetValue(hash, out retval))
+				{
+					listeners[hash] = retval = new MessageStreamListener(poolUrls, this.ResolveBucketUri);
+					listenerRefs[retval] = new ListenerInfo { RefCount = 1, HashKey = hash };
+
+					retval.Timeout = this.Timeout;
+					retval.DeadTimeout = this.DeadTimeout;
+					retval.Credentials = this.credential;
+
+					retval.Subscribe(this.HandleMessage);
+
+					retval.Start();
+				}
+				else
+				{
+					listenerRefs[retval].RefCount++;
+					retval.Subscribe(this.HandleMessage);
+				}
+			}
+
+			return retval;
 		}
 
-		protected override Uri ResolveUri(Uri uri)
+		#endregion
+
+		private Uri ResolveBucketUri(WebClientWithTimeout client, Uri uri)
 		{
 			try
 			{
-				var bucket = this.helper.ResolveBucket(uri, this.bucketName);
-
-				var firstNode = bucket.nodes.FirstOrDefault();
-
-				// quick fix for membase beta2
-				if (firstNode != null && firstNode.version == "1.6.0beta2")
-					return new Uri(uri, bucket.streamingUri.Replace("/bucketsStreaming/", "/bucketsStreamingConfig/"));
+				var helper = new ConfigHelper(client);
+				var bucket = helper.ResolveBucket(uri, this.bucketName);
 
 				return new Uri(uri, bucket.streamingUri);
 			}
@@ -77,19 +139,51 @@ namespace NorthScale.Store
 			}
 		}
 
-		public override void Start()
+		public event Action<ClusterConfig> ClusterConfigChanged;
+
+		private void HandleMessage(string message)
 		{
-			this.initEvent = new ManualResetEvent(false);
-			this.helper = new ConfigHelper()
+			// everything failed
+			if (String.IsNullOrEmpty(message))
 			{
-				Timeout = this.Timeout,
-				Credentials = this.Credentials
-			};
+				this.RaiseConfigChanged(null);
+				return;
+			}
 
-			base.Start();
+			// deserialize the buckets
+			var jss = new JavaScriptSerializer();
+			var config = jss.Deserialize<ClusterConfig>(message);
 
-			using (this.initEvent) this.initEvent.WaitOne();
-			this.initEvent = null;
+			// check if the config is the same as the previous
+			// we cannot compare the messages because they have more information than we deserialize from them
+			var configHash = config.GetHashCode();
+
+			if (lastHash != configHash)
+			{
+				lastHash = configHash;
+				this.RaiseConfigChanged(config);
+			}
+		}
+
+		public void Start()
+		{
+			var reset = this.mre = new ManualResetEvent(false);
+
+			// subscribe to the config url
+			this.listener = this.GetPooledListener();
+
+			reset.WaitOne();
+
+			// set to null, then dispose, so RaiseConfigChanged will not 
+			// fail at Set when the config changes while we're cleaning up here
+			this.mre = null;
+			((IDisposable)reset).Dispose();
+		}
+
+		public void Stop()
+		{
+			this.ReleaseListener(this.listener);
+			this.listener = null;
 		}
 
 		private void RaiseConfigChanged(ClusterConfig config)
@@ -101,17 +195,8 @@ namespace NorthScale.Store
 				ccc(config);
 
 			// trigger the event so Start stops blocking
-			if (this.initEvent != null)
-				this.initEvent.Set();
-		}
-
-		void IDisposable.Dispose()
-		{
-			if (this.helper != null)
-			{
-				((IDisposable)this.helper).Dispose();
-				this.helper = null;
-			}
+			if (this.mre != null)
+				this.mre.Set();
 		}
 	}
 }

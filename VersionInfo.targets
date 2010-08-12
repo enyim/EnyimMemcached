@@ -15,15 +15,11 @@
 
 		<Exec Command="git describe --tags --match $(GitTagMatch) > $(GitDescribe)" />
 		<ReadLinesFromFile File="$(GitDescribe)">
-			<Output TaskParameter="Lines" PropertyName="_AssemblyDescription"/>
+			<Output TaskParameter="Lines" PropertyName="_AssemblyFileVersion"/>
 		</ReadLinesFromFile>
 
-		<Message Importance="high" Text="----"/>
-		<Message Importance="high" Text="@(_AssemblyDescription)"/>
-		<Message Importance="high" Text="----"/>
-
 		<Delete Files="$(GeneratedAssemblyInfo)" />
-		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Lines="[assembly: System.Reflection.AssemblyDescription(&quot;$(_AssemblyDescription)&quot;)]" />
+		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Lines="[assembly: System.Reflection.AssemblyFileVersion(&quot;$(_AssemblyFileVersion)&quot;)]" />
 	</Target>
 
 	<Target Name="IncludeGeneratedAssemblyInfo">

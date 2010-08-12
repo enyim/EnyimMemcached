@@ -14,9 +14,11 @@ namespace NorthScale.Store
 
 		private WebClientWithTimeout wcwt;
 
-		public ConfigHelper()
+		public ConfigHelper() : this(new WebClientWithTimeout()) { }
+
+		public ConfigHelper(WebClientWithTimeout client)
 		{
-			this.wcwt = new WebClientWithTimeout();
+			this.wcwt = client;
 		}
 
 		public ICredentials Credentials

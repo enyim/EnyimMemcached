@@ -38,7 +38,7 @@ namespace NorthScale.Store.Configuration
 		/// <summary>
 		/// Gets the credentials used to connect to the REST API of the cluster.
 		/// </summary>
-		ICredentials Credentials { get; }
+		NetworkCredential Credentials { get; }
 
 		/// <summary>
 		/// Determines which port the client should use to connect to the nodes

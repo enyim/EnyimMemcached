@@ -1,5 +1,24 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
 	<Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+	
+	<UsingTask TaskName="GetFileVersion" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+		<ParameterGroup>
+			<AssemblyPath ParameterType="System.String" Required="true" />
+			<FileVersion ParameterType="System.String" Output="true" />
+		</ParameterGroup>
+		<Task>
+			<Using Namespace="System.Reflection" />
+			<Code Type="Fragment" Language="cs">
+				<![CDATA[
+					var a = Assembly.LoadFrom(AssemblyPath);
+					var afv = Attribute.GetCustomAttribute(a, typeof(AssemblyFileVersionAttribute)) as AssemblyFileVersionAttribute;
+
+					FileVersion = afv == null ? "NULL" : afv.Version;
+				]]>
+			</Code>
+		</Task>
+	</UsingTask>
+	
 	<Target Name="BeforeBuild">
 		<RemoveDir Directories="Enyim.Caching\bin;Enyim.Caching\obj;NorthScale.Store\bin;NorthScale.Store\obj" ContinueOnError="true" />
 	</Target>
@@ -18,12 +37,12 @@
 	</Target>
 
 	<Target Name="Pack">
-		<GetAssemblyIdentity AssemblyFiles="Enyim.Caching\bin\Release\Enyim.Caching.dll">
-			<Output TaskParameter="Assemblies" ItemName="EnyimCachingInfo" />
-		</GetAssemblyIdentity>
-		<GetAssemblyIdentity AssemblyFiles="NorthScale.Store\bin\Release\NorthScale.Store.dll">
-			<Output TaskParameter="Assemblies" ItemName="NorthScaleStoreInfo" />
-		</GetAssemblyIdentity>
+		<GetFileVersion AssemblyPath="Enyim.Caching\bin\Release\Enyim.Caching.dll">
+			<Output TaskParameter="FileVersion" PropertyName="EnyimCachingVersion" />
+		</GetFileVersion>
+		<GetFileVersion AssemblyPath="NorthScale.Store\bin\Release\NorthScale.Store.dll">
+			<Output TaskParameter="FileVersion" PropertyName="NorthScaleStoreVersion" />
+		</GetFileVersion>
 
 		<CreateItem Include="Enyim.Caching\bin\Release\**\*.*">
 			<Output ItemName="EnyimItems" TaskParameter="Include" />
@@ -32,11 +51,12 @@
 			<Output ItemName="NorthScaleItems" TaskParameter="Include" />
 		</CreateItem>
 
-		<Zip Files="@(EnyimItems)" ZipFileName="Enyim.Caching.$([System.Text.RegularExpressions.Regex]::Replace(%(EnyimCachingInfo.Version), `\.\d+\.\d+$`, ``)).zip" ZipLevel="9" Flatten="true" />
-		<Zip Files="@(NorthScaleItems)" ZipFileName="NorthScale.Store.$([System.Text.RegularExpressions.Regex]::Replace(%(NorthScaleStoreInfo.Version), `\.\d+\.\d+$`, ``)).zip" ZipLevel="9" Flatten="true" />
+		<Zip Files="@(EnyimItems)" ZipFileName="Enyim.Caching.$([System.Text.RegularExpressions.Regex]::Replace($(EnyimCachingVersion), `^([^0-9]+)`, ``)).zip" ZipLevel="9" Flatten="true" />
+		<Zip Files="@(NorthScaleItems)" ZipFileName="NorthScale.Store.$([System.Text.RegularExpressions.Regex]::Replace($(NorthScaleStoreVersion), `^([^0-9]+)`, ``)).zip" ZipLevel="9" Flatten="true" />
 	</Target>
 
-	<Target Name="Build" DependsOnTargets="Compile;PrepareFiles;Pack"></Target>
+	<Target Name="Build" DependsOnTargets="Compile;PrepareFiles;Pack">
+	</Target>
 </Project>
 <!--
 /* ************************************************************
