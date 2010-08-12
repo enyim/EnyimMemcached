@@ -22,7 +22,7 @@ namespace Enyim.Caching.Memcached
 		{
 			// TODO we should convert it to UTf8 byte stream then check that for the forbidden byte values
 			if (key.IndexOfAny(ForbiddenChars) > -1)
-				throw new ArgumentException("Keys cannot contain the chars 0x00-0x02f and space.");
+				throw new ArgumentException("Keys cannot contain the chars 0x00-0x20 and space.");
 
 			return key;
 		}
@@ -32,7 +32,7 @@ namespace Enyim.Caching.Memcached
 #region [ License information          ]
 /* ************************************************************
  *
- * Copyright (c) Attila Kiskó, enyim.com
+ * Copyright (c) Attila Kiskï¿½, enyim.com
  *
  * This source code is subject to terms and conditions of 
  * Microsoft Permissive License (Ms-PL).
