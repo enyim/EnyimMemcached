@@ -22,18 +22,28 @@ namespace Enyim.Caching.Memcached
 
 		public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
 		{
-			this.endpoint = endpoint;
-
-			this.socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-			//this.socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, connectionTimeout == TimeSpan.MaxValue ? Timeout.Infinite : (int)connectionTimeout.TotalMilliseconds);
-			//this.socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, receiveTimeout == TimeSpan.MaxValue ? Timeout.Infinite : (int)receiveTimeout.TotalMilliseconds);
+			var socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
 			// all operations are "atomic", we do not send small chunks of data
-			this.socket.NoDelay = true;
+			socket.NoDelay = true;
 
-			this.socket.Connect(endpoint);
-			this.inputStream = new BufferedStream(new BasicNetworkStream(this.socket));
+			var mre = new ManualResetEvent(false);
+			var timeout = connectionTimeout == TimeSpan.MaxValue
+							? Timeout.Infinite
+							: (int)connectionTimeout.TotalMilliseconds;
+
+			socket.BeginConnect(endpoint, iar => { socket.EndConnect(iar); mre.Set(); }, null);
+
+			if (!mre.WaitOne(timeout))
+			{
+				using (socket)
+					throw new TimeoutException("Could not connect to " + endpoint);
+			}
+
+			this.socket = socket;
+			this.endpoint = endpoint;
+
+			this.inputStream = new BufferedStream(new BasicNetworkStream(socket));
 		}
 
 		public Action<PooledSocket> CleanupCallback { get; set; }
