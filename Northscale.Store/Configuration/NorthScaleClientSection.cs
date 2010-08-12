@@ -100,7 +100,7 @@ namespace NorthScale.Store.Configuration
 			return this.Transcoder.CreateInstance() ?? new DefaultTranscoder();
 		}
 
-		ICredentials INorthScaleClientConfiguration.Credentials
+		NetworkCredential INorthScaleClientConfiguration.Credentials
 		{
 			get
 			{
