@@ -17,17 +17,40 @@ namespace NorthScale.Store
 
 		private Uri[] urls;
 		private int stopCounter = 0;
-		private MessageReader currentWorker;
 
-		public MessageStreamListener(Uri[] urls)
+		// false means that the url was not responding or failed while reading
+		private Dictionary<Uri, bool> statusPool;
+		// this holds the resolved urls, key is coming from the 'urls' array
+		private Dictionary<Uri, Uri> realUrls;
+
+		private int urlIndex = 0;
+		private WebClientWithTimeout client;
+		private WebRequest request;
+		private WebResponse response;
+
+		private bool hasMessage;
+		private string lastMessage;
+		private Func<WebClientWithTimeout, Uri, Uri> uriConverter;
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="urls"></param>
+		/// <param name="converter">you use this to redirect the original url into somewhere else. called only once by urls before the MessageStreamListener starts processing it</param>
+		public MessageStreamListener(Uri[] urls, Func<WebClientWithTimeout, Uri, Uri> converter)
 		{
 			if (urls == null) throw new ArgumentNullException("urls");
 			if (urls.Length == 0) throw new ArgumentException("must specify at least 1 url");
 
 			this.urls = urls;
 			this.DeadTimeout = 2000;
+			this.uriConverter = converter;
+
+			// this holds the resolved urls, key is coming from the 'urls' array
+			this.realUrls = this.urls.ToDictionary(u => u, u => (Uri)null);
 		}
 
+		protected event Action<string> MessageReceived;
 		protected bool IsStarted { get; private set; }
 
 		/// <summary>
@@ -45,7 +68,7 @@ namespace NorthScale.Store
 		/// </summary>
 		public int DeadTimeout { get; set; }
 
-		protected virtual WebClient CreateClient()
+		protected WebClientWithTimeout CreateClient()
 		{
 			return new WebClientWithTimeout()
 			{
@@ -60,11 +83,12 @@ namespace NorthScale.Store
 		/// <summary>
 		/// Starts processing the streaming URI
 		/// </summary>
-		public virtual void Start()
+		public void Start()
 		{
 			if (this.IsStarted) throw new InvalidOperationException("already started");
 
-			var success = ThreadPool.QueueUserWorkItem(this.Work);
+			this.client = this.CreateClient();
+			var success = ThreadPool.QueueUserWorkItem(this.Worker);
 
 			if (log.IsDebugEnabled) log.Debug("Starting the listener. Queue=" + success);
 		}
@@ -72,230 +96,226 @@ namespace NorthScale.Store
 		/// <summary>
 		/// Stops processing
 		/// </summary>
-		public virtual void Stop()
+		public void Stop()
 		{
 			if (log.IsDebugEnabled) log.Debug("Stopping the listener.");
 
 			Interlocked.Exchange(ref this.stopCounter, 1);
-			this.currentWorker.Stop();
+			this.CleanupRequests();
 
 			this.IsStarted = false;
 
 			if (log.IsDebugEnabled) log.Debug("Stopped.");
 		}
 
-		/// <summary>
-		/// derived classes can use this to redirect the original url into somewhere else. called only once by urls before the MessageStreamListener starts processing it
-		/// </summary>
-		/// <param name="uri"></param>
-		/// <returns></returns>
-		protected virtual Uri ResolveUri(Uri uri)
+		public void Subscribe(Action<string> callback)
 		{
-			return uri;
+			if (this.hasMessage)
+				callback(this.lastMessage);
+
+			this.MessageReceived += callback;
 		}
 
-		private void Work(object state)
+		public void Unsubscribe(Action<string> callback)
+		{
+			this.MessageReceived -= callback;
+		}
+
+		private void Worker(object state)
 		{
 			if (log.IsDebugEnabled) log.Debug("Started working.");
 
-			Uri[] urls = this.urls;
-
-			using (var client = this.CreateClient())
+			while (this.stopCounter == 0)
 			{
-				var worker = this.currentWorker = new MessageReader(client, this.OnMessageReceived);
+				// false meens that the url was not responding or failed while reading
+				this.statusPool = this.urls.ToDictionary(u => u, u => true);
+				this.urlIndex = 0;
 
-				while (this.stopCounter == 0)
+				// this will quit when all nodes go down or we're stopped externally
+				ProcessPool();
+
+				// pool fail
+				if (this.stopCounter == 0)
 				{
-					Uri currentUrl = null;
+					if (log.IsWarnEnabled) log.Warn("All nodes are dead, sleeping for a while.");
 
-					int urlIndex = 0;
+					this.Trigger(null);
 
-					// false meens that the url was not responding or failed while reading
-					Dictionary<Uri, bool> statusPool = this.urls.ToDictionary(u => u, u => true);
-					// this holds the resolved urls, key is coming from the 'urls' array
-					Dictionary<Uri, Uri> realUrls = this.urls.ToDictionary(u => u, u => (Uri)null);
+					DateTime now = DateTime.UtcNow;
 
-					while (this.stopCounter == 0)
+					var waitUntil = this.DeadTimeout;
+					while (this.stopCounter == 0
+							&& (DateTime.UtcNow - now).TotalMilliseconds < waitUntil)
 					{
-						if (log.IsDebugEnabled) log.Debug("finding the first (still) working pool.");
-
-						currentUrl = null;
-						int i = urlIndex;
-
-						// find the first working url
-						#region [ Find the first working url ]
-						while (i < urls.Length)
-						{
-							var nextUrl = urls[i];
-
-							// check if the url is alive
-							if (statusPool[nextUrl])
-							{
-								try
-								{
-									// resolve the url
-									var realUrl = realUrls[nextUrl] ?? this.ResolveUri(nextUrl);
-
-									if (realUrl != null)
-									{
-										currentUrl = realUrl;
-
-										if (log.IsDebugEnabled) log.Debug("Found pool url " + currentUrl);
-
-										break;
-									}
-								}
-								catch (Exception e)
-								{
-									log.Error(e);
-								}
-
-								// ResolveUri threw an exception or returned null so mark this url as invalid
-								statusPool[nextUrl] = false;
-								log.Warn("Could not resolve url " + nextUrl + "; trying the next in the list");
-							}
-
-							i++;
-						}
-						#endregion
-
-						// the break here will go into the outer while, and reinitialize the lookup table and the indexer
-						if (currentUrl == null)
-						{
-							if (log.IsWarnEnabled) log.Debug("Could not found a working pool url.");
-							break;
-						}
-
-						// store the current index
-						urlIndex = i;
-
-						try
-						{
-							if (log.IsDebugEnabled) log.Debug("Start receiving messages.");
-
-							// start working on the current url
-							// if it fails in the meanwhile, we'll get another url
-							worker.Start(currentUrl);
-
-							if (log.IsDebugEnabled) log.Debug("MessageReader has exited");
-
-							if (this.stopCounter > 0)
-							{
-								if (log.IsDebugEnabled) log.Debug("Processing is aborted.");
-
-								return;
-							}
-						}
-						catch (Exception e)
-						{
-							log.Error("POOLFAIL", e);
-
-							if (e is IOException || e is System.Net.WebException)
-							{
-								// current worker failed, most probably the pool it was connected to went down
-								if (currentUrl != null)
-									statusPool[currentUrl] = false;
-
-								if (log.IsWarnEnabled) log.Warn("Current pool " + currentUrl + " has failed.");
-							}
-							else
-							{
-								if (log.IsErrorEnabled) log.Error("Fatal error.", e);
-								throw;
-							}
-						}
-					}
-
-					// should we exit, or sleep because no available were found?
-					if (this.stopCounter == 0)
-					{
-						if (log.IsWarnEnabled) log.Warn("All pools are dead, sleeping a while.");
-
-						// TODO maybe this should be a separate event
-						this.OnMessageReceived(null);
-
-						DateTime now = DateTime.UtcNow;
-
-						var waitUntil = this.DeadTimeout;
-						while (this.stopCounter == 0
-								&& (DateTime.UtcNow - now).TotalMilliseconds < waitUntil)
-						{
-							Thread.Sleep(200);
-						}
+						Thread.Sleep(100);
 					}
 				}
 			}
 		}
 
-		protected virtual void OnMessageReceived(string message)
+		private void ProcessPool()
 		{
-			//if (log.IsDebugEnabled) log.Debug("Received message " + message);
-		}
-
-		#region [ MessageReader                ]
-		private class MessageReader
-		{
-			private int stopCounter;
-			private WebClient client;
-			private Action<string> callback;
-
-			public MessageReader(WebClient client, Action<string> callback)
+			while (this.stopCounter == 0)
 			{
-				this.client = client;
-				this.callback = callback;
-			}
+				if (log.IsDebugEnabled) log.Debug("Looking for the first working node.");
 
-			public void Start(Uri uri)
-			{
-				// the url is supposed to send data indefinitely
-				// but if it finishes normally somehow, this 'while' will  keep things working
-				// the only way out of here is either calling Stop() failing by an exception
-				while (true)
+				// key is the original url (used for the status dictionary)
+				// value is the resolved url (used for receiving messages)
+				var current = GetNextPoolUri();
+
+				// the break here will go into the outer while, and reinitialize the lookup table and the indexer
+				if (current.Key == null)
 				{
-					// somehow stream.Dispose() hangs, so we skipping it for a while
-					var stream = this.client.OpenRead(uri);
-					var reader = new StreamReader(stream, Encoding.UTF8, false);
+					if (log.IsWarnEnabled) log.Debug("Could not found a working node.");
+
+					return;
+				}
+
+				try
+				{
+					if (log.IsDebugEnabled) log.Debug("Start receiving messages.");
+
+					// start working on the current url
+					// if it fails in the meanwhile, we'll get another url
+					this.ReadMessages(current.Value);
 
 					if (this.stopCounter > 0)
-						return;
-
-					string line;
-					int emptyCounter = 0;
-					StringBuilder messageBuilder = new StringBuilder();
-
-					while ((line = reader.ReadLine()) != null)
 					{
-						if (this.stopCounter > 0)
-							return;
+						if (log.IsDebugEnabled) log.Debug("Processing is aborted.");
 
-						if (line.Length == 0)
-						{
-							emptyCounter++;
+						return;
+					}
+					else if (log.IsWarnEnabled) log.Warn("Streaming uri stopped streaming");
+				}
+				catch (Exception e)
+				{
+					if (e is IOException || e is System.Net.WebException)
+					{
+						// current node url failed, most probably the server was removed from the pool (or just failed)
+						if (current.Key != null)
+							statusPool[current.Key] = false;
 
-							// messages are separated by 3 empty lines
-							if (emptyCounter == 3)
-							{
-								this.callback(messageBuilder.ToString());
-								messageBuilder.Length = 0;
-								emptyCounter = 0;
-							}
-						}
-						else
-						{
-							emptyCounter = 0;
-							messageBuilder.Append(line);
-						}
+						if (log.IsWarnEnabled) log.Warn("Current node '" + current.Value + "' has failed.");
+					}
+					else
+					{
+						if (log.IsErrorEnabled) log.Error("Unexpected pool failure.", e);
+						throw;
 					}
 				}
 			}
+		}
 
-			public void Stop()
+		private KeyValuePair<Uri, Uri> GetNextPoolUri()
+		{
+			var i = this.urlIndex;
+
+			while (i < this.urls.Length)
 			{
-				this.client.CancelAsync();
-				Interlocked.Exchange(ref this.stopCounter, 1);
+				var key = this.urls[i];
+
+				// check if the url is alive
+				if (this.statusPool[key])
+				{
+					try
+					{
+						// resolve the url
+						var resolved = realUrls[key] ?? this.uriConverter(this.client, key);
+
+						if (resolved != null)
+						{
+							if (log.IsDebugEnabled) log.Debug("Resolved pool url " + key + " to " + resolved);
+
+							return new KeyValuePair<Uri, Uri>(key, resolved);
+						}
+					}
+					catch (Exception e)
+					{
+						log.Error(e);
+					}
+
+					// ResolveUri threw an exception or returned null so mark this url as invalid
+					statusPool[key] = false;
+					log.Warn("Could not resolve url " + key + "; trying the next in the list");
+				}
+
+				i++;
+			}
+
+			return new KeyValuePair<Uri, Uri>();
+		}
+
+		private void CleanupRequests()
+		{
+			if (this.request != null)
+			{
+				try { this.request.Abort(); }
+				catch { }
+			}
+
+			if (this.response != null)
+			{
+				try { ((IDisposable)this.response).Dispose(); }
+				catch { }
+			}
+
+			this.request = null;
+			this.response = null;
+		}
+
+		private void Trigger(string message)
+		{
+			var mr = this.MessageReceived;
+			if (mr != null)
+				mr(message);
+
+			this.lastMessage = message;
+			this.hasMessage = true;
+		}
+
+		private void ReadMessages(Uri uri)
+		{
+			if (this.stopCounter > 0) return;
+
+			this.CleanupRequests();
+
+			this.request = this.client.GetWebRequest(uri, uri.GetHashCode().ToString());
+			this.response = this.request.GetResponse();
+
+			// the url is supposed to send data indefinitely
+			// the only way out of here is either calling Stop() or failing by an exception
+			// somehow stream.Dispose() hangs, so we skipping it for a while
+			var stream = this.response.GetResponseStream();
+			var reader = new StreamReader(stream, Encoding.UTF8, false);
+
+			string line;
+			var emptyCounter = 0;
+			var messageBuilder = new StringBuilder();
+
+			while ((line = reader.ReadLine()) != null)
+			{
+				if (this.stopCounter > 0)
+					return;
+
+				if (line.Length == 0)
+				{
+					emptyCounter++;
+
+					// messages are separated by 3 empty lines
+					if (emptyCounter == 3)
+					{
+						this.Trigger(messageBuilder.ToString());
+						messageBuilder.Length = 0;
+						emptyCounter = 0;
+					}
+				}
+				else
+				{
+					emptyCounter = 0;
+					messageBuilder.Append(line);
+				}
 			}
 		}
-		#endregion
 	}
 }
 

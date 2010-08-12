@@ -96,7 +96,7 @@ namespace NorthScale.Store
 				Timeout = (int)this.configuration.SocketPool.ConnectionTimeout.TotalMilliseconds
 			};
 
-			this.configListener = new BucketConfigListener(this.bucketName, helper, this.poolUrls)
+			this.configListener = new BucketConfigListener(this.poolUrls, this.bucketName, this.configuration.Credentials)
 			{
 				DeadTimeout = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds
 			};

@@ -3,65 +3,85 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web.Script.Serialization;
 using System.Threading;
+using System.Net;
+using Enyim;
 
 namespace NorthScale.Store
 {
-	internal class BucketConfigListener : MessageStreamListener
+	internal class BucketConfigListener
 	{
 		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(BucketConfigListener));
 
-		private ConfigHelper helper;
+		private Uri[] poolUrls;
 		private string bucketName;
+		private NetworkCredential credential;
 
-		public BucketConfigListener(string bucketName, ConfigHelper helper, Uri[] poolUrls)
-			: base(poolUrls)
+		public BucketConfigListener(Uri[] poolUrls, string bucketName, NetworkCredential credential)
 		{
-			this.helper = helper;
+			this.poolUrls = poolUrls;
 			this.bucketName = bucketName ?? "default";
 
-			this.Credentials = helper.Credentials;
-			this.Timeout = helper.Timeout;
+			this.credential = credential;
+
+			this.Timeout = 10000;
+			this.DeadTimeout = 20000;
 		}
 
-		public event Action<ClusterConfig> ClusterConfigChanged;
+		public int Timeout { get; set; }
+		public int DeadTimeout { get; set; }
 
-		protected override void OnMessageReceived(string message)
+		#region listener cache
+		static Dictionary<int, MessageStreamListener> listeners = new Dictionary<int, MessageStreamListener>();
+
+		private MessageStreamListener GetPooledListener()
 		{
-			base.OnMessageReceived(message);
+			// create a unique key based on the parameters
+			// to find out if we already have a listener attached to this pool
+			var hcc = new HashCodeCombiner();
 
-			// everything failed
-			if (String.IsNullOrEmpty(message))
+			hcc.Add(this.Timeout);
+			hcc.Add(this.DeadTimeout);
+			hcc.Add(this.bucketName.GetHashCode());
+
+			if (credential != null)
 			{
-				this.RaiseConfigChanged(null);
-				return;
+				hcc.Add((this.credential.UserName ?? String.Empty).GetHashCode());
+				hcc.Add((this.credential.Password ?? String.Empty).GetHashCode());
+				hcc.Add((this.credential.Domain ?? String.Empty).GetHashCode());
 			}
 
-			// deserialize the buckets
-			var jss = new JavaScriptSerializer();
-			var config = jss.Deserialize<ClusterConfig>(message);
+			for (var i = 0; i < this.poolUrls.Length; i++)
+				hcc.Add(this.poolUrls[i].GetHashCode());
 
-			//// ignore the unhealthy nodes
-			//var newNodes = (from node in config.nodes
-			//                where node.status == "healthy"
-			//                orderby node.hostname
-			//                select node).ToList();
+			var hash = hcc.CurrentHash;
 
-			// check if the new config is the same as the last one
-			//if (this.lastNodes != null
-			//    && this.lastNodes.SequenceEqual(newNodes, ClusterNode.ComparerInstance))
-			//    return;
+			MessageStreamListener retval;
 
-			//this.lastNodes = newNodes;
-			this.RaiseConfigChanged(config);
+			if (!listeners.TryGetValue(hash, out retval))
+				lock (listeners)
+					if (!listeners.TryGetValue(hash, out retval))
+					{
+						listeners[hash] = retval = new MessageStreamListener(poolUrls, this.ResolveBucketUri);
+						retval.Timeout = this.Timeout;
+						retval.DeadTimeout = this.DeadTimeout;
+						retval.Credentials = this.credential;
+
+						retval.Start();
+					}
+
+			retval.Subscribe(this.HandleMessage);
+
+			return retval;
 		}
 
-		private ManualResetEvent mre;
+		#endregion
 
-		protected override Uri ResolveUri(Uri uri)
+		private Uri ResolveBucketUri(WebClientWithTimeout client, Uri uri)
 		{
 			try
 			{
-				var bucket = this.helper.ResolveBucket(uri, this.bucketName);
+				var helper = new ConfigHelper(client);
+				var bucket = helper.ResolveBucket(uri, this.bucketName);
 
 				return new Uri(uri, bucket.streamingUri);
 			}
@@ -73,14 +93,42 @@ namespace NorthScale.Store
 			}
 		}
 
-		public override void Start()
+		public event Action<ClusterConfig> ClusterConfigChanged;
+
+		private void HandleMessage(string message)
 		{
-			this.mre = new ManualResetEvent(false);
+			// everything failed
+			if (String.IsNullOrEmpty(message))
+			{
+				this.RaiseConfigChanged(null);
+				return;
+			}
 
-			base.Start();
+			// deserialize the buckets
+			var jss = new JavaScriptSerializer();
+			var config = jss.Deserialize<ClusterConfig>(message);
 
-			using (this.mre) this.mre.WaitOne();
+			this.RaiseConfigChanged(config);
+		}
+
+		private ManualResetEvent mre;
+		private MessageStreamListener listener;
+
+		public void Start()
+		{
+			var reset = this.mre = new ManualResetEvent(false);
+
+			this.listener = this.GetPooledListener();
+
+			reset.WaitOne();
 			this.mre = null;
+
+			((IDisposable)reset).Dispose();
+		}
+
+		public void Stop()
+		{
+			this.listener.Unsubscribe(this.HandleMessage);
 		}
 
 		private void RaiseConfigChanged(ClusterConfig config)

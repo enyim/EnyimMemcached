@@ -79,7 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BucketConfigListener.cs" />
-    <Compile Include="ConfigManager.cs" />
+    <Compile Include="ConfigHelper.cs" />
     <Compile Include="Configuration\BucketPortType.cs" />
     <Compile Include="Configuration\INorthScaleClientConfiguration.cs" />
     <Compile Include="Configuration\NorthScaleClientConfiguration.cs" />
