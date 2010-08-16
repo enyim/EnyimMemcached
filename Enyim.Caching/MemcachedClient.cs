@@ -335,8 +335,6 @@ namespace Enyim.Caching
 		/// </summary>
 		public void FlushAll()
 		{
-			var handles = new List<WaitHandle>();
-
 			foreach (var node in this.pool.GetWorkingNodes())
 			{
 				var command = this.pool.OperationFactory.Flush();
@@ -374,7 +372,8 @@ namespace Enyim.Caching
 				handles.Add(mre);
 			}
 
-			WaitHandle.WaitAll(handles.ToArray());
+			if (handles.Count > 0)
+				WaitHandle.WaitAll(handles.ToArray());
 
 			return new ServerStats(results);
 		}
@@ -419,6 +418,10 @@ namespace Enyim.Caching
 			foreach (var slice in byServer)
 			{
 				var node = slice.Key;
+
+				// skip the dead nodes
+				if (node == null) continue;
+
 				var nodeKeys = slice.ToArray();
 				var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
 
@@ -429,40 +432,7 @@ namespace Enyim.Caching
 
 				Console.WriteLine(i + " Expecting: " + nodeKeys.Length);
 
-#if NO_PARALLEL
-				//execute the mgets parallel
-				if (node.Execute(mget))
-				{
-					try
-					{
-						Console.WriteLine(i + " Success: " + mget.Result.Count);
-						foreach (var kvp in mget.Result)
-						{
-							string original;
-							var tryget = hashed.TryGetValue(kvp.Key, out original);
-
-							Debug.Assert(tryget, "MGet returned unexpected key: " + kvp.Key);
-
-							// the lock will serialize the merges,
-							// but at least the commands were not waiting on each other
-							lock (retval)
-								retval[original] = this.transcoder.Deserialize(kvp.Value);
-						}
-					}
-					catch (Exception e)
-					{
-						Console.WriteLine(e);
-						System.Diagnostics.Debugger.Break();
-						log.Error(e);
-					}
-					finally
-					{
-						// indicate that we finished processing
-						mre.Set();
-					}
-				};
-#else
-				//execute the mgets parallel
+				//execute the mgets in parallel
 				exec.BeginInvoke(mget, iar =>
 				{
 					try
@@ -486,8 +456,6 @@ namespace Enyim.Caching
 					}
 					catch (Exception e)
 					{
-						Console.WriteLine(e);
-						System.Diagnostics.Debugger.Break();
 						log.Error(e);
 					}
 					finally
@@ -496,12 +464,12 @@ namespace Enyim.Caching
 						mre.Set();
 					}
 				}, i);
-#endif
 
 				i++;
 			}
 
-			WaitHandle.WaitAll(handles.ToArray());
+			if (handles.Count > 0)
+				WaitHandle.WaitAll(handles.ToArray());
 
 			return retval;
 		}
