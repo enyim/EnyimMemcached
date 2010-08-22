@@ -15,12 +15,19 @@ namespace Enyim.Caching.Memcached.Protocol
 
 		public string Key { get; private set; }
 
+		public ulong Cas { get; set; }
+
 		/// <summary>
 		/// The item key of the current operation.
 		/// </summary>
 		string ISingleItemOperation.Key
 		{
 			get { return this.Key; }
+		}
+
+		ulong ISingleItemOperation.CasVersion
+		{
+			get { return this.Cas; }
 		}
 	}
 }

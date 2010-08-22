@@ -24,6 +24,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			var request = new BinaryRequest((OpCode)this.mode)
 			{
 				Key = this.Key,
+				Cas = this.Cas,
 				Data = this.data
 			};
 
@@ -33,8 +34,10 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			var response = new BinaryResponse();
+			var retval = response.Read(socket);
+			this.Cas = response.CAS;
 
-			return response.Read(socket);
+			return retval;
 		}
 
 		ConcatenationMode IConcatOperation.Mode

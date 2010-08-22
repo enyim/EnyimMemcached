@@ -18,24 +18,24 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return new MultiGetOperation(keys);
 		}
 
-		IStoreOperation IOperationFactory.Store(StoreMode mode, string key, CacheItem value, uint expires)
+		IStoreOperation IOperationFactory.Store(StoreMode mode, string key, CacheItem value, uint expires, ulong cas)
 		{
-			return new StoreOperation(mode, key, value, expires);
+			return new StoreOperation(mode, key, value, expires) { Cas = cas };
 		}
 
-		IDeleteOperation IOperationFactory.Delete(string key)
+		IDeleteOperation IOperationFactory.Delete(string key, ulong cas)
 		{
-			return new DeleteOperation(key);
+			return new DeleteOperation(key) { Cas = cas };
 		}
 
-		IMutatorOperation IOperationFactory.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+		IMutatorOperation IOperationFactory.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ulong cas)
 		{
-			return new MutatorOperation(mode, key, defaultValue, delta, expires);
+			return new MutatorOperation(mode, key, defaultValue, delta, expires) { Cas = cas };
 		}
 
-		IConcatOperation IOperationFactory.Concat(ConcatenationMode mode, string key, ArraySegment<byte> data)
+		IConcatOperation IOperationFactory.Concat(ConcatenationMode mode, string key, ulong cas, ArraySegment<byte> data)
 		{
-			return new ConcatOperation(mode, key, data);
+			return new ConcatOperation(mode, key, data) { Cas = cas };
 		}
 
 		IStatsOperation IOperationFactory.Stats()

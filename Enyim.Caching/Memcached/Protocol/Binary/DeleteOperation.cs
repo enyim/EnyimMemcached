@@ -10,7 +10,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		{
 			var request = new BinaryRequest(OpCode.Delete)
 			{
-				Key = this.Key
+				Key = this.Key,
+				Cas = this.Cas
 			};
 
 			return request;
@@ -19,8 +20,10 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			var response = new BinaryResponse();
+			var retval = response.Read(socket);
+			this.Cas = response.CAS;
 
-			return response.Read(socket);
+			return retval;
 		}
 	}
 }

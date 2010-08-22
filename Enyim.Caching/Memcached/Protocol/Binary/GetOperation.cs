@@ -12,7 +12,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		{
 			var request = new BinaryRequest(OpCode.Get)
 			{
-				Key = this.Key
+				Key = this.Key,
+				Cas = this.Cas
 			};
 
 			return request;
@@ -26,9 +27,12 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			{
 				int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
 				this.result = new CacheItem((ushort)flags, response.Data);
+				this.Cas = response.CAS;
 
 				return true;
 			}
+
+			this.Cas = 0;
 
 			return false;
 		}

@@ -19,24 +19,24 @@ namespace NorthScale.Store
 			return new VBMget(keys);
 		}
 
-		IStoreOperation IOperationFactory.Store(StoreMode mode, string key, CacheItem value, uint expires)
+		IStoreOperation IOperationFactory.Store(StoreMode mode, string key, CacheItem value, uint expires, ulong cas)
 		{
-			return new VBStore(mode, key, value, expires);
+			return new VBStore(mode, key, value, expires) { Cas = cas };
 		}
 
-		IDeleteOperation IOperationFactory.Delete(string key)
+		IDeleteOperation IOperationFactory.Delete(string key, ulong cas)
 		{
-			return new VBDelete(key);
+			return new VBDelete(key) { Cas = cas };
 		}
 
-		IMutatorOperation IOperationFactory.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+		IMutatorOperation IOperationFactory.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ulong cas)
 		{
-			return new VBMutator(mode, key, defaultValue, delta, expires);
+			return new VBMutator(mode, key, defaultValue, delta, expires) { Cas = cas };
 		}
 
-		IConcatOperation IOperationFactory.Concat(ConcatenationMode mode, string key, ArraySegment<byte> data)
+		IConcatOperation IOperationFactory.Concat(ConcatenationMode mode, string key, ulong cas, ArraySegment<byte> data)
 		{
-			return new VBConcat(mode, key, data);
+			return new VBConcat(mode, key, data) { Cas = cas };
 		}
 
 		IStatsOperation IOperationFactory.Stats()

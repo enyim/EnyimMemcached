@@ -28,6 +28,16 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		{
 			var keys = this.Keys;
 
+			if (keys == null || keys.Count == 0)
+			{
+				if (log.IsWarnEnabled) log.Warn("Empty multiget!");
+
+				return new ArraySegment<byte>[0];
+			}
+
+			if (log.IsDebugEnabled)
+				log.DebugFormat("Building multi-get for {0} keys", keys.Count);
+
 			// map the command's correlationId to the item key,
 			// so we can use GetQ (which only returns the item data)
 			this.idToKey = new Dictionary<int, string>();

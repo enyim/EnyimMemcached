@@ -40,7 +40,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		{
 			var request = new BinaryRequest((OpCode)this.mode)
 			{
-				Key = this.Key
+				Key = this.Key,
+				Cas = this.Cas
 			};
 
 			this.UpdateExtra(request);
@@ -52,6 +53,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		{
 			var response = new BinaryResponse();
 			var retval = response.Read(socket);
+			this.Cas = response.CAS;
 
 			if (retval)
 			{

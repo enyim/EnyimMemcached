@@ -30,7 +30,7 @@ namespace MemcachedTest
 		/// <summary>
 		///A test for Store (StoreMode, string, byte[], int, int)
 		///</summary>
-		[TestCase]
+		//[TestCase]
 		public void StoreObjectTest()
 		{
 			TestData td = new TestData();
@@ -45,7 +45,7 @@ namespace MemcachedTest
 			}
 		}
 
-		[TestCase]
+		//[TestCase]
 		public void GetObjectTest()
 		{
 			TestData td = new TestData();
@@ -68,7 +68,7 @@ namespace MemcachedTest
 			}
 		}
 
-		[TestCase]
+		//[TestCase]
 		public void DeleteObjectTest()
 		{
 			using (MemcachedClient client = GetClient())
@@ -81,7 +81,7 @@ namespace MemcachedTest
 			}
 		}
 
-		[TestCase]
+		//[TestCase]
 		public void StoreStringTest()
 		{
 			using (MemcachedClient client = GetClient())
@@ -92,7 +92,7 @@ namespace MemcachedTest
 			}
 		}
 
-		[TestCase]
+		//[TestCase]
 		public void StoreLongTest()
 		{
 			using (MemcachedClient client = GetClient())
@@ -103,7 +103,7 @@ namespace MemcachedTest
 			}
 		}
 
-		[TestCase]
+		//[TestCase]
 		public void StoreArrayTest()
 		{
 			byte[] bigBuffer = new byte[200 * 1024];
@@ -136,7 +136,7 @@ namespace MemcachedTest
 			}
 		}
 
-		[TestCase]
+		//[TestCase]
 		public void ExpirationTestTimeSpan()
 		{
 			using (MemcachedClient client = GetClient())
@@ -149,7 +149,7 @@ namespace MemcachedTest
 			}
 		}
 
-		[TestCase]
+		//[TestCase]
 		public void ExpirationTestDateTime()
 		{
 			using (MemcachedClient client = GetClient())
@@ -165,7 +165,7 @@ namespace MemcachedTest
 			}
 		}
 
-		[TestCase]
+		//[TestCase]
 		public void AddSetReplaceTest()
 		{
 			using (MemcachedClient client = GetClient())
@@ -195,7 +195,7 @@ namespace MemcachedTest
 			public string Value;
 		}
 
-		[TestCase]
+		//[TestCase]
 		public void NonSerializableTest()
 		{
 			using (MemcachedClient client = GetClient())
@@ -224,20 +224,21 @@ namespace MemcachedTest
 		[TestCase]
 		public virtual void MultiGetTest()
 		{
+			var prefix = new Random().Next(300) + 100 + "";
 			// note, this test will fail, if memcached version is < 1.2.4
 			using (var client = GetClient())
 			{
 				var keys = new List<string>();
 
-				for (int i = 0; i < 100; i++)
+				for (int i = 0; i < 1000; i++)
 				{
-					string k = "Hello_Multi_Get_" + i; // MakeRandomKey(4) + i;
+					string k = prefix + "_Hello_Multi_Get_" + i; // MakeRandomKey(4) + i;
 					keys.Add(k);
 
 					Assert.IsTrue(client.Store(StoreMode.Set, k, i), "Store of " + k + " failed");
 				}
 
-				Thread.Sleep(5000);
+				//Thread.Sleep(5000);
 
 				//for (var i = 0; i < 100; i++)
 				//{
@@ -246,12 +247,19 @@ namespace MemcachedTest
 
 				IDictionary<string, object> retvals = client.Get(keys);
 
-
-				Assert.AreEqual(100, retvals.Count, "MultiGet should have returned 100 items.");
-
 				object value;
 
-				for (int i = 0; i < retvals.Count; i++)
+				for (int i = 0; i < keys.Count; i++)
+				{
+					string key = keys[i];
+
+					if (!retvals.TryGetValue(key, out value))
+						Console.WriteLine("missing key: " + key);
+				}
+
+				Assert.AreEqual(keys.Count, retvals.Count, "MultiGet should have returned " + keys.Count + " items.");
+
+				for (int i = 0; i < keys.Count; i++)
 				{
 					string key = keys[i];
 
@@ -261,7 +269,7 @@ namespace MemcachedTest
 			}
 		}
 
-		[TestCase]
+		//[TestCase]
 		public void FlushTest()
 		{
 			using (MemcachedClient client = GetClient())

@@ -94,6 +94,12 @@ namespace Enyim.Caching
 			return this.TryGet(key, out tmp) ? tmp : null;
 		}
 
+
+		public CasResult<object> GetWithCas(string key)
+		{
+			return this.GetWithCas<object>(key);
+		}
+
 		/// <summary>
 		/// Retrieves the specified item from the cache.
 		/// </summary>
@@ -106,6 +112,15 @@ namespace Enyim.Caching
 			return TryGet(key, out tmp) ? (T)tmp : default(T);
 		}
 
+		public CasResult<T> GetWithCas<T>(string key)
+		{
+			CasResult<object> tmp;
+
+			return this.TryGetWithCas(key, out tmp)
+					? new CasResult<T> { Cas = tmp.Cas, Result = (T)tmp.Result }
+					: new CasResult<T> { Cas = tmp.Cas, Result = default(T) };
+		}
+
 		/// <summary>
 		/// Tries to get an item from the cache.
 		/// </summary>
@@ -114,21 +129,43 @@ namespace Enyim.Caching
 		/// <returns>The <value>true</value> if the item was successfully retrieved.</returns>
 		public bool TryGet(string key, out object value)
 		{
+			ulong cas = 0;
+
+			return this.TryGet(key, out cas, out value);
+		}
+
+		public bool TryGetWithCas(string key, out CasResult<object> value)
+		{
+			object tmp;
+			ulong cas;
+
+			var retval = this.TryGet(key, out cas, out tmp);
+
+			value = new CasResult<object> { Cas = cas, Result = tmp };
+
+			return retval;
+		}
+
+		private bool TryGet(string key, out ulong cas, out object value)
+		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
 
 			if (node != null)
 			{
 				var command = this.pool.OperationFactory.Get(hashedKey);
+
 				if (node.Execute(command))
 				{
 					value = this.transcoder.Deserialize(command.Result);
+					cas = command.CasVersion;
 
 					return true;
 				}
 			}
 
 			value = null;
+			cas = 0;
 
 			return false;
 		}
@@ -174,6 +211,41 @@ namespace Enyim.Caching
 
 		private bool Store(StoreMode mode, string key, object value, uint expires)
 		{
+			ulong tmp = 0;
+
+			return this.Store(mode, key, value, expires, ref tmp);
+		}
+
+		public CasResult<bool> CasStore(StoreMode mode, string key, object value)
+		{
+			return this.CasStore(mode, key, value, 0, 0);
+		}
+
+		public CasResult<bool> CasStore(StoreMode mode, string key, object value, ulong cas)
+		{
+			return this.CasStore(mode, key, value, 0, cas);
+		}
+
+		public CasResult<bool> CasStore(StoreMode mode, string key, object value, TimeSpan validFor, ulong cas)
+		{
+			return this.CasStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), cas);
+		}
+
+		public CasResult<bool> CasStore(StoreMode mode, string key, object value, DateTime expiresAt, ulong cas)
+		{
+			return this.CasStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), cas);
+		}
+
+		private CasResult<bool> CasStore(StoreMode mode, string key, object value, uint expires, ulong cas)
+		{
+			ulong tmp = cas;
+			var retval = this.Store(mode, key, value, expires, ref tmp);
+
+			return new CasResult<bool> { Cas = tmp, Result = retval };
+		}
+
+		private bool Store(StoreMode mode, string key, object value, uint expires, ref ulong cas)
+		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
 
@@ -189,9 +261,12 @@ namespace Enyim.Caching
 					return false;
 				}
 
-				var command = this.pool.OperationFactory.Store(mode, hashedKey, item, expires);
+				var command = this.pool.OperationFactory.Store(mode, hashedKey, item, expires, cas);
+				var retval = node.Execute(command);
 
-				return node.Execute(command);
+				cas = command.CasVersion;
+
+				return retval;
 			}
 
 			return false;
@@ -279,20 +354,69 @@ namespace Enyim.Caching
 			return this.Mutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt));
 		}
 
+		public CasResult<ulong> CasIncrement(string key, ulong defaultValue, ulong delta, ulong cas)
+		{
+			return this.CasMutate(MutationMode.Increment, key, defaultValue, delta, 0, cas);
+		}
+
+		public CasResult<ulong> CasIncrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor, ulong cas)
+		{
+			return this.CasMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null), cas);
+		}
+
+		public CasResult<ulong> CasIncrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt, ulong cas)
+		{
+			return this.CasMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt), cas);
+		}
+
+		public CasResult<ulong> CasDecrement(string key, ulong defaultValue, ulong delta, ulong cas)
+		{
+			return this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, 0, cas);
+		}
+
+		public CasResult<ulong> CasDecrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor, ulong cas)
+		{
+			return this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null), cas);
+		}
+
+		public CasResult<ulong> CasDecrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt, ulong cas)
+		{
+			return this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt), cas);
+		}
+
 		private ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+		{
+			ulong tmp = 0;
+
+			return Mutate(mode, key, defaultValue, delta, expires, ref tmp);
+		}
+
+		private CasResult<ulong> CasMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ulong cas)
+		{
+			var tmp = cas;
+			var retval = Mutate(mode, key, defaultValue, delta, expires, ref tmp);
+
+			return new CasResult<ulong> { Cas = tmp, Result = retval };
+		}
+
+		private ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ref ulong cas)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
 
 			if (node != null)
 			{
-				var command = this.pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires);
+				var command = this.pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires, cas);
+				var success = node.Execute(command);
 
-				if (node.Execute(command))
+				cas = command.CasVersion;
+
+				if (success)
 					return command.Result;
 			}
 
-			return 0;
+			// TODO not sure about the return value when the command fails
+			return defaultValue;
 		}
 
 		/// <summary>
@@ -315,16 +439,44 @@ namespace Enyim.Caching
 			return this.Concatenate(ConcatenationMode.Prepend, key, data);
 		}
 
+		public CasResult<bool> Append(string key, ulong cas, ArraySegment<byte> data)
+		{
+			return this.CasConcatenate(ConcatenationMode.Append, key, cas, data);
+		}
+
+		public CasResult<bool> Prepend(string key, ulong cas, ArraySegment<byte> data)
+		{
+			return this.CasConcatenate(ConcatenationMode.Prepend, key, cas, data);
+		}
+
+		private CasResult<bool> CasConcatenate(ConcatenationMode mode, string key, ulong cas, ArraySegment<byte> data)
+		{
+			ulong tmp = cas;
+			var success = Concatenate(mode, key, ref tmp, data);
+
+			return new CasResult<bool> { Cas = cas, Result = success };
+		}
+
 		private bool Concatenate(ConcatenationMode mode, string key, ArraySegment<byte> data)
+		{
+			ulong cas = 0;
+
+			return Concatenate(mode, key, ref cas, data);
+		}
+
+		private bool Concatenate(ConcatenationMode mode, string key, ref ulong cas, ArraySegment<byte> data)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
 
 			if (node != null)
 			{
-				var command = this.pool.OperationFactory.Concat(mode, hashedKey, data);
+				var command = this.pool.OperationFactory.Concat(mode, hashedKey, 0, data);
+				var retval = node.Execute(command);
 
-				return node.Execute(command);
+				cas = command.CasVersion;
+
+				return retval;
 			}
 
 			return false;
@@ -390,7 +542,7 @@ namespace Enyim.Caching
 
 			if (node != null)
 			{
-				var command = this.pool.OperationFactory.Delete(hashedKey);
+				var command = this.pool.OperationFactory.Delete(hashedKey, 0);
 
 				return node.Execute(command);
 			}

@@ -14,11 +14,17 @@ namespace Enyim.Caching.Memcached
 	public interface ISingleItemOperation : IOperation
 	{
 		string Key { get; }
+
+		/// <summary>
+		/// The CAS value returned by the server after executing the command.
+		/// </summary>
+		ulong CasVersion { get; }
 	}
 
 	public interface IMultiItemOperation : IOperation
 	{
 		IList<string> Keys { get; }
+		Dictionary<string, ulong> Cas { get; }
 	}
 
 	public interface IGetOperation : ISingleItemOperation
@@ -26,7 +32,7 @@ namespace Enyim.Caching.Memcached
 		CacheItem Result { get; }
 	}
 
-	public interface IMultiGetOperation : IOperation
+	public interface IMultiGetOperation : IMultiItemOperation
 	{
 		Dictionary<string, CacheItem> Result { get; }
 	}
@@ -40,7 +46,7 @@ namespace Enyim.Caching.Memcached
 	{
 	}
 
-	public interface IConcatOperation : IOperation
+	public interface IConcatOperation : ISingleItemOperation
 	{
 		ConcatenationMode Mode { get; }
 	}
@@ -58,6 +64,12 @@ namespace Enyim.Caching.Memcached
 
 	public interface IFlushOperation : IOperation
 	{
+	}
+
+	public class CasResult<T>
+	{
+		public T Result { get; set; }
+		public ulong Cas { get; set; }
 	}
 }
 

@@ -15,7 +15,10 @@ namespace Enyim.Caching.Memcached.Protocol
 		}
 
 		public IList<string> Keys { get; private set; }
+		public Dictionary<string, ulong> Cas { get; protected set; }
+
 		IList<string> IMultiItemOperation.Keys { get { return this.Keys; } }
+		Dictionary<string, ulong> IMultiItemOperation.Cas { get { return this.Cas; } }
 	}
 
 }

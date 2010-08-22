@@ -28,7 +28,7 @@ namespace MemcachedTest
 			}
 		}
 
-		[TestCase]
+		//[TestCase]
 		public void DecrementTest()
 		{
 			using (MemcachedClient client = GetClient())
@@ -40,7 +40,7 @@ namespace MemcachedTest
 			}
 		}
 
-		[TestCase]
+		//[TestCase]
 		public void IncrementNoDefaultTest()
 		{
 			using (MemcachedClient client = GetClient())

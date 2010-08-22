@@ -15,22 +15,22 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 			return new MultiGetOperation(keys);
 		}
 
-		IStoreOperation IOperationFactory.Store(StoreMode mode, string key, CacheItem value, uint expires)
+		IStoreOperation IOperationFactory.Store(StoreMode mode, string key, CacheItem value, uint expires, ulong cas)
 		{
 			return new StoreOperation(mode, key, value, expires, 0);
 		}
 
-		IDeleteOperation IOperationFactory.Delete(string key)
+		IDeleteOperation IOperationFactory.Delete(string key, ulong cas)
 		{
 			return new DeleteOperation(key);
 		}
 
-		IMutatorOperation IOperationFactory.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+		IMutatorOperation IOperationFactory.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ulong cas)
 		{
 			return new MutatorOperation(mode, key, delta);
 		}
 
-		IConcatOperation IOperationFactory.Concat(ConcatenationMode mode, string key, ArraySegment<byte> data)
+		IConcatOperation IOperationFactory.Concat(ConcatenationMode mode, string key, ulong cas, ArraySegment<byte> data)
 		{
 			return new ConcateOperation(mode, key, data);
 		}

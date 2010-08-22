@@ -30,15 +30,18 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 				default: throw new ArgumentOutOfRangeException("mode", mode + " is not supported");
 			}
 
-			var request = new BinaryRequest(op);
 			var extra = new byte[8];
 
 			BinaryConverter.EncodeUInt32((uint)this.value.Flags, extra, 0);
 			BinaryConverter.EncodeUInt32(expires, extra, 4);
 
-			request.Extra = new ArraySegment<byte>(extra);
-			request.Data = this.value.Data;
-			request.Key = this.Key;
+			var request = new BinaryRequest(op)
+			{
+				Key = this.Key,
+				Cas = this.Cas,
+				Extra = new ArraySegment<byte>(extra),
+				Data = this.value.Data
+			};
 
 			return request;
 		}
@@ -47,6 +50,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		{
 			var response = new BinaryResponse();
 			var retval = response.Read(socket);
+			this.Cas = response.CAS;
 
 			if (!retval)
 				if (log.IsDebugEnabled)
