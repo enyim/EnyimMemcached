@@ -72,7 +72,7 @@ namespace Enyim.Caching.Memcached
 			return this.nodes[bucket.Master];
 		}
 
-		public VBucket GetVBucket(string key)
+		public int GetIndex(string key)
 		{
 			var ha = this.GetAlgo();
 
@@ -84,7 +84,12 @@ namespace Enyim.Caching.Memcached
 							? keyHash = BitConverter.ToUInt32(ha.ComputeHash(keyBytes), 0)
 							: iuha.ComputeHash(keyBytes);
 
-			int index = (int)(keyHash & this.mask);
+			return (int)(keyHash & this.mask);
+		}
+
+		public VBucket GetVBucket(string key)
+		{
+			int index = GetIndex(key);
 
 			return this.buckets[index];
 		}
