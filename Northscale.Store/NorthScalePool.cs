@@ -15,6 +15,8 @@ namespace NorthScale.Store
 	/// </summary>
 	internal class NorthScalePool : IServerPool
 	{
+		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(NorthScalePool));
+
 		private INorthScaleClientConfiguration configuration;
 
 		private ITranscoder transcoder;
@@ -104,6 +106,8 @@ namespace NorthScale.Store
 
 		private void InitNodes(ClusterConfig config)
 		{
+			if (log.IsInfoEnabled) log.Info("Received new config");
+
 			// default bucket does not require authentication
 			var auth = this.bucketName == null ? null : ((IServerPool)this).Authenticator;
 
