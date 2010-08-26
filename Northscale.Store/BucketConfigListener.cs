@@ -27,18 +27,27 @@ namespace NorthScale.Store
 			this.credential = credential;
 
 			this.Timeout = 10000;
-			this.DeadTimeout = 20000;
+			this.DeadTimeout = 10000;
 		}
 
+		/// <summary>
+		/// Connection timeout in milliseconds for connecting the pool.
+		/// </summary>
 		public int Timeout { get; set; }
+
+		/// <summary>
+		/// Time to wait in milliseconds to reconnect to the pool when all nodes are down.
+		/// </summary>
 		public int DeadTimeout { get; set; }
 
 		#region listener cache
-		static readonly object ListenerSync = new Object();
-		static Dictionary<int, MessageStreamListener> listeners = new Dictionary<int, MessageStreamListener>();
-		static Dictionary<MessageStreamListener, ListenerInfo> listenerRefs = new Dictionary<MessageStreamListener, ListenerInfo>();
+		private static readonly object ListenerSync = new Object();
 
-		class ListenerInfo
+		// we pool and refcount the listeners here so we can safely dispose them when all clients are destroyed
+		private static Dictionary<int, MessageStreamListener> listeners = new Dictionary<int, MessageStreamListener>();
+		private static Dictionary<MessageStreamListener, ListenerInfo> listenerRefs = new Dictionary<MessageStreamListener, ListenerInfo>();
+
+		private class ListenerInfo
 		{
 			public int RefCount;
 			public int HashKey;
@@ -132,6 +141,8 @@ namespace NorthScale.Store
 				var streamingUri = bucket.streamingUri;
 
 				var node = bucket.nodes.FirstOrDefault();
+
+				// beta 2 hack, will be phased out after b3 is released for a while
 				if (node != null && node.version == "1.6.0beta2")
 					streamingUri = streamingUri.Replace("/bucketsStreaming/", "/bucketsStreamingConfig/");
 
