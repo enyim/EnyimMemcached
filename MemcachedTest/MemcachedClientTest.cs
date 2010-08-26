@@ -30,7 +30,7 @@ namespace MemcachedTest
 		/// <summary>
 		///A test for Store (StoreMode, string, byte[], int, int)
 		///</summary>
-		//[TestCase]
+		[TestCase]
 		public void StoreObjectTest()
 		{
 			TestData td = new TestData();
@@ -45,7 +45,7 @@ namespace MemcachedTest
 			}
 		}
 
-		//[TestCase]
+		[TestCase]
 		public void GetObjectTest()
 		{
 			TestData td = new TestData();
@@ -68,7 +68,7 @@ namespace MemcachedTest
 			}
 		}
 
-		//[TestCase]
+		[TestCase]
 		public void DeleteObjectTest()
 		{
 			using (MemcachedClient client = GetClient())
@@ -81,7 +81,7 @@ namespace MemcachedTest
 			}
 		}
 
-		//[TestCase]
+		[TestCase]
 		public void StoreStringTest()
 		{
 			using (MemcachedClient client = GetClient())
@@ -92,7 +92,7 @@ namespace MemcachedTest
 			}
 		}
 
-		//[TestCase]
+		[TestCase]
 		public void StoreLongTest()
 		{
 			using (MemcachedClient client = GetClient())
@@ -103,7 +103,7 @@ namespace MemcachedTest
 			}
 		}
 
-		//[TestCase]
+		[TestCase]
 		public void StoreArrayTest()
 		{
 			byte[] bigBuffer = new byte[200 * 1024];
@@ -136,7 +136,7 @@ namespace MemcachedTest
 			}
 		}
 
-		//[TestCase]
+		[TestCase]
 		public void ExpirationTestTimeSpan()
 		{
 			using (MemcachedClient client = GetClient())
@@ -149,7 +149,7 @@ namespace MemcachedTest
 			}
 		}
 
-		//[TestCase]
+		[TestCase]
 		public void ExpirationTestDateTime()
 		{
 			using (MemcachedClient client = GetClient())
@@ -165,7 +165,7 @@ namespace MemcachedTest
 			}
 		}
 
-		//[TestCase]
+		[TestCase]
 		public void AddSetReplaceTest()
 		{
 			using (MemcachedClient client = GetClient())
@@ -195,7 +195,7 @@ namespace MemcachedTest
 			public string Value;
 		}
 
-		//[TestCase]
+		[TestCase]
 		public void NonSerializableTest()
 		{
 			using (MemcachedClient client = GetClient())
@@ -269,7 +269,7 @@ namespace MemcachedTest
 			}
 		}
 
-		//[TestCase]
+		[TestCase]
 		public void FlushTest()
 		{
 			using (MemcachedClient client = GetClient())
