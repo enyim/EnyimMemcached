@@ -16,6 +16,8 @@ namespace NorthScale.Store
 	/// </summary>
 	internal class NorthScalePool : IServerPool
 	{
+		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(NorthScalePool));
+
 		private INorthScaleClientConfiguration configuration;
 
 		private Uri[] poolUrls;
@@ -65,6 +67,8 @@ namespace NorthScale.Store
 
 		private void InitNodes(ClusterConfig config)
 		{
+			if (log.IsInfoEnabled) log.Info("Received new configuration.");
+
 			// these should be disposed after we've been reinitialized
 			var oldNodes = this.currentNodes;
 
@@ -109,16 +113,17 @@ namespace NorthScale.Store
 				var epa = endpoints.ToArray();
 				var buckets = vbsm.vBucketMap.Select(a => new VBucket(a[0], a.Skip(1).ToArray())).ToArray();
 				var bucketNodeMap = buckets.ToLookup(vb => epa[vb.Master]);
+				var vbnl = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
 
 				// assign the first bucket index to the servers until 
 				// we can solve how to assign the appropriate vbucket index to each command buffer
 				nodes = from ip in endpoints
 						let bucket = Array.IndexOf(buckets, bucketNodeMap[ip].FirstOrDefault())
-						select (IMemcachedNode)(new VBucketAwareNode(ip, this.configuration.SocketPool, auth) { BucketIndex = (ushort)bucket });
+						select (IMemcachedNode)(new BinaryNode(ip, this.configuration.SocketPool, auth));
 
-				locator = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
+				locator = vbnl;
 
-				this.operationFactory = new VBucketAwareOperationFactory();
+				this.operationFactory = new VBucketAwareOperationFactory(vbnl);
 			}
 
 			var mcNodes = nodes.ToArray();

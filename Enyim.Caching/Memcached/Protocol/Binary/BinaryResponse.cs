@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	internal class BinaryResponse
+	public class BinaryResponse
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(BinaryResponse));
 

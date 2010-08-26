@@ -4,39 +4,51 @@ using System.Linq;
 using System.Text;
 using Enyim.Caching.Memcached.Protocol.Binary;
 using Enyim.Caching.Memcached;
+using System.IO;
+using System.Threading;
 
 namespace NorthScale.Store
 {
+	/// <summary>
+	/// Membase requires each item operation to have a vbucket index set in the request's "reserved" field. (This is used for replicatiom and failover.) This op factory provides customized operations handling these indexes.
+	/// </summary>
 	internal class VBucketAwareOperationFactory : IOperationFactory
 	{
+		private VBucketNodeLocator locator;
+
+		public VBucketAwareOperationFactory(VBucketNodeLocator locator)
+		{
+			this.locator = locator;
+		}
+
 		IGetOperation IOperationFactory.Get(string key)
 		{
-			return new VBGet(key);
+			return new VBGet(locator, key);
 		}
 
 		IMultiGetOperation IOperationFactory.MultiGet(IList<string> keys)
 		{
-			return new VBMget(keys);
+			return new VBMget(locator, keys);
 		}
 
 		IStoreOperation IOperationFactory.Store(StoreMode mode, string key, CacheItem value, uint expires, ulong cas)
 		{
-			return new VBStore(mode, key, value, expires) { Cas = cas };
+			return new VBStore(locator, mode, key, value, expires) { Cas = cas };
 		}
 
 		IDeleteOperation IOperationFactory.Delete(string key, ulong cas)
 		{
-			return new VBDelete(key) { Cas = cas };
+			return new VBDelete(locator, key) { Cas = cas };
 		}
 
 		IMutatorOperation IOperationFactory.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ulong cas)
 		{
-			return new VBMutator(mode, key, defaultValue, delta, expires) { Cas = cas };
+			return new VBMutator(locator, mode, key, defaultValue, delta, expires) { Cas = cas };
 		}
 
 		IConcatOperation IOperationFactory.Concat(ConcatenationMode mode, string key, ulong cas, ArraySegment<byte> data)
 		{
-			return new VBConcat(mode, key, data) { Cas = cas };
+			return new VBConcat(locator, mode, key, data) { Cas = cas };
 		}
 
 		IStatsOperation IOperationFactory.Stats()
@@ -51,92 +63,133 @@ namespace NorthScale.Store
 
 		#region [ Custom operations            ]
 
-		private class VBStore : StoreOperation, IVBucketAwareOperation
+		private class VBStore : StoreOperation
 		{
-			public VBStore(StoreMode mode, string key, CacheItem value, uint expires) : base(mode, key, value, expires) { }
+			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBStore).FullName.Replace('+', '.'));
+			private VBucketNodeLocator locator;
 
-			ushort IVBucketAwareOperation.Index { get; set; }
+			public VBStore(VBucketNodeLocator locator, StoreMode mode, string key, CacheItem value, uint expires)
+				: base(mode, key, value, expires)
+			{
+				this.locator = locator;
+			}
 
 			protected override BinaryRequest Build()
 			{
 				var retval = base.Build();
-				retval.Reserved = ((IVBucketAwareOperation)this).Index;
+				retval.Reserved = (ushort)locator.GetIndex(this.Key);
+
+				if (log.IsDebugEnabled) log.DebugFormat("Key {0} was mapped to {1}", this.Key, retval.Reserved);
 
 				return retval;
 			}
 		}
 
-		private class VBDelete : DeleteOperation, IVBucketAwareOperation
+		private class VBDelete : DeleteOperation
 		{
-			public VBDelete(string key) : base(key) { }
+			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBDelete).FullName.Replace('+', '.'));
+			private VBucketNodeLocator locator;
 
-			ushort IVBucketAwareOperation.Index { get; set; }
+			public VBDelete(VBucketNodeLocator locator, string key)
+				: base(key)
+			{
+				this.locator = locator;
+			}
 
 			protected override BinaryRequest Build()
 			{
 				var retval = base.Build();
-				retval.Reserved = ((IVBucketAwareOperation)this).Index;
+				retval.Reserved = (ushort)locator.GetIndex(this.Key);
+
+				if (log.IsDebugEnabled) log.DebugFormat("Key {0} was mapped to {1}", this.Key, retval.Reserved);
 
 				return retval;
 			}
 		}
 
-		private class VBMutator : MutatorOperation, IVBucketAwareOperation
+		private class VBMutator : MutatorOperation
 		{
-			public VBMutator(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
-				: base(mode, key, defaultValue, delta, expires) { }
+			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBMutator).FullName.Replace('+', '.'));
+			private VBucketNodeLocator locator;
 
-			ushort IVBucketAwareOperation.Index { get; set; }
+			public VBMutator(VBucketNodeLocator locator, MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+				: base(mode, key, defaultValue, delta, expires)
+			{
+				this.locator = locator;
+			}
 
 			protected override BinaryRequest Build()
 			{
 				var retval = base.Build();
-				retval.Reserved = ((IVBucketAwareOperation)this).Index;
+				retval.Reserved = (ushort)locator.GetIndex(this.Key);
+
+				if (log.IsDebugEnabled) log.DebugFormat("Key {0} was mapped to {1}", this.Key, retval.Reserved);
 
 				return retval;
 			}
 		}
 
-		private class VBMget : MultiGetOperation, IVBucketAwareOperation
+		private class VBMget : MultiGetOperation
 		{
-			ushort IVBucketAwareOperation.Index { get; set; }
+			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBMget).FullName.Replace('+', '.'));
+			private VBucketNodeLocator locator;
 
-			public VBMget(IList<string> keys) : base(keys) { }
+			public VBMget(VBucketNodeLocator locator, IList<string> keys)
+				: base(keys)
+			{
+				this.locator = locator;
+			}
 
 			protected override BinaryRequest Build(string key)
 			{
 				var retval = base.Build(key);
-				retval.Reserved = ((IVBucketAwareOperation)this).Index;
+				retval.Reserved = (ushort)locator.GetIndex(key);
+
+				if (log.IsDebugEnabled) log.DebugFormat("Key {0} was mapped to {1}", key, retval.Reserved);
 
 				return retval;
 			}
 		}
 
-		private class VBConcat : ConcatOperation, IVBucketAwareOperation
+		private class VBConcat : ConcatOperation
 		{
-			public VBConcat(ConcatenationMode mode, string key, ArraySegment<byte> data) : base(mode, key, data) { }
+			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBConcat).FullName.Replace('+', '.'));
+			private VBucketNodeLocator locator;
 
-			ushort IVBucketAwareOperation.Index { get; set; }
+			public VBConcat(VBucketNodeLocator locator, ConcatenationMode mode, string key, ArraySegment<byte> data)
+				: base(mode, key, data)
+			{
+				this.locator = locator;
+			}
 
 			protected override BinaryRequest Build()
 			{
 				var retval = base.Build();
-				retval.Reserved = ((IVBucketAwareOperation)this).Index;
+				retval.Reserved = (ushort)locator.GetIndex(this.Key);
+
+				if (log.IsDebugEnabled) log.DebugFormat("Key {0} was mapped to {1}", this.Key, retval.Reserved);
 
 				return retval;
 			}
 		}
 
-		private class VBGet : GetOperation, IVBucketAwareOperation
+		private class VBGet : GetOperation
 		{
-			public VBGet(string key) : base(key) { }
+			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBGet).FullName.Replace('+', '.'));
+			private VBucketNodeLocator locator;
 
-			ushort IVBucketAwareOperation.Index { get; set; }
+			public VBGet(VBucketNodeLocator locator, string key)
+				: base(key)
+			{
+				this.locator = locator;
+			}
 
 			protected override BinaryRequest Build()
 			{
 				var retval = base.Build();
-				retval.Reserved = ((IVBucketAwareOperation)this).Index;
+				retval.Reserved = (ushort)locator.GetIndex(this.Key);
+
+				if (log.IsDebugEnabled) log.DebugFormat("Key {0} was mapped to {1}", this.Key, retval.Reserved);
 
 				return retval;
 			}

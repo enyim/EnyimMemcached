@@ -66,7 +66,7 @@ namespace Enyim.Caching.Memcached
 	{
 	}
 
-	public class CasResult<T>
+	public struct CasResult<T>
 	{
 		public T Result { get; set; }
 		public ulong Cas { get; set; }
