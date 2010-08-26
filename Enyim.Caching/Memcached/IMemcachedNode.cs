@@ -1,5 +1,7 @@
 using System;
 using System.Net;
+using System.Collections.Generic;
+using Enyim.Caching.Memcached.Protocol;
 
 namespace Enyim.Caching.Memcached
 {
@@ -8,10 +10,11 @@ namespace Enyim.Caching.Memcached
 		IPEndPoint EndPoint { get; }
 		bool IsAlive { get; }
 		bool Ping();
-		PooledSocket Acquire();
 
-		// TEMP HACK
-		int Bucket { get; }
+		bool Execute(IOperation op);
+
+		IAsyncResult BeginExecute(IOperation op, AsyncCallback callback, object state);
+		bool EndExecute(IAsyncResult result);
 	}
 }
 

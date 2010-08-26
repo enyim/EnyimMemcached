@@ -70,7 +70,7 @@ namespace NorthScale.Store
 
 		protected WebClientWithTimeout CreateClient()
 		{
-			return new WebClientWithTimeout()
+			return new WebClientWithTimeout
 			{
 				Credentials = this.Credentials,
 				// make it infinite so it will not stop abort the socket thinking that the server have died
@@ -127,12 +127,12 @@ namespace NorthScale.Store
 
 			while (this.stopCounter == 0)
 			{
-				// false meens that the url was not responding or failed while reading
+				// false means that the url was not responding or failed while reading
 				this.statusPool = this.urls.ToDictionary(u => u, u => true);
 				this.urlIndex = 0;
 
 				// this will quit when all nodes go down or we're stopped externally
-				ProcessPool();
+				this.ProcessPool();
 
 				// pool fail
 				if (this.stopCounter == 0)

@@ -8,14 +8,9 @@ namespace Enyim.Caching.Memcached
 	/// </summary>
 	public interface IServerPool : IDisposable
 	{
-		ITranscoder Transcoder { get; }
-		IMemcachedNodeLocator NodeLocator { get; }
-		IMemcachedKeyTransformer KeyTransformer { get; }
-
-		PooledSocket Acquire(string key);
-		IEnumerable<IMemcachedNode> GetServers();
-
-		IAuthenticator Authenticator { get; set; }
+		IMemcachedNode Locate(string key);
+		IOperationFactory OperationFactory { get; }
+		IEnumerable<IMemcachedNode> GetWorkingNodes();
 
 		void Start();
 	}

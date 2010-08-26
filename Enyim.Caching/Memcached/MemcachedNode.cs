@@ -6,6 +6,7 @@ using System.Threading;
 using Enyim.Caching.Configuration;
 using Enyim.Collections;
 using System.Security;
+using Enyim.Caching.Memcached.Protocol.Binary;
 
 namespace Enyim.Caching.Memcached
 {
@@ -15,6 +16,7 @@ namespace Enyim.Caching.Memcached
 	[DebuggerDisplay("{{MemcachedNode [ Address: {EndPoint}, IsAlive = {IsAlive} ]}}")]
 	public class MemcachedNode : IMemcachedNode
 	{
+		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MemcachedNode));
 		private static readonly object SyncRoot = new Object();
 
 		private bool isDisposed;
@@ -23,9 +25,8 @@ namespace Enyim.Caching.Memcached
 		private IPEndPoint endPoint;
 		private ISocketPoolConfiguration config;
 		private InternalPoolImpl internalPoolImpl;
-		private IAuthenticator authenticator;
 
-		public MemcachedNode(IPEndPoint endpoint, ISocketPoolConfiguration socketPoolConfig, IAuthenticator authenticator)
+		public MemcachedNode(IPEndPoint endpoint, ISocketPoolConfiguration socketPoolConfig)
 		{
 			this.endPoint = endpoint;
 			this.config = socketPoolConfig;
@@ -37,7 +38,6 @@ namespace Enyim.Caching.Memcached
 			if (socketPoolConfig.ConnectionTimeout.TotalMilliseconds >= Int32.MaxValue)
 				throw new InvalidOperationException("ConnectionTimeout must be < Int32.MaxValue");
 
-			this.authenticator = authenticator;
 			this.internalPoolImpl = new InternalPoolImpl(this, socketPoolConfig);
 		}
 
@@ -144,8 +144,6 @@ namespace Enyim.Caching.Memcached
 			this.Dispose();
 		}
 
-		public int Bucket { get; set; }
-
 		#region [ InternalPoolImpl             ]
 		private class InternalPoolImpl : IDisposable
 		{
@@ -162,9 +160,7 @@ namespace Enyim.Caching.Memcached
 
 			private int minItems;
 			private int maxItems;
-#if DEBUG_PROTOCOL
-			private int workingCount = 0;
-#endif
+
 			private MemcachedNode ownerNode;
 			private IPEndPoint endPoint;
 			private ISocketPoolConfiguration config;
@@ -219,18 +215,10 @@ namespace Enyim.Caching.Memcached
 
 			private PooledSocket CreateSocket()
 			{
-				PooledSocket retval = new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, this.ReleaseSocket);
-				retval.OwnerNode = this.ownerNode;
+				var ps = this.ownerNode.CreateSocket();
+				ps.CleanupCallback = this.ReleaseSocket;
 
-				if (this.ownerNode.authenticator != null)
-					if (!this.ownerNode.authenticator.Authenticate(retval))
-					{
-						if (log.IsErrorEnabled) log.Error("Authentication failed: " + this.endPoint);
-
-						throw new SecurityException("auth failed: " + this.endPoint);
-					}
-
-				return retval;
+				return ps;
 			}
 
 			public bool IsAlive
@@ -268,7 +256,7 @@ namespace Enyim.Caching.Memcached
 					throw new TimeoutException();
 				}
 
-				// maye we died while waiting
+				// maybe we died while waiting
 				if (!this.isAlive)
 				{
 					if (log.IsDebugEnabled) log.Debug("Pool is dead, returning null.");
@@ -285,9 +273,7 @@ namespace Enyim.Caching.Memcached
 						retval.Reset();
 
 						if (log.IsDebugEnabled) log.Debug("Socket was reset. " + retval.InstanceId);
-#if DEBUG_PROTOCOL
-						Interlocked.Increment(ref this.workingCount);
-#endif
+
 						return retval;
 					}
 					catch (Exception e)
@@ -308,9 +294,6 @@ namespace Enyim.Caching.Memcached
 				{
 					// okay, create the new item
 					retval = this.CreateSocket();
-#if DEBUG_PROTOCOL
-					Interlocked.Increment(ref this.workingCount);
-#endif
 				}
 				catch (Exception e)
 				{
@@ -352,9 +335,7 @@ namespace Enyim.Caching.Memcached
 					{
 						// mark the item as free
 						this.freeItems.Enqueue(socket);
-#if DEBUG_PROTOCOL
-						Interlocked.Decrement(ref this.workingCount);
-#endif
+
 						// signal the event so if someone is waiting for it can reuse this item
 						this.semaphore.Release();
 					}
@@ -407,7 +388,7 @@ namespace Enyim.Caching.Memcached
 							{
 								try
 								{
-									ps.OwnerNode = null;
+									//ps.OwnerNode = null;
 									ps.Destroy();
 								}
 								catch { }
@@ -444,58 +425,184 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 		#endregion
-		#region [ NodeFactory                  ]
-		//internal sealed class NodeFactory
-		//{
-		//    private Dictionary<string, MemcachedNode> nodeCache = new Dictionary<string, MemcachedNode>(StringComparer.OrdinalIgnoreCase);
 
-		//    internal NodeFactory()
-		//    {
-		//        AppDomain.CurrentDomain.DomainUnload += DestroyPool;
-		//    }
+		protected internal virtual PooledSocket CreateSocket()
+		{
+			PooledSocket retval = new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout);
 
-		//    public MemcachedNode Get(IPEndPoint endpoint, IMemcachedClientConfiguration config, IMemcachedAuthenticator authenticator)
-		//    {
-		//        ISocketPoolConfiguration ispc = config.SocketPool;
+			return retval;
+		}
 
-		//        string cacheKey = String.Concat(endpoint.ToString(), "-",
-		//                                            ispc.ConnectionTimeout.Ticks, "-",
-		//                                            ispc.DeadTimeout.Ticks, "-",
-		//                                            ispc.MaxPoolSize, "-",
-		//                                            ispc.MinPoolSize, "-",
-		//                                            ispc.ReceiveTimeout.Ticks);
+		public virtual bool Execute(IOperation op)
+		{
+			using (var ps = this.Acquire())
+			{
+				ps.Write(op.GetBuffer());
 
-		//        MemcachedNode node;
+				return op.ReadResponse(ps);
+			}
+		}
 
-		//        if (!nodeCache.TryGetValue(cacheKey, out node))
-		//        {
-		//            lock (nodeCache)
-		//            {
-		//                if (!nodeCache.TryGetValue(cacheKey, out node))
-		//                {
-		//                    node = new MemcachedNode(endpoint, config);
+		#region temp async
+		/*
+		class Pair<TFirst, TSecond>
+		{
+			public Pair(TFirst first, TSecond second)
+			{
+				this.First = first;
+				this.Second = second;
+			}
 
-		//                    nodeCache[cacheKey] = node;
-		//                }
-		//            }
-		//        }
+			public readonly TFirst First;
+			public readonly TSecond Second;
+		}
 
-		//        return node;
-		//    }
+		public IAsyncResult BeginExecute(IOperation op)
+		{
+			var req = op.GetRequest();
+			var ps = this.Acquire();
 
-		//    private void DestroyPool(object sender, EventArgs e)
-		//    {
-		//        lock (this.nodeCache)
-		//        {
-		//            foreach (MemcachedNode node in this.nodeCache.Values)
-		//            {
-		//                node.Dispose();
-		//            }
+			var retval = new IAR(null)
+			{
+				PS = ps,
+				Request = req
+			};
 
-		//            this.nodeCache.Clear();
-		//        }
-		//    }
-		//}
+			ps.BeginWrite(req.GetBuffer(), PS_BeginWriteCallback, retval);
+
+			return retval;
+		}
+
+		private static void PS_BeginWriteCallback(IAsyncResult result)
+		{
+			var iar = (IAR)result.AsyncState;
+
+			iar.PS.EndWrite(result);
+			iar.Request.BeginReadResponse(iar.PS, Request_BeginReadResponseCallback, iar);
+		}
+
+		private static void Request_BeginReadResponseCallback(IAsyncResult result)
+		{
+			var iar = (IAR)result.AsyncState;
+
+			iar.Success = iar.Request.EndReadResponse(result);
+			iar.Complete();
+		}
+
+		public bool EndExecute(IAsyncResult result)
+		{
+			using (var iar = (IAR)result)
+			using (iar.PS)
+			{
+				if (!result.IsCompleted)
+					result.AsyncWaitHandle.WaitOne();
+
+				return iar.Success;
+			}
+		}
+
+		#region IAR
+		class IAR : IAsyncResult, IDisposable
+		{
+			private object state;
+			private object SyncLock;
+			private ManualResetEvent mre;
+			private bool isCompleted;
+
+			public PooledSocket PS { get; set; }
+			public IRequest Request { get; set; }
+
+			public IAR(object state)
+			{
+				this.state = state;
+				this.SyncLock = new Object();
+			}
+
+			object IAsyncResult.AsyncState
+			{
+				get { return this.state; }
+			}
+
+			WaitHandle IAsyncResult.AsyncWaitHandle
+			{
+				get
+				{
+					if (this.mre == null)
+						lock (this.SyncLock)
+							if (this.mre == null)
+								this.mre = new ManualResetEvent(this.isCompleted);
+
+					return this.mre;
+				}
+			}
+
+			bool IAsyncResult.CompletedSynchronously
+			{
+				get { return false; }
+			}
+
+			bool IAsyncResult.IsCompleted
+			{
+				get { return this.isCompleted; }
+			}
+
+			internal void Complete()
+			{
+				this.isCompleted = true;
+
+				lock (this.SyncLock)
+					if (this.mre != null)
+						mre.Set();
+			}
+
+			public bool Success { get; set; }
+
+			void IDisposable.Dispose()
+			{
+				lock (SyncLock)
+					if (this.mre != null)
+					{
+						((IDisposable)this.mre).Dispose();
+						this.mre = null;
+					}
+			}
+		}
+		#endregion
+		*/
+		#endregion
+
+		#region IMemcachedNode Members
+
+		IPEndPoint IMemcachedNode.EndPoint
+		{
+			get { return this.EndPoint; }
+		}
+
+		bool IMemcachedNode.IsAlive
+		{
+			get { return this.IsAlive; }
+		}
+
+		bool IMemcachedNode.Ping()
+		{
+			return this.Ping();
+		}
+
+		bool IMemcachedNode.Execute(IOperation op)
+		{
+			return this.Execute(op);
+		}
+
+		IAsyncResult IMemcachedNode.BeginExecute(IOperation op, AsyncCallback callback, object state)
+		{
+			throw new NotImplementedException();
+		}
+
+		bool IMemcachedNode.EndExecute(IAsyncResult result)
+		{
+			throw new NotImplementedException();
+		}
+
 		#endregion
 	}
 }

@@ -93,6 +93,7 @@
     <Compile Include="NorthScaleClient.cs" />
     <Compile Include="NorthScalePool.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="VBucketAwareOperationFactory.cs" />
     <Compile Include="WebClientWithTimeout.cs">
       <SubType>Component</SubType>
     </Compile>

@@ -83,7 +83,7 @@ namespace Enyim.Caching.Configuration
 				if (type == null)
 					return null;
 
-				return (T)FastActivator2.Create(type);
+				return (T)FastActivator.Create(type);
 			}
 
 			return factoryInstance.Create();

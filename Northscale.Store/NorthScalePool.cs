@@ -7,6 +7,7 @@ using System.Threading;
 using Enyim.Caching.Memcached;
 using NorthScale.Store.Configuration;
 using Enyim.Caching.Configuration;
+using Enyim.Caching.Memcached.Protocol.Binary;
 
 namespace NorthScale.Store
 {
@@ -19,11 +20,14 @@ namespace NorthScale.Store
 
 		private INorthScaleClientConfiguration configuration;
 
-		private ITranscoder transcoder;
+		private Uri[] poolUrls;
+		private BucketConfigListener configListener;
+
 		private IMemcachedNodeLocator nodeLocator;
-		private IMemcachedKeyTransformer keyTransformer;
+		private IOperationFactory operationFactory;
+
 		private string bucketName;
-		private IEnumerable<IMemcachedNode> currentNodes;
+		private IMemcachedNode[] currentNodes;
 
 		public NorthScalePool(INorthScaleClientConfiguration configuration) : this(configuration, null) { }
 
@@ -34,9 +38,6 @@ namespace NorthScale.Store
 
 			if (String.IsNullOrEmpty(bucketName) || bucketName == "default")
 				bucketName = null;
-
-			this.transcoder = configuration.CreateTranscoder() ?? new DefaultTranscoder();
-			this.keyTransformer = configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
 		}
 
 		~NorthScalePool()
@@ -44,46 +45,6 @@ namespace NorthScale.Store
 			try { ((IDisposable)this).Dispose(); }
 			catch { }
 		}
-
-		private static object Create(Type type)
-		{
-			if (type == null) return null;
-
-			return Enyim.Reflection.FastActivator2.Create(type);
-		}
-
-		IMemcachedKeyTransformer IServerPool.KeyTransformer
-		{
-			get { return keyTransformer; }
-		}
-
-		ITranscoder IServerPool.Transcoder
-		{
-			get { return transcoder; }
-		}
-
-		IAuthenticator IServerPool.Authenticator { get; set; }
-
-		PooledSocket IServerPool.Acquire(string key)
-		{
-			var node = this.nodeLocator.Locate(key);
-
-			// we aren't supposed to get dead servers 
-			// or, if we get one it should disappear from the list pretty soon
-			// so we'll keep this as it is for a while
-			// (returning null, so at least the operations will fail silently)
-			if (node == null || !node.IsAlive) return null;
-
-			return node.Acquire();
-		}
-
-		IEnumerable<IMemcachedNode> IServerPool.GetServers()
-		{
-			return this.currentNodes;
-		}
-
-		private Uri[] poolUrls;
-		private BucketConfigListener configListener;
 
 		void IServerPool.Start()
 		{
@@ -106,32 +67,37 @@ namespace NorthScale.Store
 
 		private void InitNodes(ClusterConfig config)
 		{
-			if (log.IsInfoEnabled) log.Info("Received new config");
+			if (log.IsInfoEnabled) log.Info("Received new configuration.");
+
+			// these should be disposed after we've been reinitialized
+			var oldNodes = this.currentNodes;
 
 			// default bucket does not require authentication
-			var auth = this.bucketName == null ? null : ((IServerPool)this).Authenticator;
+			var auth = this.bucketName == null
+						? null
+						: new PlainTextAuthenticator(null, this.bucketName, this.bucketName);
 
-			IEnumerable<IPEndPoint> endpoints;
+			IEnumerable<IMemcachedNode> nodes;
 			IMemcachedNodeLocator locator;
-			IList<IMemcachedNode> nodes;
 
 			if (config == null || config.vBucketServerMap == null)
 			{
 				// no vbucket config, use the node list and the ports
 				var portType = this.configuration.Port;
 
-				endpoints = config == null
-							? Enumerable.Empty<IPEndPoint>()
+				nodes = config == null
+						? Enumerable.Empty<IMemcachedNode>()
 							: (from node in config.nodes
+							   let ip = new IPEndPoint(IPAddress.Parse(node.hostname),
+														(portType == BucketPortType.Proxy
+															? node.ports.proxy
+															: node.ports.direct))
 							   where node.status == "healthy"
-							   select new IPEndPoint(
-											IPAddress.Parse(node.hostname),
-											(portType == BucketPortType.Proxy
-												? node.ports.proxy
-												: node.ports.direct)));
+							   select (IMemcachedNode)(new BinaryNode(ip, this.configuration.SocketPool, auth)));
 
 				locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator();
-				nodes = endpoints.Select(ip => new MemcachedNode(ip, this.configuration.SocketPool, auth)).ToArray();
+
+				this.operationFactory = new Enyim.Caching.Memcached.Protocol.Binary.BinaryOperationFactory();
 			}
 			else
 			{
@@ -140,24 +106,35 @@ namespace NorthScale.Store
 				// but the order is significicant (because of the bucket indexes),
 				// so we we'll use this for initializing the locator
 				var vbsm = config.vBucketServerMap;
-				endpoints = (from server in vbsm.serverList
-							 let parts = server.Split(':')
-							 select new IPEndPoint(IPAddress.Parse(parts[0]), Int32.Parse(parts[1])));
+				var endpoints = (from server in vbsm.serverList
+								 let parts = server.Split(':')
+								 select new IPEndPoint(IPAddress.Parse(parts[0]), Int32.Parse(parts[1])));
 
 				var epa = endpoints.ToArray();
-
 				var buckets = vbsm.vBucketMap.Select(a => new VBucket(a[0], a.Skip(1).ToArray())).ToArray();
-				locator = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
-
 				var bucketNodeMap = buckets.ToLookup(vb => epa[vb.Master]);
+				var vbnl = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
 
-				nodes = endpoints.Select(ip => new MemcachedNode(ip, this.configuration.SocketPool, auth) { Bucket = Array.IndexOf(buckets, bucketNodeMap[ip].FirstOrDefault()) }).ToArray();
+				// assign the first bucket index to the servers until 
+				// we can solve how to assign the appropriate vbucket index to each command buffer
+				nodes = from ip in endpoints
+						let bucket = Array.IndexOf(buckets, bucketNodeMap[ip].FirstOrDefault())
+						select (IMemcachedNode)(new BinaryNode(ip, this.configuration.SocketPool, auth));
+
+				locator = vbnl;
+
+				this.operationFactory = new VBucketAwareOperationFactory(vbnl);
 			}
 
-			locator.Initialize(nodes);
+			var mcNodes = nodes.ToArray();
+			locator.Initialize(mcNodes);
 
-			Interlocked.Exchange(ref this.currentNodes, new ReadOnlyCollection<IMemcachedNode>(nodes));
+			Interlocked.Exchange(ref this.currentNodes, mcNodes);
 			Interlocked.Exchange(ref this.nodeLocator, locator);
+
+			if (oldNodes != null)
+				for (var i = 0; i < oldNodes.Length; i++)
+					oldNodes[i].Dispose();
 		}
 
 		void IDisposable.Dispose()
@@ -167,12 +144,33 @@ namespace NorthScale.Store
 				this.configListener.Stop();
 
 				this.configListener = null;
+
+				var currentNodes = this.currentNodes;
+
+				// close the pools
+				if (currentNodes != null)
+				{
+					for (var i = 0; i < currentNodes.Length; i++)
+						currentNodes[i].Dispose();
+
+					this.currentNodes = null;
+				}
 			}
 		}
 
-		IMemcachedNodeLocator IServerPool.NodeLocator
+		IMemcachedNode IServerPool.Locate(string key)
 		{
-			get { return this.nodeLocator; }
+			return this.nodeLocator.Locate(key);
+		}
+
+		IOperationFactory IServerPool.OperationFactory
+		{
+			get { return this.operationFactory; }
+		}
+
+		IEnumerable<IMemcachedNode> IServerPool.GetWorkingNodes()
+		{
+			return this.nodeLocator.GetWorkingNodes();
 		}
 	}
 }

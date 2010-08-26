@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using Enyim.Caching.Memcached;
 using Enyim.Reflection;
+using Enyim.Caching.Memcached.Protocol.Binary;
 
 namespace Enyim.Caching.Configuration
 {
@@ -107,11 +108,17 @@ namespace Enyim.Caching.Configuration
 			return this.Transcoder;
 		}
 
-		MemcachedProtocol IMemcachedClientConfiguration.Protocol
+		IServerPool IMemcachedClientConfiguration.CreatePool()
 		{
-			get { return this.Protocol; }
-			set { this.Protocol = value; }
+			switch (this.Protocol)
+			{
+				case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory());
+				case MemcachedProtocol.Binary: return new BinaryPool(this);
+			}
+
+			throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);
 		}
+
 		#endregion
 	}
 }

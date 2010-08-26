@@ -1,5 +1,6 @@
 using Enyim.Caching;
 using NUnit.Framework;
+using Enyim.Caching.Memcached;
 
 namespace MemcachedTest
 {
@@ -51,6 +52,36 @@ namespace MemcachedTest
 
 				var value = client.Get("VALUE");
 				Assert.AreEqual("2", value, "Get failed. Expected 2, returned: '" + value + "'");
+			}
+		}
+
+		[TestCase]
+		public void CASTest()
+		{
+			using (MemcachedClient client = GetClient())
+			{
+				// store the item
+				var r1 = client.Cas(StoreMode.Set, "CasItem1", "foo");
+
+				Assert.IsTrue(r1.Result, "Initial set failed.");
+				Assert.AreNotEqual(r1.Cas, 0, "No cas value was returned.");
+
+				// get back the item and check the cas value (it should match the cas from the set)
+				var r2 = client.GetWithCas<string>("CasItem1");
+
+				Assert.AreEqual(r2.Result, "foo", "Invalid data returned; expected 'foo'.");
+				Assert.AreEqual(r1.Cas, r2.Cas, "Cas values do not match.");
+
+				var r3 = client.Cas(StoreMode.Set, "CasItem1", "bar", r1.Cas - 1);
+
+				Assert.IsFalse(r3.Result, "foo", "Overwriting with 'bar' should have failed.");
+
+				var r4 = client.Cas(StoreMode.Set, "CasItem1", "baz", r2.Cas);
+
+				Assert.IsTrue(r4.Result, "foo", "Overwriting with 'baz' should have succeeded.");
+
+				var r5 = client.GetWithCas<string>("CasItem1");
+				Assert.AreEqual(r5.Result, "baz", "Invalid data returned; excpected 'baz'.");
 			}
 		}
 	}

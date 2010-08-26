@@ -11,7 +11,7 @@ namespace Enyim.Caching.Configuration
 		private int maxPoolSize = 200;
 		private TimeSpan connectionTimeout = new TimeSpan(0, 0, 10);
 		private TimeSpan receiveTimeout = new TimeSpan(0, 0, 10);
-		private TimeSpan deadTimeout = new TimeSpan(0, 2, 0);
+		private TimeSpan deadTimeout = new TimeSpan(0, 0, 10);
 
 		int ISocketPoolConfiguration.MinPoolSize
 		{

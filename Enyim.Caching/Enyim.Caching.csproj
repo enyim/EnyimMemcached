@@ -81,97 +81,279 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Configuration\AuthenticationConfiguration.cs" />
-    <Compile Include="Configuration\ConfigurationElementException.cs" />
-    <Compile Include="Configuration\ConfigurationHelper.cs" />
-    <Compile Include="Configuration\AuthenticationElement.cs" />
-    <Compile Include="Configuration\TextElement.cs" />
-    <Compile Include="Configuration\ProviderElement.cs" />
-    <Compile Include="Configuration\IAuthenticationConfiguration.cs" />
-    <Compile Include="Configuration\IVBucketConfiguration.cs" />
+    <Compile Include="Configuration\AuthenticationConfiguration.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\AuthenticationElement.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\ConfigurationElementException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\ConfigurationHelper.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\EndPointElement.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\EndPointElementCollection.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\IAuthenticationConfiguration.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\IMemcachedClientConfiguration.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\InterfaceValidator.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\ISocketPoolConfiguration.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\IVBucketConfiguration.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Configuration\JsonVBucketConfig.cs" />
-    <Compile Include="Configuration\SocketPoolConfiguration.cs" />
+    <Compile Include="Configuration\MemcachedClientConfiguration.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\MemcachedClientSection.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\ProviderElement.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\SocketPoolConfiguration.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\SocketPoolElement.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Configuration\TextElement.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="HashkitCrc32.cs" />
     <Compile Include="HashkitMurmur.cs" />
     <Compile Include="HashkitOneAtATime.cs" />
     <Compile Include="IUIntHashAlgorithm.cs" />
-    <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs" />
-    <Compile Include="Memcached\VBucketNodeLocatorFactory.cs" />
-    <Compile Include="Memcached\IProviderFactory.cs" />
-    <Compile Include="Memcached\IAuthenticator.cs" />
-    <Compile Include="Memcached\IMemcachedNode.cs" />
-    <Compile Include="Memcached\IServerPool.cs" />
-    <Compile Include="Memcached\IProtocolImplementation.cs" />
-    <Compile Include="Memcached\ISaslAuthenticationProvider.cs" />
-    <Compile Include="Memcached\Enums.cs" />
-    <Compile Include="Memcached\KetamaNodeLocator.cs" />
-    <Compile Include="Memcached\Operations\Binary\ConcatenationOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\MultiGetOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\SaslAuthenticator.cs" />
-    <Compile Include="Memcached\Operations\Binary\FlushOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\StatsOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\TextProtocol.cs" />
-    <Compile Include="Memcached\Operations\Binary\BinaryProtocol.cs" />
     <Compile Include="HashCodeCombiner.cs" />
     <Compile Include="InterlockedQueue.cs" />
-    <Compile Include="Memcached\CommandNotSupportedException.cs" />
-    <Compile Include="Memcached\IMemcachedKeyTransformer.cs" />
-    <Compile Include="Memcached\KeyTransformers\Base64KeyTransformer.cs" />
+    <Compile Include="FastActivator.cs" />
+    <Compile Include="IFastObjectFacory.cs" />
+    <Compile Include="FnvHash.cs" />
+    <Compile Include="MemcachedClient.cs" />
+    <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\CommandNotSupportedException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\DefaultServerPool.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Enums.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\IAuthenticator.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\IMemcachedKeyTransformer.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\IMemcachedNode.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\IMemcachedNodeLocator.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\IOperationFactory.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\IProviderFactory.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\ISaslAuthenticationProvider.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\IServerPool.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\KeyTransformers\Base64KeyTransformer.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Memcached\KeyTransformers\DefaultKeyTransformer.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\KeyTransformers\KeyTransformerBase.cs" />
-    <Compile Include="Memcached\KeyTransformers\SHA1KeyTransformer.cs" />
-    <Compile Include="Memcached\KeyTransformers\TigerHashKeyTransformer.cs" />
-    <Compile Include="Memcached\MemcachedNode.cs" />
-    <Compile Include="Memcached\Operations\Binary\BinaryRequest.cs" />
-    <Compile Include="Memcached\Operations\Binary\BinaryResponse.cs" />
-    <Compile Include="Memcached\Operations\Binary\BinaryConverter.cs" />
-    <Compile Include="Memcached\Operations\Binary\MutatorOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\DeleteOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\GetOperation.cs" />
-    <Compile Include="Memcached\Operations\Binary\OpCode.cs" />
-    <Compile Include="Memcached\Operations\Binary\StoreOperation.cs" />
-    <Compile Include="Memcached\Operations\ItemOperation.cs" />
-    <Compile Include="Memcached\Operations\Operation.cs" />
-    <Compile Include="Memcached\Operations\Text\DecrementOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\DeleteOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\FlushOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\GetHelper.cs" />
-    <Compile Include="Memcached\Operations\Text\GetOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\IncrementOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\MultiGetOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\TextSocketHelper.cs" />
-    <Compile Include="Memcached\Operations\Text\StatsOperation.cs" />
-    <Compile Include="Memcached\Operations\Text\StoreOperation.cs" />
-    <Compile Include="Memcached\SingleNodeLocator.cs" />
-    <Compile Include="Memcached\StatItem.cs" />
-    <Compile Include="Memcached\Transcoders\DefaultTranscoder.cs" />
-    <Compile Include="Configuration\IMemcachedClientConfiguration.cs" />
-    <Compile Include="Configuration\EndPointElement.cs" />
-    <Compile Include="Configuration\InterfaceValidator.cs" />
-    <Compile Include="Configuration\ISocketPoolConfiguration.cs" />
-    <Compile Include="Configuration\MemcachedClientConfiguration.cs" />
-    <Compile Include="Configuration\SocketPoolElement.cs" />
-    <Compile Include="Configuration\EndPointElementCollection.cs" />
-    <Compile Include="FastActivator.cs" />
-    <Compile Include="IFastObjectFacory.cs" />
-    <Compile Include="Memcached\DefaultNodeLocator.cs" />
-    <Compile Include="Memcached\IMemcachedNodeLocator.cs" />
-    <Compile Include="FnvHash.cs" />
-    <Compile Include="MemcachedClient.cs" />
-    <Compile Include="Memcached\MemcachedClientException.cs" />
-    <Compile Include="Configuration\MemcachedClientSection.cs" />
-    <Compile Include="Memcached\MemcachedException.cs" />
-    <Compile Include="Memcached\PooledSocket.cs" />
-    <Compile Include="Memcached\ServerStats.cs" />
-    <Compile Include="Memcached\ThrowHelper.cs" />
-    <Compile Include="Memcached\Transcoders\CacheItem.cs" />
-    <Compile Include="Memcached\Transcoders\ITranscoder.cs" />
-    <Compile Include="Memcached\VBucketNodeLocator.cs" />
+    <Compile Include="Memcached\KeyTransformers\KeyTransformerBase.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\KeyTransformers\SHA1KeyTransformer.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\KeyTransformers\TigerHashKeyTransformer.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Locators\DefaultNodeLocator.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Locators\KetamaNodeLocator.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Locators\SingleNodeLocator.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Locators\VBucketNodeLocator.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Locators\VBucketNodeLocatorFactory.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\MemcachedClientException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\MemcachedException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\MemcachedNode.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\OperationInterfaces.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\PooledSocket.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\BinaryConverter.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\BinaryMultiItemOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\BinaryNode.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\BinaryOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\BinaryOperationFactory.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\BinaryPool.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\BinaryRequest.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\BinaryResponse.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\BinarySingleItemOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\ConcatOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\DeleteOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\FlushOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\GetOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\MultiGetOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\MutatorOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\OpCode.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\SaslContinue.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\SaslStart.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\SaslStep.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\StatsOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Binary\StoreOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\ItemOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\MultiItemOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Operation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Text\ConcateOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Text\DeleteOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Text\FlushOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Text\GetHelper.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Text\GetOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Text\MultiGetOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Text\MutatorOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Text\StatsOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Text\StoreOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Text\StoreOperationBase.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Text\TextOperationFactory.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Protocol\Text\TextSocketHelper.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\ServerStats.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\StatItem.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\StoreMode.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\ThrowHelper.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Transcoders\CacheItem.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Transcoders\DefaultTranscoder.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Transcoders\ITranscoder.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Memcached\ServerPool.cs" />
-    <Compile Include="Memcached\StoreMode.cs" />
     <Compile Include="TigerHash.cs" />
     <Compile Include="UIntEqualityComparer.cs" />
   </ItemGroup>
@@ -195,6 +377,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <GitTagMatch>emc*</GitTagMatch>

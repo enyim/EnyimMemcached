@@ -222,30 +222,44 @@ namespace MemcachedTest
 		}
 
 		[TestCase]
-		public void MultiGetTest()
+		public virtual void MultiGetTest()
 		{
-			
-
+			var prefix = new Random().Next(300) + 100 + "";
 			// note, this test will fail, if memcached version is < 1.2.4
 			using (var client = GetClient())
 			{
 				var keys = new List<string>();
 
-				for (int i = 0; i < 100; i++)
+				for (int i = 0; i < 1000; i++)
 				{
-					string k = MakeRandomKey(4) + i;
+					string k = prefix + "_Hello_Multi_Get_" + i; // MakeRandomKey(4) + i;
 					keys.Add(k);
 
-					client.Store(StoreMode.Set, k, i);
+					Assert.IsTrue(client.Store(StoreMode.Set, k, i), "Store of " + k + " failed");
 				}
+
+				//Thread.Sleep(5000);
+
+				//for (var i = 0; i < 100; i++)
+				//{
+				//    Assert.AreEqual(client.Get(keys[i]), i, "Store of " + keys[i] + " failed");
+				//}
 
 				IDictionary<string, object> retvals = client.Get(keys);
 
-				Assert.AreEqual(100, retvals.Count, "MultiGet should have returned 100 items.");
-
 				object value;
 
-				for (int i = 0; i < retvals.Count; i++)
+				for (int i = 0; i < keys.Count; i++)
+				{
+					string key = keys[i];
+
+					if (!retvals.TryGetValue(key, out value))
+						Console.WriteLine("missing key: " + key);
+				}
+
+				Assert.AreEqual(keys.Count, retvals.Count, "MultiGet should have returned " + keys.Count + " items.");
+
+				for (int i = 0; i < keys.Count; i++)
 				{
 					string key = keys[i];
 

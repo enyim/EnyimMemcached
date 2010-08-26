@@ -18,6 +18,13 @@ namespace Enyim.Caching.Memcached
 		/// <param name="key">The key of the item to be located.</param>
 		/// <returns>The <see cref="T:MemcachedNode"/> the specifed item belongs to</returns>
 		IMemcachedNode Locate(string key);
+
+		/// <summary>
+		/// Returns all the working nodes currently available to the locator.
+		/// </summary>
+		/// <remarks>It should return an instance which is safe to enumerate multiple times and provides the same results.</remarks>
+		/// <returns></returns>
+		IEnumerable<IMemcachedNode> GetWorkingNodes();
 	}
 }
 

@@ -3,8 +3,6 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("Enyim.Caching")]
 [assembly: AssemblyProduct("Enyim.Caching")]
-[assembly: AssemblyDescription("")]
-
 
 [assembly: AssemblyCompany("enyim.com")]
 [assembly: AssemblyCopyright("Copyright © enyim.com, Attila Kiskó 2007-2010")]
