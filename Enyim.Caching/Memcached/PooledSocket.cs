@@ -93,7 +93,7 @@ namespace Enyim.Caching.Memcached
 		/// Releases all resources used by this instance and shuts down the inner <see cref="T:Socket"/>. This instance will not be usable anymore.
 		/// </summary>
 		/// <remarks>Use the IDisposable.Dispose method if you want to release this instance back into the pool.</remarks>
-		public void Destroy() // TODO this should be a Dispose() override
+		public void Destroy()
 		{
 			this.Dispose(true);
 		}
@@ -110,17 +110,24 @@ namespace Enyim.Caching.Memcached
 			{
 				GC.SuppressFinalize(this);
 
-				if (socket != null)
+				try
 				{
-					using (this.socket)
-						this.socket.Shutdown(SocketShutdown.Both);
+					if (socket != null)
+					{
+						using (this.socket)
+							this.socket.Shutdown(SocketShutdown.Both);
+					}
+
+					this.inputStream.Dispose();
+
+					this.inputStream = null;
+					this.socket = null;
+					this.CleanupCallback = null;
 				}
-
-				this.inputStream.Dispose();
-
-				this.inputStream = null;
-				this.socket = null;
-				this.CleanupCallback = null;
+				catch (Exception e)
+				{
+					log.Error(e);
+				}
 			}
 			else
 			{

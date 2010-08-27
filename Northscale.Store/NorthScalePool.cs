@@ -36,8 +36,8 @@ namespace NorthScale.Store
 			this.configuration = configuration;
 			this.bucketName = bucket ?? configuration.Bucket;
 
-			if (String.IsNullOrEmpty(bucketName) || bucketName == "default")
-				bucketName = null;
+			if (String.IsNullOrEmpty(this.bucketName) || this.bucketName == "default")
+				this.bucketName = null;
 		}
 
 		~NorthScalePool()
@@ -82,6 +82,8 @@ namespace NorthScale.Store
 
 			if (config == null || config.vBucketServerMap == null)
 			{
+				if (log.IsInfoEnabled) log.Info("No vbucket. Server count: " + (config.nodes == null ? 0 : config.nodes.Length));
+
 				// no vbucket config, use the node list and the ports
 				var portType = this.configuration.Port;
 
@@ -106,6 +108,9 @@ namespace NorthScale.Store
 				// but the order is significicant (because of the bucket indexes),
 				// so we we'll use this for initializing the locator
 				var vbsm = config.vBucketServerMap;
+
+				if (log.IsInfoEnabled) log.Info("Has vbucket. Server count: " + (vbsm.serverList == null ? 0 : vbsm.serverList.Length));
+
 				var endpoints = (from server in vbsm.serverList
 								 let parts = server.Split(':')
 								 select new IPEndPoint(IPAddress.Parse(parts[0]), Int32.Parse(parts[1])));

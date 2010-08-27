@@ -386,11 +386,7 @@ namespace Enyim.Caching.Memcached
 
 							while (this.freeItems.Dequeue(out ps))
 							{
-								try
-								{
-									//ps.OwnerNode = null;
-									ps.Destroy();
-								}
+								try { ps.Destroy(); }
 								catch { }
 							}
 
@@ -437,6 +433,8 @@ namespace Enyim.Caching.Memcached
 		{
 			using (var ps = this.Acquire())
 			{
+				if (ps == null) return false;
+
 				ps.Write(op.GetBuffer());
 
 				return op.ReadResponse(ps);

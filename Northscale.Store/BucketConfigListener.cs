@@ -22,7 +22,9 @@ namespace NorthScale.Store
 		public BucketConfigListener(Uri[] poolUrls, string bucketName, NetworkCredential credential)
 		{
 			this.poolUrls = poolUrls;
-			this.bucketName = bucketName ?? "default";
+			this.bucketName = String.IsNullOrEmpty(bucketName)
+								? "default"
+								: bucketName;
 
 			this.credential = credential;
 
