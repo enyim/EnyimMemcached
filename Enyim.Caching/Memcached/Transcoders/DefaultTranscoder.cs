@@ -1,8 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 
 namespace Enyim.Caching.Memcached
 {
@@ -11,32 +10,6 @@ namespace Enyim.Caching.Memcached
 	/// </summary>
 	public sealed class DefaultTranscoder : ITranscoder
 	{
-		#region [ TypeCode from Reflector      ]
-	/*
-		public enum TypeCode
-		{
-			Empty = 0,
-			Object = 1,
-			DBNull = 2,
-			Boolean = 3,
-			Char = 4,
-			SByte = 5,
-			Byte = 6,
-			Int16 = 7,
-			UInt16 = 8,
-			Int32 = 9,
-			UInt32 = 10,
-			Int64 = 11,
-			UInt64 = 12
-			Single = 13,
-			Double = 14,
-			Decimal = 15,
-			DateTime = 16,
-			String = 18
-		}
-	*/
-	#endregion
-
 		internal const ushort RawDataFlag = 0xfa52;
 		internal static readonly byte[] EmptyArray = new byte[0];
 
@@ -140,7 +113,7 @@ namespace Enyim.Caching.Memcached
 
 		object ITranscoder.Deserialize(CacheItem item)
 		{
-			if (item.Flag == RawDataFlag)
+			if (item.Flags == RawDataFlag)
 			{
 				ArraySegment<byte> tmp = item.Data;
 
@@ -155,17 +128,19 @@ namespace Enyim.Caching.Memcached
 				return retval;
 			}
 
-			TypeCode code = (TypeCode)(item.Flag & 0x00ff);
+			TypeCode code = (TypeCode)(item.Flags & 0x00ff);
 			
-			if (code == TypeCode.Empty)
-				return null;
-
 			byte[] data = item.Data.Array;
 			int offset = item.Data.Offset;
 			int count = item.Data.Count;
 
 			switch (code)
 			{
+				// incrementing a non-existing key then getting it
+				// returns as a string, but the flag will be 0
+				// so treat all 0 flagged items as string
+				// this may help inter-client data management as well
+				case TypeCode.Empty:
 				case TypeCode.String:
 					return Encoding.UTF8.GetString(data, offset, count);
 
@@ -216,22 +191,20 @@ namespace Enyim.Caching.Memcached
 
 #region [ License information          ]
 /* ************************************************************
- *
- * Copyright (c) Attila Kiskó, enyim.com
- *
- * This source code is subject to terms and conditions of 
- * Microsoft Permissive License (Ms-PL).
  * 
- * A copy of the license can be found in the License.html
- * file at the root of this distribution. If you can not 
- * locate the License, please send an email to a@enyim.com
- * 
- * By using this source code in any fashion, you are 
- * agreeing to be bound by the terms of the Microsoft 
- * Permissive License.
- *
- * You must not remove this notice, or any other, from this
- * software.
- *
+ *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *    
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *    
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *    
  * ************************************************************/
 #endregion

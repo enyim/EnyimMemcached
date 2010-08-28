@@ -1,98 +1,112 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Net;
 using Enyim.Caching.Memcached;
+using Enyim.Reflection;
+using Enyim.Caching.Memcached.Protocol.Binary;
 
 namespace Enyim.Caching.Configuration
 {
 	/// <summary>
-	/// COnfiguration class
+	/// Configuration class
 	/// </summary>
 	public class MemcachedClientConfiguration : IMemcachedClientConfiguration
 	{
-		private List<IPEndPoint> servers;
-		private ISocketPoolConfiguration socketPool;
-		private Type keyTransformer;
+		// these are lazy initialized in the getters
 		private Type nodeLocator;
-		private Type transcoder;
+		private ITranscoder transcoder;
+		private IMemcachedKeyTransformer keyTransformer;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
 		/// </summary>
 		public MemcachedClientConfiguration()
 		{
-			this.servers = new List<IPEndPoint>();
-			this.socketPool = new _SocketPoolConfig();
+			this.Servers = new List<IPEndPoint>();
+			this.SocketPool = new SocketPoolConfiguration();
+			this.Authentication = new AuthenticationConfiguration();
 
-			this.EnablePerformanceCounters = false;
+			this.Protocol = MemcachedProtocol.Binary;
+		}
+
+		/// <summary>
+		/// Adds a new server to the pool.
+		/// </summary>
+		/// <param name="address">The address and the port of the server in the format 'host:port'.</param>
+		public void AddServer(string address)
+		{
+			this.Servers.Add(ConfigurationHelper.ResolveToEndPoint(address));
+		}
+
+		/// <summary>
+		/// Adds a new server to the pool.
+		/// </summary>
+		/// <param name="address">The host name or IP address of the server.</param>
+		/// <param name="port">The port number of the memcached instance.</param>
+		public void AddServer(string host, int port)
+		{
+			this.Servers.Add(ConfigurationHelper.ResolveToEndPoint(host, port));
 		}
 
 		/// <summary>
 		/// Gets a list of <see cref="T:IPEndPoint"/> each representing a Memcached server in the pool.
 		/// </summary>
-		public IList<IPEndPoint> Servers
-		{
-			get { return this.servers; }
-		}
+		public IList<IPEndPoint> Servers { get; private set; }
 
 		/// <summary>
 		/// Gets the configuration of the socket pool.
 		/// </summary>
-		public ISocketPoolConfiguration SocketPool
+		public ISocketPoolConfiguration SocketPool { get; private set; }
+
+		/// <summary>
+		/// Gets the authentication settings.
+		/// </summary>
+		public IAuthenticationConfiguration Authentication { get; private set; }
+
+		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
+		/// </summary>
+		public IMemcachedKeyTransformer KeyTransformer
 		{
-			get { return this.socketPool; }
+			get { return this.keyTransformer ?? (this.keyTransformer = new DefaultKeyTransformer()); }
+			set { this.keyTransformer = value; }
 		}
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
+		/// Gets or sets the Type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
 		/// </summary>
-		public Type KeyTransformer
-		{
-			get { return this.keyTransformer; }
-			set
-			{
-				ConfigurationHelper.CheckForInterface(value, typeof(IMemcachedKeyTransformer));
-
-				this.keyTransformer = value;
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
-		/// </summary>
+		/// <remarks>If both <see cref="M:NodeLocator"/> and  <see cref="M:NodeLocatorFactory"/> are assigned then the latter takes precedence.</remarks>
 		public Type NodeLocator
 		{
 			get { return this.nodeLocator; }
 			set
 			{
 				ConfigurationHelper.CheckForInterface(value, typeof(IMemcachedNodeLocator));
-
 				this.nodeLocator = value;
 			}
 		}
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
+		/// Gets or sets the NodeLocatorFactory instance which will be used to create a new IMemcachedNodeLocator instances.
 		/// </summary>
-		public Type Transcoder
-		{
-			get { return this.transcoder; }
-			set
-			{
-				ConfigurationHelper.CheckForInterface(value, typeof(ITranscoder));
+		/// <remarks>If both <see cref="M:NodeLocator"/> and  <see cref="M:NodeLocatorFactory"/> are assigned then the latter takes precedence.</remarks>
+		public IProviderFactory<IMemcachedNodeLocator> NodeLocatorFactory { get; set; }
 
-				this.transcoder = value;
-			}
+		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialize or deserialize items.
+		/// </summary>
+		public ITranscoder Transcoder
+		{
+			get { return this.transcoder ?? (this.transcoder = new DefaultTranscoder()); }
+			set { this.transcoder = value; }
 		}
 
 		/// <summary>
-		/// Gets or sets a value indicating whether operation statistics are created using Windows Performance Counters.
+		/// Gets or sets the type of the communication between client and server.
 		/// </summary>
-		/// <remarks>This is set to false by default so the application using this library will work even if teh performance counters are not installed.</remarks>
-		public bool EnablePerformanceCounters { get; set; }
+		public MemcachedProtocol Protocol { get; set; }
 
-		#region [ IMemcachedClientConfiguration]
+		#region [ interface                     ]
 
 		IList<System.Net.IPEndPoint> IMemcachedClientConfiguration.Servers
 		{
@@ -104,121 +118,62 @@ namespace Enyim.Caching.Configuration
 			get { return this.SocketPool; }
 		}
 
-		Type IMemcachedClientConfiguration.KeyTransformer
+		IAuthenticationConfiguration IMemcachedClientConfiguration.Authentication
 		{
-			get { return this.KeyTransformer; }
-			set { this.KeyTransformer = value; }
+			get { return this.Authentication; }
 		}
 
-		Type IMemcachedClientConfiguration.NodeLocator
+		IMemcachedKeyTransformer IMemcachedClientConfiguration.CreateKeyTransformer()
 		{
-			get { return this.NodeLocator; }
-			set { this.NodeLocator = value; }
+			return this.KeyTransformer;
 		}
 
-		Type IMemcachedClientConfiguration.Transcoder
+		IMemcachedNodeLocator IMemcachedClientConfiguration.CreateNodeLocator()
 		{
-			get { return this.Transcoder; }
-			set { this.Transcoder = value; }
+			var f = this.NodeLocatorFactory;
+			if (f != null) return f.Create();
+
+			return this.NodeLocator == null
+					? new DefaultNodeLocator()
+					: (IMemcachedNodeLocator)FastActivator.Create(this.NodeLocator);
 		}
 
-		bool IMemcachedClientConfiguration.EnablePerformanceCounters
+		ITranscoder IMemcachedClientConfiguration.CreateTranscoder()
 		{
-			get { return this.EnablePerformanceCounters; }
-			set { this.EnablePerformanceCounters = value; }
+			return this.Transcoder;
 		}
-		#endregion
-		#region [ T:SocketPoolConfig           ]
-		private class _SocketPoolConfig : ISocketPoolConfiguration
+
+		IServerPool IMemcachedClientConfiguration.CreatePool()
 		{
-			private int minPoolSize = 10;
-			private int maxPoolSize = 200;
-			private TimeSpan connectionTimeout = new TimeSpan(0, 0, 10);
-			private TimeSpan receiveTimeout = new TimeSpan(0, 0, 10);
-			private TimeSpan deadTimeout = new TimeSpan(0, 2, 0);
-
-			int ISocketPoolConfiguration.MinPoolSize
+			switch (this.Protocol)
 			{
-				get { return this.minPoolSize; }
-				set
-				{
-					if (value > 1000 || value > this.maxPoolSize)
-						throw new ArgumentOutOfRangeException("value", "MinPoolSize must be <= MaxPoolSize and must be <= 1000");
-
-					this.minPoolSize = value;
-				}
+				case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory());
+				case MemcachedProtocol.Binary: return new BinaryPool(this);
 			}
 
-			int ISocketPoolConfiguration.MaxPoolSize
-			{
-				get { return this.maxPoolSize; }
-				set
-				{
-					if (value > 1000 || value < this.minPoolSize)
-						throw new ArgumentOutOfRangeException("value", "MaxPoolSize must be >= MinPoolSize and must be <= 1000");
-
-					this.maxPoolSize = value;
-				}
-			}
-
-			TimeSpan ISocketPoolConfiguration.ConnectionTimeout
-			{
-				get { return this.connectionTimeout; }
-				set
-				{
-					if (value < TimeSpan.Zero)
-						throw new ArgumentOutOfRangeException("value", "value must be positive");
-
-					this.connectionTimeout = value;
-				}
-			}
-
-			TimeSpan ISocketPoolConfiguration.ReceiveTimeout
-			{
-				get { return this.receiveTimeout; }
-				set
-				{
-					if (value < TimeSpan.Zero)
-						throw new ArgumentOutOfRangeException("value", "value must be positive");
-
-					this.receiveTimeout = value;
-				}
-			}
-
-			TimeSpan ISocketPoolConfiguration.DeadTimeout
-			{
-				get { return this.deadTimeout; }
-				set
-				{
-					if (value < TimeSpan.Zero)
-						throw new ArgumentOutOfRangeException("value", "value must be positive");
-
-					this.deadTimeout = value;
-				}
-			}
+			throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);
 		}
+
 		#endregion
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
- *
- * Copyright (c) Attila Kiskó, enyim.com
- *
- * This source code is subject to terms and conditions of 
- * Microsoft Permissive License (Ms-PL).
  * 
- * A copy of the license can be found in the License.html
- * file at the root of this distribution. If you can not 
- * locate the License, please send an email to a@enyim.com
- * 
- * By using this source code in any fashion, you are 
- * agreeing to be bound by the terms of the Microsoft 
- * Permissive License.
- *
- * You must not remove this notice, or any other, from this
- * software.
- *
+ *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *    
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *    
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *    
  * ************************************************************/
 #endregion

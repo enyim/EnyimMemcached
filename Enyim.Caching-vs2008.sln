@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{319FC4D5-5302-46B4-887A-65CC10157B64}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Enyim.Caching", "Enyim.Caching\Enyim.Caching-vs2008.csproj", "{D438C0B3-A168-40B8-BDDD-61F0939DFF35}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemcachedTest", "MemcachedTest\MemcachedTest-vs2008.csproj", "{0ACEA848-04B3-4E9C-8F74-D051006CA43D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoApp", "DemoApp\DemoApp-vs2008.csproj", "{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Northscale.Store", "Northscale.Store\Northscale.Store-vs2008.csproj", "{708A2350-A26C-444D-B975-8164263951A7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D438C0B3-A168-40B8-BDDD-61F0939DFF35}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D438C0B3-A168-40B8-BDDD-61F0939DFF35}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D438C0B3-A168-40B8-BDDD-61F0939DFF35}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D438C0B3-A168-40B8-BDDD-61F0939DFF35}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0ACEA848-04B3-4E9C-8F74-D051006CA43D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0ACEA848-04B3-4E9C-8F74-D051006CA43D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0ACEA848-04B3-4E9C-8F74-D051006CA43D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0ACEA848-04B3-4E9C-8F74-D051006CA43D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{708A2350-A26C-444D-B975-8164263951A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{708A2350-A26C-444D-B975-8164263951A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{708A2350-A26C-444D-B975-8164263951A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{708A2350-A26C-444D-B975-8164263951A7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

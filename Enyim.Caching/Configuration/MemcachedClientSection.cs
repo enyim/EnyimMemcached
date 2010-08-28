@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Configuration;
-using System.Web.Configuration;
 using System.ComponentModel;
-using Enyim.Caching;
-using System.Collections.ObjectModel;
+using System.Configuration;
 using System.Net;
+using System.Web.Configuration;
+using Enyim.Caching.Memcached;
+using Enyim.Reflection;
 
 namespace Enyim.Caching.Configuration
 {
@@ -35,44 +34,43 @@ namespace Enyim.Caching.Configuration
 		}
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
+		/// Gets or sets the configuration of the authenticator.
 		/// </summary>
-		[ConfigurationProperty("keyTransformer", IsRequired = false), TypeConverter(typeof(TypeNameConverter)), InterfaceValidator(typeof(Enyim.Caching.Memcached.IMemcachedKeyTransformer))]
-		public Type KeyTransformer
+		[ConfigurationProperty("authentication", IsRequired = false)]
+		public AuthenticationElement Authentication
 		{
-			get { return (Type)base["keyTransformer"]; }
+			get { return (AuthenticationElement)base["authentication"]; }
+			set { base["authentication"] = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
+		/// </summary>
+		[ConfigurationProperty("locator", IsRequired = false)]
+		public ProviderElement<IMemcachedNodeLocator> NodeLocator
+		{
+			get { return (ProviderElement<IMemcachedNodeLocator>)base["locator"]; }
+			set { base["locator"] = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
+		/// </summary>
+		[ConfigurationProperty("keyTransformer", IsRequired = false)]
+		public ProviderElement<IMemcachedKeyTransformer> KeyTransformer
+		{
+			get { return (ProviderElement<IMemcachedKeyTransformer>)base["keyTransformer"]; }
 			set { base["keyTransformer"] = value; }
 		}
 
 		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
 		/// </summary>
-		[ConfigurationProperty("nodeLocator", IsRequired = false), TypeConverter(typeof(TypeNameConverter)), InterfaceValidator(typeof(Enyim.Caching.Memcached.IMemcachedNodeLocator))]
-		public Type NodeLocator
+		[ConfigurationProperty("transcoder", IsRequired = false)]
+		public ProviderElement<ITranscoder> Transcoder
 		{
-			get { return (Type)base["nodeLocator"]; }
-			set { base["nodeLocator"] = value; }
-		}
-
-		/// <summary>
-		/// Gets or sets the type of the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
-		/// </summary>
-		[ConfigurationProperty("transcoder", IsRequired = false), TypeConverter(typeof(TypeNameConverter)), InterfaceValidator(typeof(Enyim.Caching.Memcached.ITranscoder))]
-		public Type Transcoder
-		{
-			get { return (Type)base["transcoder"]; }
+			get { return (ProviderElement<ITranscoder>)base["transcoder"]; }
 			set { base["transcoder"] = value; }
-		}
-
-		/// <summary>
-		/// Gets or sets a value indicating whether operation statistics are created using Windows Performance Counters.
-		/// </summary>
-		/// <remarks>This is set to false by default so the application using this library will work even if teh performance counters are not installed.</remarks>
-		[ConfigurationProperty("enablePerformanceCounters", IsRequired = false, DefaultValue = false)]
-		public bool EnablePerformanceCounters
-		{
-			get { return (bool)base["enablePerformanceCounters"]; }
-			set { base["enablePerformanceCounters"] = value; }
 		}
 
 		/// <summary>
@@ -88,6 +86,16 @@ namespace Enyim.Caching.Configuration
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the type of the communication between client and server.
+		/// </summary>
+		[ConfigurationProperty("protocol", IsRequired = false, DefaultValue = MemcachedProtocol.Text)]
+		public MemcachedProtocol Protocol
+		{
+			get { return (MemcachedProtocol)base["protocol"]; }
+			set { base["protocol"] = value; }
+		}
+
 		#region [ IMemcachedClientConfiguration]
 		IList<IPEndPoint> IMemcachedClientConfiguration.Servers
 		{
@@ -99,45 +107,57 @@ namespace Enyim.Caching.Configuration
 			get { return this.SocketPool; }
 		}
 
-		Type IMemcachedClientConfiguration.KeyTransformer
+		IMemcachedKeyTransformer IMemcachedClientConfiguration.CreateKeyTransformer()
 		{
-			get { return this.KeyTransformer; }
-			set { this.KeyTransformer = value; }
+			return this.KeyTransformer.CreateInstance() ?? new DefaultKeyTransformer();
 		}
 
-		Type IMemcachedClientConfiguration.NodeLocator
+		IMemcachedNodeLocator IMemcachedClientConfiguration.CreateNodeLocator()
 		{
-			get { return this.NodeLocator; }
-			set { this.NodeLocator = value; }
+			return this.NodeLocator.CreateInstance() ?? new DefaultNodeLocator();
 		}
 
-		Type IMemcachedClientConfiguration.Transcoder
+		ITranscoder IMemcachedClientConfiguration.CreateTranscoder()
 		{
-			get { return this.Transcoder; }
-			set { this.Transcoder = value; }
+			return this.Transcoder.CreateInstance() ?? new DefaultTranscoder();
 		}
+
+		IAuthenticationConfiguration IMemcachedClientConfiguration.Authentication
+		{
+			get { return this.Authentication; }
+		}
+
+		IServerPool IMemcachedClientConfiguration.CreatePool()
+		{
+			switch (this.Protocol)
+			{
+				case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory());
+				case MemcachedProtocol.Binary: return new Enyim.Caching.Memcached.Protocol.Binary.BinaryPool(this);
+			}
+
+			throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);
+		}
+
 		#endregion
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
- *
- * Copyright (c) Attila Kiskó, enyim.com
- *
- * This source code is subject to terms and conditions of 
- * Microsoft Permissive License (Ms-PL).
  * 
- * A copy of the license can be found in the License.html
- * file at the root of this distribution. If you can not 
- * locate the License, please send an email to a@enyim.com
- * 
- * By using this source code in any fashion, you are 
- * agreeing to be bound by the terms of the Microsoft 
- * Permissive License.
- *
- * You must not remove this notice, or any other, from this
- * software.
- *
+ *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *    
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *    
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *    
  * ************************************************************/
 #endregion

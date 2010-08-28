@@ -1,54 +1,62 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Net;
-using System.Net.Sockets;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 
 namespace Enyim.Caching.Memcached
 {
 	[DebuggerDisplay("[ Address: {endpoint}, IsAlive = {IsAlive} ]")]
-	internal class PooledSocket : IDisposable
+	public class PooledSocket : IDisposable
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(PooledSocket));
 
-		private const int ErrorResponseLength = 13;
-
-		private const string GenericErrorResponse = "ERROR";
-		private const string ClientErrorResponse = "CLIENT_ERROR ";
-		private const string ServerErrorResponse = "SERVER_ERROR ";
-
 		private bool isAlive = true;
 		private Socket socket;
-		private Action<PooledSocket> cleanupCallback;
 		private IPEndPoint endpoint;
 
 		private BufferedStream inputStream;
-		private MemcachedNode ownerNode;
 
-		internal PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, Action<PooledSocket> cleanupCallback)
+		public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
 		{
-			this.endpoint = endpoint;
-			this.cleanupCallback = cleanupCallback;
-
-			this.socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-			this.socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, connectionTimeout == TimeSpan.MaxValue ? Timeout.Infinite : (int)connectionTimeout.TotalMilliseconds);
-			this.socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, receiveTimeout == TimeSpan.MaxValue ? Timeout.Infinite : (int)receiveTimeout.TotalMilliseconds);
+			var socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
 			// all operations are "atomic", we do not send small chunks of data
-			this.socket.NoDelay = true;
+			socket.NoDelay = true;
 
-			this.socket.Connect(endpoint);
-			this.inputStream = new BufferedStream(new BasicNetworkStream(this.socket));
+			var mre = new ManualResetEvent(false);
+			var timeout = connectionTimeout == TimeSpan.MaxValue
+							? Timeout.Infinite
+							: (int)connectionTimeout.TotalMilliseconds;
+
+			socket.BeginConnect(endpoint, iar =>
+			{
+				try { socket.EndConnect(iar); }
+				catch { }
+
+				mre.Set();
+			}, null);
+
+			if (!mre.WaitOne(timeout) || !socket.Connected)
+			{
+				using (socket)
+					throw new TimeoutException("Could not connect to " + endpoint);
+			}
+
+			this.socket = socket;
+			this.endpoint = endpoint;
+
+			this.inputStream = new BufferedStream(new BasicNetworkStream(socket));
 		}
 
-		public MemcachedNode OwnerNode
+		public Action<PooledSocket> CleanupCallback { get; set; }
+
+		public int Available
 		{
-			get { return this.ownerNode; }
-			internal set { this.ownerNode = value; }
+			get { return this.socket.Available; }
 		}
 
 		public void Reset()
@@ -77,24 +85,8 @@ namespace Enyim.Caching.Memcached
 				log.DebugFormat("Socket {0} was reset", this.InstanceId);
 		}
 
-		//private int threadId = -1;
-
-		//private void LockToThread()
-		//{
-		//    if (this.threadId > -1)
-		//        throw new InvalidOperationException("We are already bound to thread #" + this.threadId);
-
-		//    this.threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
-		//}
-
-		//private void CheckThread()
-		//{
-		//    if (this.threadId != System.Threading.Thread.CurrentThread.ManagedThreadId)
-		//        throw new InvalidOperationException(String.Format("Thread id differs: {0} vs {1}", this.threadId, System.Threading.Thread.CurrentThread.ManagedThreadId));
-		//}
-
 		/// <summary>
-		/// The ID of theis instance. Used by the <see cref="T:MemcachedServer"/> to identify the instance in its inner lists.
+		/// The ID of this instance. Used by the <see cref="T:MemcachedServer"/> to identify the instance in its inner lists.
 		/// </summary>
 		public readonly Guid InstanceId = Guid.NewGuid();
 
@@ -112,27 +104,40 @@ namespace Enyim.Caching.Memcached
 			this.Dispose(true);
 		}
 
+		~PooledSocket()
+		{
+			try { this.Dispose(true); }
+			catch { }
+		}
+
 		protected void Dispose(bool disposing)
 		{
 			if (disposing)
 			{
 				GC.SuppressFinalize(this);
 
-				if (socket != null)
+				try
 				{
-					using (this.socket)
-						this.socket.Shutdown(SocketShutdown.Both);
+					if (socket != null)
+					{
+						using (this.socket)
+							this.socket.Shutdown(SocketShutdown.Both);
+					}
+
+					this.inputStream.Dispose();
+
+					this.inputStream = null;
+					this.socket = null;
+					this.CleanupCallback = null;
 				}
-
-				this.inputStream.Dispose();
-
-				this.inputStream = null;
-				this.socket = null;
-				this.cleanupCallback = null;
+				catch (Exception e)
+				{
+					log.Error(e);
+				}
 			}
 			else
 			{
-				Action<PooledSocket> cc = this.cleanupCallback;
+				Action<PooledSocket> cc = this.CleanupCallback;
 
 				if (cc != null)
 				{
@@ -153,42 +158,16 @@ namespace Enyim.Caching.Memcached
 		}
 
 		/// <summary>
-		/// Reads a line from the socket. A line is terninated by \r\n.
+		/// Reads the next byte from the server's response.
 		/// </summary>
-		/// <returns></returns>
-		private string ReadLine()
+		/// <remarks>This method blocks and will not return until the value is read.</remarks>
+		public int ReadByte()
 		{
-			MemoryStream ms = new MemoryStream(50);
-
-			bool gotR = false;
-			byte[] buffer = new byte[1];
-
-			int data;
+			this.CheckDisposed();
 
 			try
 			{
-				while (true)
-				{
-					data = this.inputStream.ReadByte();
-
-					if (data == 13)
-					{
-						gotR = true;
-						continue;
-					}
-
-					if (gotR)
-					{
-						if (data == 10)
-							break;
-
-						ms.WriteByte(13);
-
-						gotR = false;
-					}
-
-					ms.WriteByte((byte)data);
-				}
+				return this.inputStream.ReadByte();
 			}
 			catch (IOException)
 			{
@@ -196,52 +175,6 @@ namespace Enyim.Caching.Memcached
 
 				throw;
 			}
-
-			string retval = Encoding.ASCII.GetString(ms.GetBuffer(), 0, (int)ms.Length);
-
-			if (log.IsDebugEnabled)
-				log.Debug("ReadLine: " + retval);
-
-			return retval;
-		}
-
-		/// <summary>
-		/// Sends the command to the server. The trailing \r\n is automatically appended.
-		/// </summary>
-		/// <param name="value">The command to be sent to the server.</param>
-		public void SendCommand(string value)
-		{
-			this.CheckDisposed();
-			//this.CheckThread();
-
-			if (log.IsDebugEnabled)
-				log.Debug("SendCommand: " + value);
-
-			// send the whole command with only one Write
-			// since Nagle is disabled on the socket this is more efficient than
-			// Write(command), Write("\r\n")
-			this.Write(PooledSocket.GetCommandBuffer(value));
-		}
-
-		/// <summary>
-		/// Gets the bytes representing the specified command. returned buffer can be used to streamline multiple writes into one Write on the Socket
-		/// using the <see cref="M:Enyim.Caching.Memcached.PooledSocket.Write(IList&lt;ArraySegment&lt;byte&gt;&gt;)"/>
-		/// </summary>
-		/// <param name="value">The command to be converted.</param>
-		/// <returns>The buffer containing the bytes representing the command. The returned buffer will be terminated with 13, 10 (\r\n)</returns>
-		/// <remarks>The Nagle algorithm is disabled on the socket to speed things up, so it's recommended to convert a command into a buffer
-		/// and use the <see cref="M:Enyim.Caching.Memcached.PooledSocket.Write(IList&lt;ArraySegment&lt;byte&gt;&gt;)"/> to send the command and the additional buffers in one transaction.</remarks>
-		public static ArraySegment<byte> GetCommandBuffer(string value)
-		{
-			int valueLength = value.Length;
-			byte[] data = new byte[valueLength + 2];
-
-			Encoding.ASCII.GetBytes(value, 0, valueLength, data, 0);
-
-			data[valueLength] = 13;
-			data[valueLength + 1] = 10;
-
-			return new ArraySegment<byte>(data);
 		}
 
 		/// <summary>
@@ -254,10 +187,6 @@ namespace Enyim.Caching.Memcached
 		public void Read(byte[] buffer, int offset, int count)
 		{
 			this.CheckDisposed();
-			//this.CheckThread();
-
-			if (log.IsDebugEnabled)
-				log.DebugFormat("Reading {0} bytes into buffer starting at {1}", count, offset);
 
 			int read = 0;
 			int shouldRead = count;
@@ -282,18 +211,9 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public void Write(ArraySegment<byte> data)
-		{
-			this.Write(data.Array, data.Offset, data.Count);
-		}
-
 		public void Write(byte[] data, int offset, int length)
 		{
 			this.CheckDisposed();
-			//this.CheckThread();
-
-			if (log.IsDebugEnabled)
-				log.DebugFormat("Writing {0} bytes from buffer starting at {1}", length, offset);
 
 			SocketError status;
 
@@ -310,10 +230,6 @@ namespace Enyim.Caching.Memcached
 		public void Write(IList<ArraySegment<byte>> buffers)
 		{
 			this.CheckDisposed();
-			//this.CheckThread();
-
-			if (log.IsDebugEnabled)
-				log.DebugFormat("Writing {0} buffer(s)", buffers.Count);
 
 			SocketError status;
 
@@ -327,43 +243,60 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		/// <summary>
-		/// Reads the response of the server.
-		/// </summary>
-		/// <returns>The data sent by the memcached server.</returns>
-		/// <exception cref="T:System.InvalidOperationException">The server did not sent a response or an empty line was returned.</exception>
-		/// <exception cref="T:Enyim.Caching.Memcached.MemcachedException">The server did not specified any reason just returned the string ERROR. - or - The server returned a SERVER_ERROR, in this case the Message of the exception is the message returned by the server.</exception>
-		/// <exception cref="T:Enyim.Caching.Memcached.MemcachedClientException">The server did not recognize the request sent by the client. The Message of the exception is the message returned by the server.</exception>
-		public string ReadResponse()
+		public IAsyncResult BeginWrite(IList<ArraySegment<byte>> buffers, AsyncCallback callback, object state)
 		{
 			this.CheckDisposed();
-			//this.CheckThread();
 
-			string response = this.ReadLine();
-
-			if (log.IsDebugEnabled)
-				log.Debug("Received response: " + response);
-
-			if (String.IsNullOrEmpty(response))
-				throw new MemcachedClientException("Empty response received.");
-
-			if (String.Compare(response, GenericErrorResponse, StringComparison.Ordinal) == 0)
-				throw new NotSupportedException("Operation is not supported by the server or the request was malformed. If the latter please report the bug to the developers.");
-
-			if (response.Length >= ErrorResponseLength)
-			{
-				if (String.Compare(response, 0, ClientErrorResponse, 0, ErrorResponseLength, StringComparison.Ordinal) == 0)
-				{
-					throw new MemcachedClientException(response.Remove(0, ErrorResponseLength));
-				}
-				else if (String.Compare(response, 0, ServerErrorResponse, 0, ErrorResponseLength, StringComparison.Ordinal) == 0)
-				{
-					throw new MemcachedException(response.Remove(0, ErrorResponseLength));
-				}
-			}
-
-			return response;
+			return this.socket.BeginSend(buffers, SocketFlags.None, callback, state);
 		}
+
+		public void EndWrite(IAsyncResult result)
+		{
+			SocketError status;
+
+			this.socket.EndSend(result, out status);
+
+			if (status != SocketError.Success)
+			{
+				this.isAlive = false;
+
+				ThrowHelper.ThrowSocketWriteError(this.endpoint, status);
+			}
+		}
+
+		//public IAsyncResult BeginRead(byte[] buffer, int offset, int size, AsyncCallback callback, object state)
+		//{
+		//    this.inputStream.BEG
+		//    return null;
+
+		//    //return this.socket.BeginReceive(buffer, offset, size, callback, state);
+
+		//    //            this.CheckDisposed();
+
+		//    //int read = 0;
+		//    //int shouldRead = count;
+
+		//    //while (read < count)
+		//    //{
+		//    //    try
+		//    //    {
+		//    //        int currentRead = this.inputStream.Read(buffer, offset, shouldRead);
+		//    //        if (currentRead < 1)
+		//    //            continue;
+
+		//    //        read += currentRead;
+		//    //        offset += currentRead;
+		//    //        shouldRead -= currentRead;
+		//    //    }
+		//    //    catch (IOException)
+		//    //    {
+		//    //        this.isAlive = false;
+		//    //        throw;
+		//    //    }
+		//    //}
+
+		//}
+
 
 		#region [ BasicNetworkStream           ]
 		private class BasicNetworkStream : Stream
@@ -405,13 +338,39 @@ namespace Enyim.Caching.Memcached
 				set { throw new NotSupportedException(); }
 			}
 
+			public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+			{
+				SocketError errorCode;
+
+				var retval = this.socket.BeginReceive(buffer, offset, count, SocketFlags.None, out errorCode, callback, state);
+
+				if (errorCode == SocketError.Success)
+					return retval;
+
+				throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode));
+			}
+
+			public override int EndRead(IAsyncResult asyncResult)
+			{
+				SocketError errorCode;
+
+				var retval = this.socket.EndReceive(asyncResult, out errorCode);
+
+				// actually "0 bytes read" could mean an error as well
+				if (errorCode == SocketError.Success && retval > 0)
+					return retval;
+
+				throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode));
+			}
+
 			public override int Read(byte[] buffer, int offset, int count)
 			{
 				SocketError errorCode;
 
 				int retval = this.socket.Receive(buffer, offset, count, SocketFlags.None, out errorCode);
 
-				if (errorCode == SocketError.Success)
+				// actually "0 bytes read" could mean an error as well
+				if (errorCode == SocketError.Success && retval > 0)
 					return retval;
 
 				throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode));
@@ -438,22 +397,20 @@ namespace Enyim.Caching.Memcached
 
 #region [ License information          ]
 /* ************************************************************
- *
- * Copyright (c) Attila Kiskó, enyim.com
- *
- * This source code is subject to terms and conditions of 
- * Microsoft Permissive License (Ms-PL).
  * 
- * A copy of the license can be found in the License.html
- * file at the root of this distribution. If you can not 
- * locate the License, please send an email to a@enyim.com
- * 
- * By using this source code in any fashion, you are 
- * agreeing to be bound by the terms of the Microsoft 
- * Permissive License.
- *
- * You must not remove this notice, or any other, from this
- * software.
- *
+ *    Copyright (c) 2010 Attila Kisk�, enyim.com
+ *    
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *    
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *    
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *    
  * ************************************************************/
 #endregion

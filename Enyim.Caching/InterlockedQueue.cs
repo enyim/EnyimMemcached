@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System;
 using System.Threading;
 
 namespace Enyim.Collections
@@ -11,8 +9,8 @@ namespace Enyim.Collections
 	/// <typeparam name="T"></typeparam>
 	public class InterlockedQueue<T>
 	{
-		private Node head;
-		private Node tail;
+		private Node headNode;
+		private Node tailNode;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:InterlockedQueue"/> class.
@@ -21,8 +19,8 @@ namespace Enyim.Collections
 		{
 			Node node = new Node(default(T));
 
-			this.head = node;
-			this.tail = node;
+			this.headNode = node;
+			this.tailNode = node;
 		}
 
 		/// <summary>
@@ -39,12 +37,12 @@ namespace Enyim.Collections
 			while (true)
 			{
 				// read head
-				head = this.head;
-				tail = this.tail;
+				head = this.headNode;
+				tail = this.tailNode;
 				next = head.Next;
 
 				// Are head, tail, and next consistent?
-				if (Object.ReferenceEquals(this.head, head))
+				if (Object.ReferenceEquals(this.headNode, head))
 				{
 					// is tail falling behind
 					if (Object.ReferenceEquals(head.Next, tail.Next))
@@ -59,7 +57,7 @@ namespace Enyim.Collections
 						}
 
 						Interlocked.CompareExchange<Node>(
-							ref this.tail,
+							ref this.tailNode,
 							next.Next,
 							tail);
 					}
@@ -70,7 +68,7 @@ namespace Enyim.Collections
 
 						// try to swing the head to the next node
 						if (Interlocked.CompareExchange<Node>(
-							ref this.head,
+							ref this.headNode,
 							next,
 							head) == head)
 						{
@@ -92,11 +90,11 @@ namespace Enyim.Collections
 
 			while (true)
 			{
-				Node tail = this.tail;
+				Node tail = this.tailNode;
 				Node next = tail.Next;
 
 				// are tail and next consistent
-				if (Object.ReferenceEquals(tail, this.tail))
+				if (Object.ReferenceEquals(tail, this.tailNode))
 				{
 					// was tail pointing to the last node?
 					if (Object.ReferenceEquals(next, null))
@@ -107,14 +105,14 @@ namespace Enyim.Collections
 								)
 							)
 						{
-							Interlocked.CompareExchange(ref this.tail, valueNode, tail);
+							Interlocked.CompareExchange(ref this.tailNode, valueNode, tail);
 							break;
 						}
 					}
 					else // tail was not pointing to last node
 					{
 						// try to swing Tail to the next node
-						Interlocked.CompareExchange<Node>(ref this.tail, next, tail);
+						Interlocked.CompareExchange<Node>(ref this.tailNode, next, tail);
 					}
 				}
 			}
@@ -137,22 +135,20 @@ namespace Enyim.Collections
 
 #region [ License information          ]
 /* ************************************************************
- *
- * Copyright (c) Attila Kiskó, enyim.com
- *
- * This source code is subject to terms and conditions of 
- * Microsoft Permissive License (Ms-PL).
  * 
- * A copy of the license can be found in the License.html
- * file at the root of this distribution. If you can not 
- * locate the License, please send an email to a@enyim.com
- * 
- * By using this source code in any fashion, you are 
- * agreeing to be bound by the terms of the Microsoft 
- * Permissive License.
- *
- * You must not remove this notice, or any other, from this
- * software.
- *
+ *    Copyright (c) 2010 Attila Kisk�, enyim.com
+ *    
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *    
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *    
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *    
  * ************************************************************/
 #endregion

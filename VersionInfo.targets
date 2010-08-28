@@ -1,0 +1,31 @@
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<Target Name="BeforeBuild" Condition=" $(Configuration) == 'Release' " DependsOnTargets="CreateAssemblyInfo;IncludeGeneratedAssemblyInfo">
+		
+	</Target>
+
+	<PropertyGroup>
+		<GeneratedAssemblyInfo>obj\$(Configuration)\.assemblyinfo</GeneratedAssemblyInfo>
+		<GitDescribe>obj\$(Configuration)\.describe</GitDescribe>
+		<GitTagMatch Condition=" '$(GitTagMatch)' == '' ">*</GitTagMatch>
+	</PropertyGroup>
+
+	<Target Name="CreateAssemblyInfo">
+
+		<MakeDir Directories="obj\$(Configuration)" />
+
+		<Exec Command="git describe --tags --match $(GitTagMatch) > $(GitDescribe)" />
+		<ReadLinesFromFile File="$(GitDescribe)">
+			<Output TaskParameter="Lines" PropertyName="_AssemblyFileVersion"/>
+		</ReadLinesFromFile>
+
+		<Delete Files="$(GeneratedAssemblyInfo)" />
+		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Lines="[assembly: System.Reflection.AssemblyFileVersion(&quot;$(_AssemblyFileVersion)&quot;)]" />
+	</Target>
+
+	<Target Name="IncludeGeneratedAssemblyInfo">
+		<CreateItem Include="$(GeneratedAssemblyInfo)">
+			<Output TaskParameter="Include" ItemName="Compile"/>
+		</CreateItem>
+	</Target>
+
+</Project>
