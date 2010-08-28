@@ -31,6 +31,11 @@ namespace NorthScale.Store
 
 		public NorthScalePool(INorthScaleClientConfiguration configuration) : this(configuration, null) { }
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="T:NorthScale.Store.NorthScalePool" /> class using the specified configuration and bucket name.
+		/// </summary>
+		/// <param name="configuration"></param>
+		/// <param name="bucket"></param>
 		public NorthScalePool(INorthScaleClientConfiguration configuration, string bucket)
 		{
 			this.configuration = configuration;
