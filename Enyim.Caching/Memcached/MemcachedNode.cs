@@ -20,7 +20,6 @@ namespace Enyim.Caching.Memcached
 		private static readonly object SyncRoot = new Object();
 
 		private bool isDisposed;
-		private double deadTimeout = 2 * 60;
 
 		private IPEndPoint endPoint;
 		private ISocketPoolConfiguration config;
@@ -31,15 +30,13 @@ namespace Enyim.Caching.Memcached
 			this.endPoint = endpoint;
 			this.config = socketPoolConfig;
 
-			this.deadTimeout = socketPoolConfig.DeadTimeout.TotalSeconds;
-			if (this.deadTimeout < 0)
-				throw new InvalidOperationException("deadTimeout must be >= TimeSpan.Zero");
-
 			if (socketPoolConfig.ConnectionTimeout.TotalMilliseconds >= Int32.MaxValue)
 				throw new InvalidOperationException("ConnectionTimeout must be < Int32.MaxValue");
 
 			this.internalPoolImpl = new InternalPoolImpl(this, socketPoolConfig);
 		}
+
+		public event Action<IMemcachedNode> Failed;
 
 		/// <summary>
 		/// Gets the <see cref="T:IPEndPoint"/> of this instance
@@ -62,42 +59,44 @@ namespace Enyim.Caching.Memcached
 		/// <summary>
 		/// Gets a value indicating whether the server is working or not.
 		/// 
-		/// If the server is not working, and the "being dead" timeout has been expired it will reinitialize itself.
+		/// If the server is back online, we'll ercreate the internal socket pool and mark the server as alive so operations can target it.
 		/// </summary>
-		/// <remarks>It's possible that the server is still not up &amp; running so the next call to <see cref="M:Acquire"/> could mark the instance as dead again.</remarks>
-		/// <returns></returns>
+		/// <returns>true if the server is alive; false otherwise.</returns>
 		public bool Ping()
 		{
 			// is the server working?
 			if (this.internalPoolImpl.IsAlive)
 				return true;
 
-			// deadTimeout was set to 0 which means forever
-			if (this.deadTimeout == 0)
-				return false;
-
-			TimeSpan diff = DateTime.UtcNow - this.internalPoolImpl.MarkedAsDeadUtc;
-
-			// only do the real check if the configured time interval has passed
-			if (diff.TotalSeconds < this.deadTimeout)
-				return false;
-
 			// this codepath is (should be) called very rarely
 			// if you get here hundreds of times then you have bigger issues
 			// and try to make the memcached instaces more stable and/or increase the deadTimeout
-			lock (SyncRoot)
+			try
 			{
-				if (this.internalPoolImpl.IsAlive)
-					return true;
+				// try to connect to the server
+				using (var socket = this.CreateSocket()) ;
 
-				// it's easier to create a new pool than reinitializing a dead one
-				try { this.internalPoolImpl.Dispose(); }
-				catch { }
+				// we could connect to the server, let's recreate the socket pool
+				lock (SyncRoot)
+				{
+					if (this.internalPoolImpl.IsAlive)
+						return true;
 
-				Interlocked.Exchange(ref this.internalPoolImpl, new InternalPoolImpl(this, this.config));
+					// it's easier to create a new pool than reinitializing a dead one
+					// rewrite-then-dispose to avoid a race condition with Acquire (which does no locking)
+					var oldPool = this.internalPoolImpl;
+					var newPool = new InternalPoolImpl(this, this.config);
+
+					Interlocked.Exchange(ref this.internalPoolImpl, newPool);
+
+					try { oldPool.Dispose(); }
+					catch { }
+				}
+
+				return true;
 			}
-
-			return true;
+			//could not reconnect
+			catch { return false; }
 		}
 
 		/// <summary>
@@ -125,7 +124,7 @@ namespace Enyim.Caching.Memcached
 			GC.SuppressFinalize(this);
 
 			// this is not a graceful shutdown
-			// if someone uses a pooled item then 99% that an exception will be thrown
+			// if someone uses a pooled item then it's 99% that an exception will be thrown
 			// somewhere. But since the dispose is mostly used when everyone else is finished
 			// this should not kill any kittens
 			lock (SyncRoot)
@@ -314,6 +313,11 @@ namespace Enyim.Caching.Memcached
 
 				this.isAlive = false;
 				this.markedAsDeadUtc = DateTime.UtcNow;
+
+				var f = this.ownerNode.Failed;
+
+				if (f != null)
+					f(this.ownerNode);
 			}
 
 			/// <summary>
@@ -350,9 +354,8 @@ namespace Enyim.Caching.Memcached
 				}
 				else
 				{
-					// one of our previous sockets has died, so probably all of them are dead
-					// kill the socket thus clearing the pool, and after we become alive
-					// we'll fill the pool with working sockets
+					// one of our previous sockets has died, so probably all of them 
+					// are dead. so, kill the socket (this will eventually clear the pool as well)
 					socket.Destroy();
 				}
 			}
@@ -429,147 +432,28 @@ namespace Enyim.Caching.Memcached
 			return retval;
 		}
 
-		public virtual bool Execute(IOperation op)
+		protected virtual bool ExecuteOperation(IOperation op)
 		{
 			using (var ps = this.Acquire())
 			{
-				if (ps == null) return false;
-
-				ps.Write(op.GetBuffer());
-
-				return op.ReadResponse(ps);
-			}
-		}
-
-		#region temp async
-		/*
-		class Pair<TFirst, TSecond>
-		{
-			public Pair(TFirst first, TSecond second)
-			{
-				this.First = first;
-				this.Second = second;
-			}
-
-			public readonly TFirst First;
-			public readonly TSecond Second;
-		}
-
-		public IAsyncResult BeginExecute(IOperation op)
-		{
-			var req = op.GetRequest();
-			var ps = this.Acquire();
-
-			var retval = new IAR(null)
-			{
-				PS = ps,
-				Request = req
-			};
-
-			ps.BeginWrite(req.GetBuffer(), PS_BeginWriteCallback, retval);
-
-			return retval;
-		}
-
-		private static void PS_BeginWriteCallback(IAsyncResult result)
-		{
-			var iar = (IAR)result.AsyncState;
-
-			iar.PS.EndWrite(result);
-			iar.Request.BeginReadResponse(iar.PS, Request_BeginReadResponseCallback, iar);
-		}
-
-		private static void Request_BeginReadResponseCallback(IAsyncResult result)
-		{
-			var iar = (IAR)result.AsyncState;
-
-			iar.Success = iar.Request.EndReadResponse(result);
-			iar.Complete();
-		}
-
-		public bool EndExecute(IAsyncResult result)
-		{
-			using (var iar = (IAR)result)
-			using (iar.PS)
-			{
-				if (!result.IsCompleted)
-					result.AsyncWaitHandle.WaitOne();
-
-				return iar.Success;
-			}
-		}
-
-		#region IAR
-		class IAR : IAsyncResult, IDisposable
-		{
-			private object state;
-			private object SyncLock;
-			private ManualResetEvent mre;
-			private bool isCompleted;
-
-			public PooledSocket PS { get; set; }
-			public IRequest Request { get; set; }
-
-			public IAR(object state)
-			{
-				this.state = state;
-				this.SyncLock = new Object();
-			}
-
-			object IAsyncResult.AsyncState
-			{
-				get { return this.state; }
-			}
-
-			WaitHandle IAsyncResult.AsyncWaitHandle
-			{
-				get
+				try
 				{
-					if (this.mre == null)
-						lock (this.SyncLock)
-							if (this.mre == null)
-								this.mre = new ManualResetEvent(this.isCompleted);
+					if (ps == null) return false;
 
-					return this.mre;
+					ps.Write(op.GetBuffer());
+
+					return op.ReadResponse(ps);
+				}
+				catch (Exception e)
+				{
+					log.Error(e);
+
+					return false;
 				}
 			}
-
-			bool IAsyncResult.CompletedSynchronously
-			{
-				get { return false; }
-			}
-
-			bool IAsyncResult.IsCompleted
-			{
-				get { return this.isCompleted; }
-			}
-
-			internal void Complete()
-			{
-				this.isCompleted = true;
-
-				lock (this.SyncLock)
-					if (this.mre != null)
-						mre.Set();
-			}
-
-			public bool Success { get; set; }
-
-			void IDisposable.Dispose()
-			{
-				lock (SyncLock)
-					if (this.mre != null)
-					{
-						((IDisposable)this.mre).Dispose();
-						this.mre = null;
-					}
-			}
 		}
-		#endregion
-		*/
-		#endregion
 
-		#region IMemcachedNode Members
+		#region [ IMemcachedNode               ]
 
 		IPEndPoint IMemcachedNode.EndPoint
 		{
@@ -588,17 +472,23 @@ namespace Enyim.Caching.Memcached
 
 		bool IMemcachedNode.Execute(IOperation op)
 		{
-			return this.Execute(op);
+			return this.ExecuteOperation(op);
 		}
 
-		IAsyncResult IMemcachedNode.BeginExecute(IOperation op, AsyncCallback callback, object state)
-		{
-			throw new NotImplementedException();
-		}
+		//IAsyncResult IMemcachedNode.BeginExecute(IOperation op, AsyncCallback callback, object state)
+		//{
+		//    throw new NotImplementedException();
+		//}
 
-		bool IMemcachedNode.EndExecute(IAsyncResult result)
+		//bool IMemcachedNode.EndExecute(IAsyncResult result)
+		//{
+		//    throw new NotImplementedException();
+		//}
+
+		event Action<IMemcachedNode> IMemcachedNode.Failed
 		{
-			throw new NotImplementedException();
+			add { this.Failed += value; }
+			remove { this.Failed -= value; }
 		}
 
 		#endregion

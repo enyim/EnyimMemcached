@@ -22,6 +22,11 @@ namespace Enyim.Caching.Memcached
 		private int mask;
 		private Func<HashAlgorithm> factory;
 
+		private VBucketNodeLocator()
+		{
+			throw new InvalidOperationException("You must use the VBucketNodeLocatorFactory in the configuration file to use this locator!");
+		}
+
 		public VBucketNodeLocator(string hashAlgorithm, VBucket[] buckets)
 		{
 			var log = Math.Log(buckets.Length, 2);
@@ -62,6 +67,9 @@ namespace Enyim.Caching.Memcached
 
 		void IMemcachedNodeLocator.Initialize(IList<IMemcachedNode> nodes)
 		{
+			// we do not care about dead nodes
+			if (this.nodes != null) return;
+
 			this.nodes = nodes.ToArray();
 		}
 

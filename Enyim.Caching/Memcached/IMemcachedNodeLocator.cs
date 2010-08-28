@@ -11,7 +11,14 @@ namespace Enyim.Caching.Memcached
 		/// Initializes the locator.
 		/// </summary>
 		/// <param name="nodes">The memcached nodes defined in the configuration.</param>
+		/// <remarks>This called first when the server pool is initialized, and subsequently every time 
+		/// when a node goes down or comes back. If your locator has its own logic to deal with dead nodes 
+		/// then ignore all calls but the first. Otherwise make sure that your implementation can handle 
+		/// simultaneous calls to Initialize and Locate in a thread safe manner.</remarks>
+		/// <seealso cref="T:DefaultNodeLocator"/>
+		/// <seealso cref="T:KetamaNodeLocator"/>
 		void Initialize(IList<IMemcachedNode> nodes);
+
 		/// <summary>
 		/// Returns the memcached node the specified key belongs to.
 		/// </summary>
@@ -22,7 +29,7 @@ namespace Enyim.Caching.Memcached
 		/// <summary>
 		/// Returns all the working nodes currently available to the locator.
 		/// </summary>
-		/// <remarks>It should return an instance which is safe to enumerate multiple times and provides the same results.</remarks>
+		/// <remarks>It should return an instance which is safe to enumerate multiple times and provides the same results every time.</remarks>
 		/// <returns></returns>
 		IEnumerable<IMemcachedNode> GetWorkingNodes();
 	}

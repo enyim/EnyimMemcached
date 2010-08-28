@@ -12,7 +12,6 @@ namespace Enyim.Caching.Memcached
 	public sealed class DefaultNodeLocator : IMemcachedNodeLocator, IDisposable
 	{
 		private const int ServerAddressMutations = 100;
-		private const int IsAliveTimerInterval = 60 * 1000;
 
 		// holds all server keys for mapping an item key to the server consistently
 		private uint[] keys;
@@ -24,6 +23,8 @@ namespace Enyim.Caching.Memcached
 		private List<IMemcachedNode> allServers = new List<IMemcachedNode>();
 
 		private ReaderWriterLockSlim serverAccessLock = new ReaderWriterLockSlim();
+
+		public TimeSpan DeadTimeout { get; set; }
 
 		/// <summary>
 		/// Checks if a dead node is working again.
@@ -59,7 +60,8 @@ namespace Enyim.Caching.Memcached
 					}
 				}
 
-				this.isAliveTimer.Change(IsAliveTimerInterval, Timeout.Infinite);
+				// ask the timer to fire again after DeadTimeout time
+				this.isAliveTimer.Change((long)this.DeadTimeout.TotalMilliseconds, Timeout.Infinite);
 			}
 			finally
 			{
@@ -92,67 +94,65 @@ namespace Enyim.Caching.Memcached
 
 		void IMemcachedNodeLocator.Initialize(IList<IMemcachedNode> nodes)
 		{
-			this.allServers = nodes.ToList();
-			this.BuildIndex(this.allServers);
+			this.serverAccessLock.EnterWriteLock();
 
-			this.isAliveTimer = new Timer(this.callback_isAliveTimer, null, IsAliveTimerInterval, Timeout.Infinite);
+			try
+			{
+				this.allServers = nodes.ToList();
+				this.BuildIndex(this.allServers);
+
+				if (this.isAliveTimer == null)
+					this.isAliveTimer = new Timer(this.callback_isAliveTimer, null, (long)this.DeadTimeout.TotalMilliseconds, Timeout.Infinite);
+			}
+			finally
+			{
+				this.serverAccessLock.ExitWriteLock();
+			}
 		}
 
 		IMemcachedNode IMemcachedNodeLocator.Locate(string key)
 		{
 			if (key == null) throw new ArgumentNullException("key");
 
-			return this.Locate(key);
+			this.serverAccessLock.EnterUpgradeableReadLock();
+
+			try { return this.Locate(key); }
+			finally { this.serverAccessLock.ExitUpgradeableReadLock(); }
 		}
 
 		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetWorkingNodes()
 		{
 			this.serverAccessLock.EnterReadLock();
 
-			try
-			{
-				return this.allServers.Except(this.deadServers.Keys).ToArray();
-			}
-			finally
-			{
-				this.serverAccessLock.ExitReadLock();
-			}
+			try { return this.allServers.Except(this.deadServers.Keys).ToArray(); }
+			finally { this.serverAccessLock.ExitReadLock(); }
 		}
 
 		private IMemcachedNode Locate(string key)
 		{
-			this.serverAccessLock.EnterUpgradeableReadLock();
+			var node = FindNode(key);
+			if (node == null || node.IsAlive)
+				return node;
+
+			// move the current node to the dead list and rebuild the indexes
+			this.serverAccessLock.EnterWriteLock();
 
 			try
 			{
-				var node = FindNode(key);
-				if (node == null || node.IsAlive)
-					return node;
+				// check if it's still dead or it came back
+				// while waiting for the write lock
+				if (!node.IsAlive)
+					this.deadServers[node] = true;
 
-				// move the current node to the dead list and rebuild the indexes
-				this.serverAccessLock.EnterWriteLock();
-
-				try
-				{
-					// check if it's still dead or it came back
-					// while waiting for the write lock
-					if (!node.IsAlive)
-						this.deadServers[node] = true;
-
-					this.BuildIndex(this.allServers.Except(this.deadServers.Keys).ToList());
-				}
-				finally
-				{
-					this.serverAccessLock.ExitWriteLock();
-				}
-
-				// try again with the dead server removed from the lists
-				return ((IMemcachedNodeLocator)this).Locate(key);
+				this.BuildIndex(this.allServers.Except(this.deadServers.Keys).ToList());
 			}
 			finally
 			{
-				this.serverAccessLock.ExitUpgradeableReadLock();
+				this.serverAccessLock.ExitWriteLock();
 			}
+
+			// try again with the dead server removed from the lists
+			return this.Locate(key);
 		}
 
 		/// <summary>

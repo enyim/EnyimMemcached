@@ -32,9 +32,15 @@ namespace Enyim.Caching.Memcached
 							? Timeout.Infinite
 							: (int)connectionTimeout.TotalMilliseconds;
 
-			socket.BeginConnect(endpoint, iar => { socket.EndConnect(iar); mre.Set(); }, null);
+			socket.BeginConnect(endpoint, iar =>
+			{
+				try { socket.EndConnect(iar); }
+				catch { }
 
-			if (!mre.WaitOne(timeout))
+				mre.Set();
+			}, null);
+
+			if (!mre.WaitOne(timeout) || !socket.Connected)
 			{
 				using (socket)
 					throw new TimeoutException("Could not connect to " + endpoint);
