@@ -119,12 +119,11 @@ namespace Enyim.Caching.Memcached
 				try
 				{
 					if (socket != null)
-					{
-						using (this.socket)
-							this.socket.Shutdown(SocketShutdown.Both);
-					}
+						try { using (this.socket) this.socket.Shutdown(SocketShutdown.Both); }
+						catch { }
 
-					this.inputStream.Dispose();
+					if (this.inputStream != null)
+						this.inputStream.Dispose();
 
 					this.inputStream = null;
 					this.socket = null;
