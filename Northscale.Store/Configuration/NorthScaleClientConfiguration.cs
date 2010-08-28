@@ -12,6 +12,10 @@ namespace NorthScale.Store.Configuration
 	/// </summary>
 	public class NorthScaleClientConfiguration : INorthScaleClientConfiguration
 	{
+		private Type nodeLocator;
+		private ITranscoder transcoder;
+		private IMemcachedKeyTransformer keyTransformer;
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
 		/// </summary>
@@ -40,17 +44,40 @@ namespace NorthScale.Store.Configuration
 		/// <summary>
 		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
 		/// </summary>
-		public IMemcachedKeyTransformer KeyTransformer { get; set; }
+		public IMemcachedKeyTransformer KeyTransformer
+		{
+			get { return this.keyTransformer ?? (this.keyTransformer = new DefaultKeyTransformer()); }
+			set { this.keyTransformer = value; }
+		}
 
 		/// <summary>
-		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
+		/// Gets or sets the Type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
 		/// </summary>
-		public IMemcachedNodeLocator NodeLocator { get; set; }
+		/// <remarks>If both <see cref="M:NodeLocator"/> and  <see cref="M:NodeLocatorFactory"/> are assigned then the latter takes precedence.</remarks>
+		public Type NodeLocator
+		{
+			get { return this.nodeLocator; }
+			set
+			{
+				ConfigurationHelper.CheckForInterface(value, typeof(IMemcachedNodeLocator));
+				this.nodeLocator = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the NodeLocatorFactory instance which will be used to create a new IMemcachedNodeLocator instances.
+		/// </summary>
+		/// <remarks>If both <see cref="M:NodeLocator"/> and  <see cref="M:NodeLocatorFactory"/> are assigned then the latter takes precedence.</remarks>
+		public IProviderFactory<IMemcachedNodeLocator> NodeLocatorFactory { get; set; }
 
 		/// <summary>
 		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
 		/// </summary>
-		public ITranscoder Transcoder { get; set; }
+		public ITranscoder Transcoder
+		{
+			get { return this.transcoder ?? (this.transcoder = new DefaultTranscoder()); }
+			set { this.transcoder = value; }
+		}
 
 		/// <summary>
 		/// Determines which port the client should use to connect to the nodes
@@ -80,7 +107,12 @@ namespace NorthScale.Store.Configuration
 
 		IMemcachedNodeLocator INorthScaleClientConfiguration.CreateNodeLocator()
 		{
-			return this.NodeLocator;
+			var f = this.NodeLocatorFactory;
+			if (f != null) return f.Create();
+
+			return this.NodeLocator == null
+					? new KetamaNodeLocator()
+					: (IMemcachedNodeLocator)FastActivator.Create(this.NodeLocator);
 		}
 
 		ITranscoder INorthScaleClientConfiguration.CreateTranscoder()

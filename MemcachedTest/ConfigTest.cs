@@ -107,7 +107,7 @@ namespace MemcachedTest
 			mcc.Servers.Add(new System.Net.IPEndPoint(IPAddress.Loopback, 20000));
 			mcc.Servers.Add(new System.Net.IPEndPoint(IPAddress.Loopback, 20002));
 
-			mcc.NodeLocator = new DefaultNodeLocator();
+			mcc.NodeLocator = typeof(DefaultNodeLocator);
 			mcc.KeyTransformer = new SHA1KeyTransformer();
 			mcc.Transcoder = new DefaultTranscoder();
 

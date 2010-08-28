@@ -13,7 +13,7 @@ namespace Enyim.Caching.Configuration
 	public class MemcachedClientConfiguration : IMemcachedClientConfiguration
 	{
 		// these are lazy initialized in the getters
-		private IMemcachedNodeLocator nodeLocator;
+		private Type nodeLocator;
 		private ITranscoder transcoder;
 		private IMemcachedKeyTransformer keyTransformer;
 
@@ -73,13 +73,24 @@ namespace Enyim.Caching.Configuration
 		}
 
 		/// <summary>
-		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
+		/// Gets or sets the Type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
 		/// </summary>
-		public IMemcachedNodeLocator NodeLocator
+		/// <remarks>If both <see cref="M:NodeLocator"/> and  <see cref="M:NodeLocatorFactory"/> are assigned then the latter takes precedence.</remarks>
+		public Type NodeLocator
 		{
-			get { return this.nodeLocator ?? (this.nodeLocator = new DefaultNodeLocator()); }
-			set { this.nodeLocator = value; }
+			get { return this.nodeLocator; }
+			set
+			{
+				ConfigurationHelper.CheckForInterface(value, typeof(IMemcachedNodeLocator));
+				this.nodeLocator = value;
+			}
 		}
+
+		/// <summary>
+		/// Gets or sets the NodeLocatorFactory instance which will be used to create a new IMemcachedNodeLocator instances.
+		/// </summary>
+		/// <remarks>If both <see cref="M:NodeLocator"/> and  <see cref="M:NodeLocatorFactory"/> are assigned then the latter takes precedence.</remarks>
+		public IProviderFactory<IMemcachedNodeLocator> NodeLocatorFactory { get; set; }
 
 		/// <summary>
 		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialize or deserialize items.
@@ -119,7 +130,12 @@ namespace Enyim.Caching.Configuration
 
 		IMemcachedNodeLocator IMemcachedClientConfiguration.CreateNodeLocator()
 		{
-			return this.NodeLocator;
+			var f = this.NodeLocatorFactory;
+			if (f != null) return f.Create();
+
+			return this.NodeLocator == null
+					? new DefaultNodeLocator()
+					: (IMemcachedNodeLocator)FastActivator.Create(this.NodeLocator);
 		}
 
 		ITranscoder IMemcachedClientConfiguration.CreateTranscoder()
