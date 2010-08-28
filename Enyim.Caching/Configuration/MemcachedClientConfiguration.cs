@@ -8,7 +8,7 @@ using Enyim.Caching.Memcached.Protocol.Binary;
 namespace Enyim.Caching.Configuration
 {
 	/// <summary>
-	/// COnfiguration class
+	/// Configuration class
 	/// </summary>
 	public class MemcachedClientConfiguration : IMemcachedClientConfiguration
 	{
@@ -27,6 +27,25 @@ namespace Enyim.Caching.Configuration
 			this.Authentication = new AuthenticationConfiguration();
 
 			this.Protocol = MemcachedProtocol.Binary;
+		}
+
+		/// <summary>
+		/// Adds a new server to the pool.
+		/// </summary>
+		/// <param name="address">The address and the port of the server in the format 'host:port'.</param>
+		public void AddServer(string address)
+		{
+			this.Servers.Add(ConfigurationHelper.ResolveToEndPoint(address));
+		}
+
+		/// <summary>
+		/// Adds a new server to the pool.
+		/// </summary>
+		/// <param name="address">The host name or IP address of the server.</param>
+		/// <param name="port">The port number of the memcached instance.</param>
+		public void AddServer(string host, int port)
+		{
+			this.Servers.Add(ConfigurationHelper.ResolveToEndPoint(host, port));
 		}
 
 		/// <summary>
@@ -63,7 +82,7 @@ namespace Enyim.Caching.Configuration
 		}
 
 		/// <summary>
-		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialize or deserialize items.
 		/// </summary>
 		public ITranscoder Transcoder
 		{
