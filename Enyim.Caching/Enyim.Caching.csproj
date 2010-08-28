@@ -194,6 +194,7 @@
     <Compile Include="Memcached\KeyTransformers\TigerHashKeyTransformer.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Memcached\Locators\KetamaNodeLocatorFactory.cs" />
     <Compile Include="Memcached\Locators\DefaultNodeLocator.cs">
       <SubType>Code</SubType>
     </Compile>

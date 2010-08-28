@@ -3321,12 +3321,32 @@ namespace MemcachedTest
 			return true;
 		}
 
-		IAsyncResult IMemcachedNode.BeginExecute(IOperation op, AsyncCallback callback, object state)
+		//IAsyncResult IMemcachedNode.BeginExecute(IOperation op, AsyncCallback callback, object state)
+		//{
+		//    throw new NotImplementedException();
+		//}
+
+		//bool IMemcachedNode.EndExecute(IAsyncResult result)
+		//{
+		//    throw new NotImplementedException();
+		//}
+
+		#endregion
+
+		#region IMemcachedNode Members
+
+
+		event Action<IMemcachedNode> IMemcachedNode.Failed
 		{
-			throw new NotImplementedException();
+			add { }
+			remove { }
 		}
 
-		bool IMemcachedNode.EndExecute(IAsyncResult result)
+		#endregion
+
+		#region IDisposable Members
+
+		void IDisposable.Dispose()
 		{
 			throw new NotImplementedException();
 		}

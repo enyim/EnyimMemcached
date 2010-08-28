@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Web;
 
 namespace Enyim.Caching.Memcached
 {
@@ -13,15 +14,53 @@ namespace Enyim.Caching.Memcached
 	public sealed class KetamaNodeLocator : IMemcachedNodeLocator
 	{
 		// TODO make this configurable without restructuring the whole config system
-		private const string HashName = "System.Security.Cryptography.MD5";
+		private const string DefaultHashName = "System.Security.Cryptography.MD5";
 		private const int ServerAddressMutations = 160;
 		private LookupData lookupData;
+		private string hashName;
+		private Func<HashAlgorithm> factory;
+
+		/// <summary>
+		/// Initialized a new instance of the <see cref="KetamaNodeLocator"/> using the default hash algorithm.
+		/// </summary>
+		public KetamaNodeLocator() : this(DefaultHashName) { }
+
+		/// <summary>
+		/// Initialized a new instance of the <see cref="KetamaNodeLocator"/> using a custom hash algorithm.
+		/// </summary>
+		/// <param name="hashName">The name of the hash algorithm to use.
+		/// <list type="table">
+		/// <listheader><term>Name</term><description>Description</description></listheader>
+		/// <item><term>md5</term><description>Equivalent of System.Security.Cryptography.MD5</description></item>
+		/// <item><term>sha1</term><description>Equivalent of System.Security.Cryptography.SHA1</description></item>
+		/// <item><term>tiger</term><description>Tiger Hash</description></item>
+		/// <item><term>crc</term><description>CRC32</description></item>
+		/// <item><term>fnv1_32</term><description>FNV Hash 32bit</description></item>
+		/// <item><term>fnv1_64</term><description>FNV Hash 64bit</description></item>
+		/// <item><term>fnv1a_32</term><description>Modified FNV Hash 32bit</description></item>
+		/// <item><term>fnv1a_64</term><description>Modified FNV Hash 64bit</description></item>
+		/// <item><term>murmur</term><description>Murmur Hash</description></item>
+		/// <item><term>oneatatime</term><description>Jenkin's "One at A time Hash"</description></item>
+		/// </list>
+		/// </param>
+		/// <remarks>If the hashName does not match any of the item on the list it will be passed to HashAlgorithm.Create.</remarks>
+		public KetamaNodeLocator(string hashName)
+		{
+			this.hashName = hashName ?? DefaultHashName;
+
+			if (!hashFactory.TryGetValue(this.hashName, out this.factory))
+				this.factory = () => HashAlgorithm.Create(this.hashName);
+		}
 
 		void IMemcachedNodeLocator.Initialize(IList<IMemcachedNode> nodes)
 		{
+			// quit if we've been initialized because we can handle dead nodes,
+			// so there is no need to recalculate everything
+			if (this.lookupData != null) return;
+
 			// sizeof(uint)
 			const int KeyLength = 4;
-			var hashAlgo = HashAlgorithm.Create(HashName);
+			var hashAlgo = this.CreateHash();
 
 			int PartCount = hashAlgo.HashSize / 8 / KeyLength; // HashSize is in bits, uint is 4 bytes long
 			if (PartCount < 1) throw new ArgumentOutOfRangeException("The hash algorithm must provide at least 32 bits long hashes");
@@ -63,20 +102,31 @@ namespace Enyim.Caching.Memcached
 			var lookupData = new LookupData
 			{
 				keys = keys.ToArray(),
-				keyToServer = keyToServer,
-				servers = nodes.ToArray()
+				KeyToServer = keyToServer,
+				Servers = nodes.ToArray()
 			};
 
-			// now the re-initialization is kinda thread safe without locking
 			Interlocked.Exchange(ref this.lookupData, lookupData);
 		}
 
 		private uint GetKeyHash(string key)
 		{
-			var hashAlgo = HashAlgorithm.Create(HashName);
-			var data = hashAlgo.ComputeHash(Encoding.UTF8.GetBytes(key));
+			var hashAlgo = this.CreateHash();
+			var uintHash = hashAlgo as IUIntHashAlgorithm;
 
-			return ((uint)data[3] << 24) | ((uint)data[2] << 16) | ((uint)data[1] << 8) | ((uint)data[0]);
+			var keyData = Encoding.UTF8.GetBytes(key);
+
+			// shortcut for internal hash algorithms
+			if (uintHash == null)
+			{
+				var data = hashAlgo.ComputeHash(keyData);
+
+				return ((uint)data[3] << 24) | ((uint)data[2] << 16) | ((uint)data[1] << 8) | ((uint)data[0]);
+			}
+			else
+			{
+				return uintHash.ComputeHash(keyData);
+			}
 		}
 
 		IMemcachedNode IMemcachedNodeLocator.Locate(string key)
@@ -85,18 +135,21 @@ namespace Enyim.Caching.Memcached
 
 			var ld = this.lookupData;
 
-			switch (ld.servers.Length)
+			switch (ld.Servers.Length)
 			{
 				case 0: return null;
-				case 1: return ld.servers[0];
+				case 1: return ld.Servers[0];
 			}
 
 			var retval = LocateNode(ld, this.GetKeyHash(key));
 
-			// isalive is not atomic
+			// if the result is not alive then try to mutate the item key and 
+			// find another node this way we do not have to reinitialize every 
+			// time a node dies/comes back
+			// (DefaultServerPool will resurrect the nodes in the background without affecting the  hashring)
 			if (!retval.IsAlive)
 			{
-				for (var i = 0; i < ld.servers.Length; i++)
+				for (var i = 0; i < ld.Servers.Length; i++)
 				{
 					// -- this is from spymemcached so we select the same node for the same items
 					ulong tmpKey = (ulong)GetKeyHash(i + key);
@@ -117,11 +170,11 @@ namespace Enyim.Caching.Memcached
 		{
 			var ld = this.lookupData;
 
-			if (ld.servers == null || ld.servers.Length == 0)
+			if (ld.Servers == null || ld.Servers.Length == 0)
 				return Enumerable.Empty<IMemcachedNode>();
 
-			var retval = new IMemcachedNode[ld.servers.Length];
-			Array.Copy(ld.servers, retval, retval.Length);
+			var retval = new IMemcachedNode[ld.Servers.Length];
+			Array.Copy(ld.Servers, retval, retval.Length);
 
 			return retval;
 		}
@@ -152,21 +205,62 @@ namespace Enyim.Caching.Memcached
 			if (foundIndex < 0 || foundIndex > ld.keys.Length)
 				return null;
 
-			return ld.keyToServer[ld.keys[foundIndex]];
+			return ld.KeyToServer[ld.keys[foundIndex]];
 		}
 
 		#region [ LookupData                   ]
-		// this will encapsulate all the indexes we need for lookup
-		// so the instance can be reinitialized without locking
-		// in case an IMemcachedConfig implementation returns the same instance form the CreateLocator()
+		/// <summary>
+		/// this will encapsulate all the indexes we need for lookup
+		/// so the instance can be reinitialized without locking
+		/// in case an IMemcachedConfig implementation returns the same instance form the CreateLocator()
+		/// </summary>
 		private class LookupData
 		{
-			public IMemcachedNode[] servers;
+			public IMemcachedNode[] Servers;
 			// holds all server keys for mapping an item key to the server consistently
 			public uint[] keys;
 			// used to lookup a server based on its key
-			public Dictionary<uint, IMemcachedNode> keyToServer;
+			public Dictionary<uint, IMemcachedNode> KeyToServer;
 		}
+		#endregion
+		#region [ hashFactory                  ]
+
+		private static readonly Dictionary<string, Func<HashAlgorithm>> hashFactory = new Dictionary<string, Func<HashAlgorithm>>(StringComparer.OrdinalIgnoreCase)
+		{
+		    { String.Empty, () => MD5.Create() },
+		    { "default", () => MD5.Create() },
+			{ "md5", () => MD5.Create() },
+			{ "sha1", () => SHA1.Create() },
+			{ "tiger", () => new TigerHash() },
+		    { "crc", () => new HashkitCrc32() },
+		    { "fnv1_32", () => new Enyim.FNV1() },
+		    { "fnv1_64", () => new Enyim.FNV1a() },
+		    { "fnv1a_32", () => new Enyim.FNV64() },
+		    { "fnv1a_64", () => new Enyim.FNV64a() },
+		    { "murmur", () => new HashkitMurmur() },
+		    { "oneatatime", () => new HashkitOneAtATime() }
+		};
+
+
+		[ThreadStatic]
+		private static HashAlgorithm currentAlgo;
+
+		private HashAlgorithm CreateHash()
+		{
+			// we cache the HashAlgorithm instance per thread
+			// they are reinitialized before every ComputeHash but we avoid creating then GCing them every time we need 
+			// to find something (which will happen a lot)
+			var ctx = HttpContext.Current;
+			if (ctx == null)
+				return currentAlgo ?? (currentAlgo = this.factory());
+
+			var algo = ctx.Items["**VBucket.CurrentAlgo"] as HashAlgorithm;
+			if (algo == null)
+				ctx.Items["**VBucket.CurrentAlgo"] = algo = this.factory();
+
+			return algo;
+		}
+
 		#endregion
 	}
 }
