@@ -29,7 +29,7 @@ If you'd like to add a feature request please add some details how it is suppose
 
 ## Patches
 
-The best bug reports come with a patch as well. Fork it on GitHub then send a pull request so chnges can be included in `master`.
+The best bug reports come with a patch: fork the code on GitHub, then send a pull request so the fixes can be included in the next version.
 
 ## Questions?
 
