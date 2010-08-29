@@ -5,19 +5,14 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Protocol.Text
 {
-	public class StoreOperation : StoreOperationBase, IStoreOperation
+	public class CasOperation : StoreOperationBase, IStoreOperation
 	{
-		private StoreMode mode;
-
-		internal StoreOperation(StoreMode mode, string key, CacheItem value, uint expires)
-			: base((StoreCommand)mode, key, value, expires, 0)
-		{
-			this.mode = mode;
-		}
+		internal CasOperation(string key, CacheItem value, uint expires, ulong cas)
+			: base(StoreCommand.CheckAndSet, key, value, expires, cas) { }
 
 		StoreMode IStoreOperation.Mode
 		{
-			get { return this.mode; }
+			get { return StoreMode.Set; }
 		}
 	}
 }

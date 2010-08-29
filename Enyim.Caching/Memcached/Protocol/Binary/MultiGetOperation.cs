@@ -67,6 +67,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		protected internal override bool ReadResponse(PooledSocket socket)
 		{
 			this.result = new Dictionary<string, CacheItem>();
+			this.Cas = new Dictionary<string, ulong>();
+
 			var response = new BinaryResponse();
 
 			while (response.Read(socket))
@@ -89,7 +91,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 				// deserialize the response
 				int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
+
 				this.result[key] = new CacheItem((ushort)flags, response.Data);
+				this.Cas[key] = response.CAS;
 			}
 
 			// finished reading but we did not find the NOOP

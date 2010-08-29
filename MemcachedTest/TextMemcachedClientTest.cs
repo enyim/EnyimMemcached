@@ -38,6 +38,35 @@ namespace MemcachedTest
 				Assert.AreEqual(88L, client.Decrement("VALUE", 0, 10));
 			}
 		}
+
+		[TestCase]
+		public void CASTest()
+		{
+			using (MemcachedClient client = GetClient())
+			{
+				// store the item
+				var r1 = client.Store(StoreMode.Set, "CasItem1", "foo");
+
+				Assert.IsTrue(r1, "Initial set failed.");
+
+				// get back the item and check the cas value (it should match the cas from the set)
+				var r2 = client.GetWithCas<string>("CasItem1");
+
+				Assert.AreEqual(r2.Result, "foo", "Invalid data returned; expected 'foo'.");
+				Assert.AreNotEqual(0, r2.Cas, "No cas value was returned.");
+
+				var r3 = client.Cas(StoreMode.Set, "CasItem1", "bar", r2.Cas - 1);
+
+				Assert.IsFalse(r3.Result, "foo", "Overwriting with 'bar' should have failed.");
+
+				var r4 = client.Cas(StoreMode.Set, "CasItem1", "baz", r2.Cas);
+
+				Assert.IsTrue(r4.Result, "foo", "Overwriting with 'baz' should have succeeded.");
+
+				var r5 = client.GetWithCas<string>("CasItem1");
+				Assert.AreEqual(r5.Result, "baz", "Invalid data returned; excpected 'baz'.");
+			}
+		}
 	}
 }
 

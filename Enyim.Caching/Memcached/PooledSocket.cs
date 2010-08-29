@@ -34,7 +34,7 @@ namespace Enyim.Caching.Memcached
 
 			socket.BeginConnect(endpoint, iar =>
 			{
-				try { socket.EndConnect(iar); }
+				try { using (iar.AsyncWaitHandle) socket.EndConnect(iar); }
 				catch { }
 
 				mre.Set();
@@ -119,7 +119,7 @@ namespace Enyim.Caching.Memcached
 				try
 				{
 					if (socket != null)
-						try { using (this.socket) this.socket.Shutdown(SocketShutdown.Both); }
+						try { this.socket.Close(); }
 						catch { }
 
 					if (this.inputStream != null)

@@ -18,7 +18,7 @@ namespace Enyim.Caching.Memcached
 		/// <summary>
 		/// The CAS value returned by the server after executing the command.
 		/// </summary>
-		ulong CasVersion { get; }
+		ulong CasValue { get; }
 	}
 
 	public interface IMultiItemOperation : IOperation

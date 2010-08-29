@@ -300,6 +300,7 @@
     <Compile Include="Memcached\Protocol\Text\ConcateOperation.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Memcached\Protocol\Text\CasOperation.cs" />
     <Compile Include="Memcached\Protocol\Text\DeleteOperation.cs">
       <SubType>Code</SubType>
     </Compile>

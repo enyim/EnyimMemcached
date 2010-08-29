@@ -11,9 +11,9 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 		private StoreCommand command;
 		private CacheItem value;
 		private uint expires;
-		private uint cas;
+		private ulong cas;
 
-		internal StoreOperationBase(StoreCommand mode, string key, CacheItem value, uint expires, uint cas)
+		internal StoreOperationBase(StoreCommand mode, string key, CacheItem value, uint expires, ulong cas)
 			: base(key)
 		{
 			this.command = mode;

@@ -157,7 +157,7 @@ namespace Enyim.Caching
 				if (node.Execute(command))
 				{
 					value = this.transcoder.Deserialize(command.Result);
-					cas = command.CasVersion;
+					cas = command.CasValue;
 
 					return true;
 				}
@@ -222,7 +222,7 @@ namespace Enyim.Caching
 		/// <param name="mode">Defines how the item is stored in the cache.</param>
 		/// <param name="key">The key used to reference the item.</param>
 		/// <param name="value">The object to be inserted into the cache.</param>
-		/// <remarks>The item does not expire unless it is removed due memory pressure.</remarks>
+		/// <remarks>The item does not expire unless it is removed due memory pressure. The text protocol does not support this operation, you need to Store then GetWithCas.</remarks>
 		/// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
 		public CasResult<bool> Cas(StoreMode mode, string key, object value)
 		{
@@ -298,7 +298,7 @@ namespace Enyim.Caching
 				var command = this.pool.OperationFactory.Store(mode, hashedKey, item, expires, cas);
 				var retval = node.Execute(command);
 
-				cas = command.CasVersion;
+				cas = command.CasValue;
 
 				return retval;
 			}
@@ -510,7 +510,7 @@ namespace Enyim.Caching
 				var command = this.pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires, cas);
 				var success = node.Execute(command);
 
-				cas = command.CasVersion;
+				cas = command.CasValue;
 
 				if (success)
 					return command.Result;
@@ -588,7 +588,7 @@ namespace Enyim.Caching
 				var command = this.pool.OperationFactory.Concat(mode, hashedKey, 0, data);
 				var retval = node.Execute(command);
 
-				cas = command.CasVersion;
+				cas = command.CasValue;
 
 				return retval;
 			}
@@ -623,25 +623,32 @@ namespace Enyim.Caching
 			foreach (var node in this.pool.GetWorkingNodes())
 			{
 				var cmd = this.pool.OperationFactory.Stats();
+				var action = new Func<IOperation, bool>(node.Execute);
 				var mre = new ManualResetEvent(false);
 
-				Func<IOperation, bool> action = new Func<IOperation, bool>(node.Execute);
+				handles.Add(mre);
 
 				action.BeginInvoke(cmd, iar =>
 				{
-					action.EndInvoke(iar);
+					using (iar.AsyncWaitHandle)
+					{
+						action.EndInvoke(iar);
 
-					lock (results)
-						results[node.EndPoint] = cmd.Result;
+						lock (results)
+							results[node.EndPoint] = cmd.Result;
 
-					mre.Set();
+						mre.Set();
+					}
 				}, null);
-
-				handles.Add(mre);
 			}
 
 			if (handles.Count > 0)
+			{
 				WaitHandle.WaitAll(handles.ToArray());
+
+				foreach (var wh in handles)
+					wh.Close();
+			}
 
 			return new ServerStats(results);
 		}
@@ -673,12 +680,28 @@ namespace Enyim.Caching
 		/// <returns>a Dictionary holding all items indexed by their key.</returns>
 		public IDictionary<string, object> Get(IEnumerable<string> keys)
 		{
+			return PerformMultiGet<object>(keys, (mget, kvp) => this.transcoder.Deserialize(kvp.Value));
+		}
+
+
+
+		public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
+		{
+			return PerformMultiGet<CasResult<object>>(keys, (mget, kvp) => new CasResult<object>
+			{
+				Result = this.transcoder.Deserialize(kvp.Value),
+				Cas = mget.Cas[kvp.Key]
+			});
+		}
+
+		public IDictionary<string, T> PerformMultiGet<T>(IEnumerable<string> keys, Func<IMultiGetOperation, KeyValuePair<string, CacheItem>, T> collector)
+		{
 			// transform the keys and index them by hashed => original
 			// the mget results will be mapped using this index
 			var hashed = keys.ToDictionary(key => this.keyTransformer.Transform(key));
 			var byServer = hashed.Keys.ToLookup(key => this.pool.Locate(key));
 
-			var retval = new Dictionary<string, object>(hashed.Count);
+			var retval = new Dictionary<string, T>(hashed.Count);
 			var handles = new List<WaitHandle>();
 			var i = 0;
 
@@ -694,33 +717,36 @@ namespace Enyim.Caching
 				var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
 
 				// we'll use the delegate's BeginInvoke/EndInvoke to run the gets parallel
-				Func<IOperation, bool> exec = new Func<IOperation, bool>(node.Execute);
+				var action = new Func<IOperation, bool>(node.Execute);
 				var mre = new ManualResetEvent(false);
 				handles.Add(mre);
 
-				Console.WriteLine(i + " Expecting: " + nodeKeys.Length);
+				if (log.IsDebugEnabled) log.Debug(i + " Expecting: " + nodeKeys.Length);
 
 				//execute the mgets in parallel
-				exec.BeginInvoke(mget, iar =>
+				action.BeginInvoke(mget, iar =>
 				{
 					try
 					{
-						if (exec.EndInvoke(iar))
-						{
-							Console.WriteLine(iar.AsyncState + " Success: " + mget.Result.Count);
-							foreach (var kvp in mget.Result)
+						using (iar.AsyncWaitHandle)
+							if (action.EndInvoke(iar))
 							{
-								string original;
-								var tryget = hashed.TryGetValue(kvp.Key, out original);
+								if (log.IsDebugEnabled) log.Debug(iar.AsyncState + " Success: " + mget.Result.Count);
 
-								Debug.Assert(tryget, "MGet returned unexpected key: " + kvp.Key);
+								// deserialize the items in the dictionary
+								foreach (var kvp in mget.Result)
+								{
+									string original;
+									if (hashed.TryGetValue(kvp.Key, out original))
+									{
+										var result = collector(mget, kvp);
 
-								// the lock will serialize the merges,
-								// but at least the commands were not waiting on each other
-								lock (retval)
-									retval[original] = this.transcoder.Deserialize(kvp.Value);
+										// the lock will serialize the merge,
+										// but at least the commands were not waiting on each other
+										lock (retval) retval[original] = result;
+									}
+								}
 							}
-						}
 					}
 					catch (Exception e)
 					{
@@ -737,7 +763,12 @@ namespace Enyim.Caching
 			}
 
 			if (handles.Count > 0)
+			{
 				WaitHandle.WaitAll(handles.ToArray());
+
+				foreach (var wh in handles)
+					wh.Close();
+			}
 
 			return retval;
 		}

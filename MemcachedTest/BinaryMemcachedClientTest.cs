@@ -56,7 +56,7 @@ namespace MemcachedTest
 		}
 
 		[TestCase]
-		public void CASTest()
+		public virtual void CASTest()
 		{
 			using (MemcachedClient client = GetClient())
 			{

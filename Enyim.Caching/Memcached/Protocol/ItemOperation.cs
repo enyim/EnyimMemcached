@@ -25,7 +25,7 @@ namespace Enyim.Caching.Memcached.Protocol
 			get { return this.Key; }
 		}
 
-		ulong ISingleItemOperation.CasVersion
+		ulong ISingleItemOperation.CasValue
 		{
 			get { return this.Cas; }
 		}

@@ -17,21 +17,30 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 
 		IStoreOperation IOperationFactory.Store(StoreMode mode, string key, CacheItem value, uint expires, ulong cas)
 		{
-			return new StoreOperation(mode, key, value, expires, 0);
+			if (cas == 0)
+				return new StoreOperation(mode, key, value, expires);
+
+			return new CasOperation(key, value, expires, (uint)cas);
 		}
 
 		IDeleteOperation IOperationFactory.Delete(string key, ulong cas)
 		{
+			if (cas > 0) throw new NotSupportedException("Text protocol does not support delete with cas.");
+
 			return new DeleteOperation(key);
 		}
 
 		IMutatorOperation IOperationFactory.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ulong cas)
 		{
+			if (cas > 0) throw new NotSupportedException("Text protocol does not support " + mode + " with cas.");
+
 			return new MutatorOperation(mode, key, delta);
 		}
 
 		IConcatOperation IOperationFactory.Concat(ConcatenationMode mode, string key, ulong cas, ArraySegment<byte> data)
 		{
+			if (cas > 0) throw new NotSupportedException("Text protocol does not support " + mode + " with cas.");
+
 			return new ConcateOperation(mode, key, data);
 		}
 

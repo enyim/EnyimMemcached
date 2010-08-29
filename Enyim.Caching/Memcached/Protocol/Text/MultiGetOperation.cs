@@ -10,26 +10,16 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(MultiGetOperation));
 
 		private Dictionary<string, CacheItem> result;
-		private Dictionary<string, ulong> casValues;
 
 		public MultiGetOperation(IList<string> keys) : base(keys) { }
-
-		public IDictionary<string, ulong> CasValues
-		{
-			get { return this.casValues; }
-		}
 
 		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
 			// gets key1 key2 key3 ... keyN\r\n
-			var commandBuilder = new StringBuilder("gets");
 
-			foreach (var key in this.Keys)
-				commandBuilder.Append(" ").Append(key);
+			var command = "gets " + String.Join(" ", Keys.ToArray()) + TextSocketHelper.CommandTerminator;
 
-			commandBuilder.Append(TextSocketHelper.CommandTerminator);
-
-			return TextSocketHelper.GetCommandBuffer(commandBuilder.ToString());
+			return TextSocketHelper.GetCommandBuffer(command);
 		}
 
 		protected internal override bool ReadResponse(PooledSocket socket)
@@ -59,7 +49,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 			}
 
 			this.result = retval;
-			this.casValues = cas;
+			this.Cas = cas;
 
 			return true;
 		}
