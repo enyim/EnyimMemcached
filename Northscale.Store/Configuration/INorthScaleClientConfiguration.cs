@@ -8,7 +8,16 @@ namespace NorthScale.Store.Configuration
 {
 	public interface INorthScaleClientConfiguration
 	{
+		/// <summary>
+		/// Gets the name of the bucket to be used. If not specified the "default" bucket will be used.
+		/// </summary>
 		string Bucket { get; }
+
+		/// <summary>
+		/// Gets the pasword used to connect to the bucket.
+		/// </summary>
+		/// <remarks> If null, the bucket name will be used. Set to String.Empty to use an empty password.</remarks>
+		string BucketPassword { get; }
 
 		/// <summary>
 		/// Gets a list of <see cref="T:IPEndPoint"/> each representing a Memcached server in the pool.

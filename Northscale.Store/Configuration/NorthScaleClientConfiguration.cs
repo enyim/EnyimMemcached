@@ -27,7 +27,16 @@ namespace NorthScale.Store.Configuration
 			this.SocketPool = new SocketPoolConfiguration();
 		}
 
+		/// <summary>
+		/// Gets or sets the name of the bucket to be used. Can be overriden at the pool's constructor, and if not specified the "default" bucket will be used.
+		/// </summary>
 		public string Bucket { get; set; }
+
+		/// <summary>
+		/// Gets or sets the pasword used to connect to the bucket.
+		/// </summary>
+		/// <remarks> If null, the bucket name will be used. Set to String.Empty to use an empty password.</remarks>
+		public string BucketPassword { get; set; }
 
 		/// <summary>
 		/// Gets a list of <see cref="T:IPEndPoint"/> each representing a Memcached server in the pool.

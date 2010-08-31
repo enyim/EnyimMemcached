@@ -116,6 +116,11 @@ namespace NorthScale.Store.Configuration
 			get { return this.Servers.Bucket; }
 		}
 
+		string INorthScaleClientConfiguration.BucketPassword
+		{
+			get { return this.Servers.BucketPassword; }
+		}
+
 		BucketPortType INorthScaleClientConfiguration.Port
 		{
 			get { return this.Servers.Port; }

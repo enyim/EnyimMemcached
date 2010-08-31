@@ -27,22 +27,40 @@ namespace NorthScale.Store
 		private IOperationFactory operationFactory;
 
 		private string bucketName;
+		private string bucketPassword;
 		private IMemcachedNode[] currentNodes;
 
 		public NorthScalePool(INorthScaleClientConfiguration configuration) : this(configuration, null) { }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:NorthScale.Store.NorthScalePool" /> class using the specified configuration and bucket name.
+		/// Initializes a new instance of the <see cref="T:NorthScale.Store.NorthScalePool" /> class using the specified configuration 
+		/// and bucket name. The name also will be used as the bucket password.
 		/// </summary>
-		/// <param name="configuration"></param>
-		/// <param name="bucket"></param>
-		public NorthScalePool(INorthScaleClientConfiguration configuration, string bucket)
+		/// <param name="configuration">The configuration to be used.</param>
+		/// <param name="bucket">The name of the bucket to connect to.</param>
+		public NorthScalePool(INorthScaleClientConfiguration configuration, string bucket) : this(configuration, bucket, bucket) { }
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="T:NorthScale.Store.NorthScalePool" /> class using the specified configuration,
+		/// bucket name and password.
+		/// </summary>
+		/// <param name="configuration">The configuration to be used.</param>
+		/// <param name="bucket">The name of the bucket to connect to.</param>
+		/// <param name="bucketPassword">The password to the bucket.</param>
+		/// <remarks> If the password is null, the bucket name will be used. Set to String.Empty to use an empty password.</remarks>
+		public NorthScalePool(INorthScaleClientConfiguration configuration, string bucket, string bucketPassword)
 		{
 			this.configuration = configuration;
 			this.bucketName = bucket ?? configuration.Bucket;
+			// parameter -> config -> name
+			this.bucketPassword = bucketPassword ?? configuration.BucketPassword ?? bucket;
 
+			// make null both if we use the default bucket since we do not need to be authenticated
 			if (String.IsNullOrEmpty(this.bucketName) || this.bucketName == "default")
+			{
 				this.bucketName = null;
+				this.bucketPassword = null;
+			}
 		}
 
 		~NorthScalePool()
@@ -80,7 +98,7 @@ namespace NorthScale.Store
 			// default bucket does not require authentication
 			var auth = this.bucketName == null
 						? null
-						: new PlainTextAuthenticator(null, this.bucketName, this.bucketName);
+						: new PlainTextAuthenticator(null, this.bucketName, this.bucketPassword);
 
 			IEnumerable<IMemcachedNode> nodes;
 			IMemcachedNodeLocator locator;

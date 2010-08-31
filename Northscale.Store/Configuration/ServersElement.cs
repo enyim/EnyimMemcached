@@ -8,13 +8,24 @@ namespace NorthScale.Store.Configuration
 	public sealed class ServersElement : ConfigurationElement
 	{
 		/// <summary>
-		/// Gets or sets the name of the bucket to be used. Can be overriden at the pool's constructor, and if not pecified the "default" bucket will be used.
+		/// Gets or sets the name of the bucket to be used. Can be overriden at the pool's constructor, and if not specified the "default" bucket will be used.
 		/// </summary>
 		[ConfigurationProperty("bucket", IsRequired = false)]
 		public string Bucket
 		{
 			get { return (string)base["bucket"]; }
 			set { base["bucket"] = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the pasword used to connect to the bucket.
+		/// </summary>
+		/// <remarks> If null, the bucket name will be used. Set to String.Empty to use an empty password.</remarks>
+		[ConfigurationProperty("bucketPassword", IsRequired = false)]
+		public string BucketPassword
+		{
+			get { return (string)base["bucketPassword"]; }
+			set { base["bucketPassword"] = value; }
 		}
 
 		/// <summary>
@@ -49,7 +60,7 @@ namespace NorthScale.Store.Configuration
 		/// <summary>
 		/// Determines which port the client should use to connect to the nodes
 		/// </summary>
-		[ConfigurationProperty("port", IsRequired = false, DefaultValue=BucketPortType.Proxy)]
+		[ConfigurationProperty("port", IsRequired = false, DefaultValue = BucketPortType.Proxy)]
 		public BucketPortType Port
 		{
 			get { return (BucketPortType)base["port"]; }
