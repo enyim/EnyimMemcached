@@ -52,9 +52,13 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			var retval = response.Read(socket);
 			this.Cas = response.CAS;
 
-			if (!retval)
-				if (log.IsDebugEnabled)
+#if EVEN_MORE_LOGGING
+			if (log.IsDebugEnabled)
+				if (retval)
+					log.DebugFormat("Store succeeded for key '{0}'. Reason: {1}", this.Key);
+				else
 					log.DebugFormat("Store failed for key '{0}'. Reason: {1}", this.Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
+#endif
 
 			return retval;
 		}
