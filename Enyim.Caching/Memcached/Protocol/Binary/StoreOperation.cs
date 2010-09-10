@@ -48,7 +48,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 		protected internal override bool ReadResponse(PooledSocket socket)
 		{
-			var response = new BinaryResponse();
+			var response = this.CurrentResponse = new BinaryResponse();
 			var retval = response.Read(socket);
 			this.Cas = response.CAS;
 

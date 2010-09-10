@@ -139,6 +139,8 @@ namespace NorthScale.Store
 			{
 				var helper = new ConfigHelper(client);
 				var bucket = helper.ResolveBucket(uri, this.bucketName);
+				if (bucket == null)
+					return null;
 
 				var streamingUri = bucket.streamingUri;
 
