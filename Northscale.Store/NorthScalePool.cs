@@ -92,6 +92,16 @@ namespace NorthScale.Store
 		{
 			if (log.IsInfoEnabled) log.Info("Received new configuration.");
 
+			if (config == null)
+			{
+				if (log.IsInfoEnabled) log.Info("Config is empty, all nodes are down.");
+
+				Interlocked.Exchange(ref this.currentNodes, new IMemcachedNode[0]);
+				Interlocked.Exchange(ref this.nodeLocator, NotFoundLocator.Instance);
+
+				return;
+			}
+
 			// these should be disposed after we've been reinitialized
 			var oldNodes = this.currentNodes;
 
@@ -200,6 +210,29 @@ namespace NorthScale.Store
 		{
 			return this.nodeLocator.GetWorkingNodes();
 		}
+
+		#region [ NotFoundLocator              ]
+
+		private class NotFoundLocator : IMemcachedNodeLocator
+		{
+			public static readonly IMemcachedNodeLocator Instance = new NotFoundLocator();
+
+			void IMemcachedNodeLocator.Initialize(IList<IMemcachedNode> nodes)
+			{
+			}
+
+			IMemcachedNode IMemcachedNodeLocator.Locate(string key)
+			{
+				return null;
+			}
+
+			IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetWorkingNodes()
+			{
+				return Enumerable.Empty<IMemcachedNode>();
+			}
+		}
+
+		#endregion
 	}
 }
 
