@@ -23,12 +23,10 @@ namespace NorthScale.Store
 		private Uri[] poolUrls;
 		private BucketConfigListener configListener;
 
-		private IMemcachedNodeLocator nodeLocator;
-		private IOperationFactory operationFactory;
+		private InternalState state;
 
 		private string bucketName;
 		private string bucketPassword;
-		private IMemcachedNode[] currentNodes;
 
 		public NorthScalePool(INorthScaleClientConfiguration configuration) : this(configuration, null) { }
 
@@ -69,6 +67,8 @@ namespace NorthScale.Store
 			catch { }
 		}
 
+		public VBucketNodeLocator ForwardLocator { get; private set; }
+
 		void IServerPool.Start()
 		{
 			// get the pool urls
@@ -93,7 +93,7 @@ namespace NorthScale.Store
 			if (log.IsInfoEnabled) log.Info("Received new configuration.");
 
 			// these should be disposed after we've been reinitialized
-			var oldNodes = this.currentNodes;
+			var oldNodes = this.state == null ? null : this.state.CurrentNodes;
 
 			// default bucket does not require authentication
 			var auth = this.bucketName == null
@@ -102,6 +102,7 @@ namespace NorthScale.Store
 
 			IEnumerable<IMemcachedNode> nodes;
 			IMemcachedNodeLocator locator;
+			IOperationFactory opFactory;
 
 			if (config == null || config.vBucketServerMap == null)
 			{
@@ -122,7 +123,7 @@ namespace NorthScale.Store
 
 				locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator();
 
-				this.operationFactory = new Enyim.Caching.Memcached.Protocol.Binary.BinaryOperationFactory();
+				opFactory = new Enyim.Caching.Memcached.Protocol.Binary.BinaryOperationFactory();
 			}
 			else
 			{
@@ -151,18 +152,31 @@ namespace NorthScale.Store
 
 				locator = vbnl;
 
-				this.operationFactory = new VBucketAwareOperationFactory(vbnl);
+				opFactory = new VBucketAwareOperationFactory(vbnl);
 			}
 
 			var mcNodes = nodes.ToArray();
 			locator.Initialize(mcNodes);
 
-			Interlocked.Exchange(ref this.currentNodes, mcNodes);
-			Interlocked.Exchange(ref this.nodeLocator, locator);
+			var state = new InternalState
+			{
+				CurrentNodes = mcNodes,
+				Locator = locator,
+				OpFactory = opFactory
+			};
+
+			Interlocked.Exchange(ref this.state, state);
 
 			if (oldNodes != null)
 				for (var i = 0; i < oldNodes.Length; i++)
 					oldNodes[i].Dispose();
+		}
+
+		class InternalState
+		{
+			public IMemcachedNodeLocator Locator;
+			public IOperationFactory OpFactory;
+			public IMemcachedNode[] CurrentNodes;
 		}
 
 		void IDisposable.Dispose()
@@ -173,32 +187,32 @@ namespace NorthScale.Store
 
 				this.configListener = null;
 
-				var currentNodes = this.currentNodes;
+				var currentNodes = this.state.CurrentNodes;
 
 				// close the pools
 				if (currentNodes != null)
 				{
 					for (var i = 0; i < currentNodes.Length; i++)
 						currentNodes[i].Dispose();
-
-					this.currentNodes = null;
 				}
+
+				this.state = null;
 			}
 		}
 
 		IMemcachedNode IServerPool.Locate(string key)
 		{
-			return this.nodeLocator.Locate(key);
+			return this.state.Locator.Locate(key);
 		}
 
 		IOperationFactory IServerPool.OperationFactory
 		{
-			get { return this.operationFactory; }
+			get { return this.state.OpFactory; }
 		}
 
 		IEnumerable<IMemcachedNode> IServerPool.GetWorkingNodes()
 		{
-			return this.nodeLocator.GetWorkingNodes();
+			return this.state.Locator.GetWorkingNodes();
 		}
 	}
 }
