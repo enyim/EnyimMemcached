@@ -161,7 +161,7 @@ namespace NorthScale.Store
 		{
 			if (startNode.Execute(op)) return true;
 
-			var iows = (IOpWithState)op;
+			var iows = (IOperationWithState)op;
 
 #if HAS_FORWARD_MAP
 			// node responded with invalid vbucket
@@ -183,7 +183,7 @@ namespace NorthScale.Store
 			}
 #endif
 			// still invalid vbucket, try all nodes in sequence
-			if (iows.State == OpState.InvalidVBucket)
+			if (iows.State == OperationState.InvalidVBucket)
 			{
 				var nodes = this.Pool.GetWorkingNodes();
 
@@ -193,7 +193,7 @@ namespace NorthScale.Store
 						return true;
 
 					// the node accepted our request so quit
-					if (iows.State != OpState.InvalidVBucket)
+					if (iows.State != OperationState.InvalidVBucket)
 						break;
 				}
 			}
