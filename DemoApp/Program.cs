@@ -15,59 +15,6 @@ namespace DemoApp
 	{
 		static void Main(string[] args)
 		{
-			var ns = new NorthScaleClient();
-
-			var v1 = ns.CasStore(StoreMode.Set, "A", "1");
-			var v2 = ns.GetWithCas("A");
-
-			var v3 = ns.CasStore(StoreMode.Set, "A", "2", 1);
-			var v4 = ns.GetWithCas("A");
-
-			var v5 = ns.CasStore(StoreMode.Set, "A", "3", v1.Cas);
-			var v6 = ns.GetWithCas("A");
-
-
-
-			//ns.Store(StoreMode.Set, "K", 1);
-			//var K = ns.Get2("K");
-
-			//var prefix = new Random().Next(1000) + "_random_multi_get_key_";
-			//var keys = new List<string>();
-
-			//Console.WriteLine(ns.Increment("VALUE", 100, 2));
-			//Console.WriteLine(ns.Increment("VALUE", 10, 24));
-
-			//ns.FlushAll();
-			////Thread.Sleep(10000);
-			//Console.WriteLine("flush done");
-
-			//for (var i = 0; i < 2000; i++)
-			//{
-			//    var key = prefix + i;
-			//    keys.Add(key);
-
-			//    ns.Store(StoreMode.Set, key, i);
-			//}
-
-			//var retval = ns.Get(keys);
-			//Console.WriteLine(retval.Count);
-			//Console.WriteLine(retval.Count == keys.Count ? "success" : "fail");
-
-			Console.ReadLine();
-
-			return;
-
-			//new NorthScaleClient().Stats();
-
-			//var nsc = new NorthScaleClientConfiguration();
-
-			//nsc.KeyTransformer = new TigerHashKeyTransformer();
-			//nsc.NodeLocator = new VBucketNodeLocator("crc", new VBucket[] { new VBucket(0, null), new VBucket(1, null) });
-
-			//nsc.Urls.Add(new Uri("http://192.168.2.200:8080/pools/default"));
-
-			//new NorthScaleClient(nsc);
-
 			// create a MemcachedClient
 			// in your application you can cache the client in a static variable or just recreate it every time
 			// MemcachedClient mc = new MemcachedClient();
