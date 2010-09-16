@@ -31,6 +31,10 @@ namespace Enyim.Caching
 		/// </summary>
 		public MemcachedClient() : this(DefaultSettings) { }
 
+		protected IServerPool Pool { get { return this.pool; } }
+		protected IMemcachedKeyTransformer KeyTransformer { get { return this.keyTransformer; } }
+		protected ITranscoder Transcoder { get { return this.transcoder; } }
+
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the specified configuration section. 
 		/// This overload allows to create multiple MemcachedClients with different pool configurations.
@@ -145,7 +149,7 @@ namespace Enyim.Caching
 			return retval;
 		}
 
-		private bool PerformTryGet(string key, out ulong cas, out object value)
+		protected virtual bool PerformTryGet(string key, out ulong cas, out object value)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
@@ -278,7 +282,7 @@ namespace Enyim.Caching
 			return new CasResult<bool> { Cas = tmp, Result = retval };
 		}
 
-		private bool PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas)
+		protected virtual bool PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
@@ -500,7 +504,7 @@ namespace Enyim.Caching
 			return new CasResult<ulong> { Cas = tmp, Result = retval };
 		}
 
-		private ulong PerformMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ref ulong cas)
+		protected virtual ulong PerformMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ref ulong cas)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
@@ -578,7 +582,7 @@ namespace Enyim.Caching
 			return new CasResult<bool> { Cas = tmp, Result = success };
 		}
 
-		private bool PerformConcatenate(ConcatenationMode mode, string key, ref ulong cas, ArraySegment<byte> data)
+		protected virtual bool PerformConcatenate(ConcatenationMode mode, string key, ref ulong cas, ArraySegment<byte> data)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);

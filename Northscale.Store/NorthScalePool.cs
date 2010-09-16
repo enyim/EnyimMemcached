@@ -23,12 +23,10 @@ namespace NorthScale.Store
 		private Uri[] poolUrls;
 		private BucketConfigListener configListener;
 
-		private IMemcachedNodeLocator nodeLocator;
-		private IOperationFactory operationFactory;
+		private InternalState state;
 
 		private string bucketName;
 		private string bucketPassword;
-		private IMemcachedNode[] currentNodes;
 
 		public NorthScalePool(INorthScaleClientConfiguration configuration) : this(configuration, null) { }
 
@@ -69,24 +67,7 @@ namespace NorthScale.Store
 			catch { }
 		}
 
-		void IServerPool.Start()
-		{
-			// get the pool urls
-			this.poolUrls = this.configuration.Urls.ToArray();
-			if (this.poolUrls.Length == 0)
-				throw new InvalidOperationException("At least 1 pool url must be specified.");
-
-			this.configListener = new BucketConfigListener(this.poolUrls, this.bucketName, this.configuration.Credentials)
-			{
-				Timeout = (int)this.configuration.SocketPool.ConnectionTimeout.TotalMilliseconds,
-				DeadTimeout = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds
-			};
-
-			this.configListener.ClusterConfigChanged += this.InitNodes;
-
-			// start blocks until the first NodeListChanged event is triggered
-			this.configListener.Start();
-		}
+		//public VBucketNodeLocator ForwardLocator { get { return this.state.ForwardLocator; } }
 
 		private void InitNodes(ClusterConfig config)
 		{
@@ -96,22 +77,22 @@ namespace NorthScale.Store
 			{
 				if (log.IsInfoEnabled) log.Info("Config is empty, all nodes are down.");
 
-				Interlocked.Exchange(ref this.currentNodes, new IMemcachedNode[0]);
-				Interlocked.Exchange(ref this.nodeLocator, NotFoundLocator.Instance);
+				Interlocked.Exchange(ref this.state, InternalState.Empty);
 
 				return;
 			}
 
 			// these should be disposed after we've been reinitialized
-			var oldNodes = this.currentNodes;
+			var oldNodes = this.state == null ? null : this.state.CurrentNodes;
 
 			// default bucket does not require authentication
 			var auth = this.bucketName == null
 						? null
 						: new PlainTextAuthenticator(null, this.bucketName, this.bucketPassword);
 
-			IEnumerable<IMemcachedNode> nodes;
+			IMemcachedNode[] nodes;
 			IMemcachedNodeLocator locator;
+			IOperationFactory opFactory;
 
 			if (config == null || config.vBucketServerMap == null)
 			{
@@ -120,7 +101,7 @@ namespace NorthScale.Store
 				// no vbucket config, use the node list and the ports
 				var portType = this.configuration.Port;
 
-				nodes = config == null
+				var tmp = config == null
 						? Enumerable.Empty<IMemcachedNode>()
 							: (from node in config.nodes
 							   let ip = new IPEndPoint(IPAddress.Parse(node.hostname),
@@ -130,9 +111,9 @@ namespace NorthScale.Store
 							   where node.status == "healthy"
 							   select (IMemcachedNode)(new BinaryNode(ip, this.configuration.SocketPool, auth)));
 
+				nodes = tmp.ToArray();
 				locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator();
-
-				this.operationFactory = new Enyim.Caching.Memcached.Protocol.Binary.BinaryOperationFactory();
+				opFactory = new Enyim.Caching.Memcached.Protocol.Binary.BinaryOperationFactory();
 			}
 			else
 			{
@@ -153,26 +134,26 @@ namespace NorthScale.Store
 				var bucketNodeMap = buckets.ToLookup(vb => epa[vb.Master]);
 				var vbnl = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
 
-				// assign the first bucket index to the servers until 
-				// we can solve how to assign the appropriate vbucket index to each command buffer
-				nodes = from ip in endpoints
-						let bucket = Array.IndexOf(buckets, bucketNodeMap[ip].FirstOrDefault())
-						select (IMemcachedNode)(new BinaryNode(ip, this.configuration.SocketPool, auth));
-
+				nodes = endpoints.Select(ip => (IMemcachedNode)new BinaryNode(ip, this.configuration.SocketPool, auth)).ToArray();
 				locator = vbnl;
-
-				this.operationFactory = new VBucketAwareOperationFactory(vbnl);
+				opFactory = new VBucketAwareOperationFactory(vbnl);
 			}
 
-			var mcNodes = nodes.ToArray();
-			locator.Initialize(mcNodes);
+			locator.Initialize(nodes);
 
-			Interlocked.Exchange(ref this.currentNodes, mcNodes);
-			Interlocked.Exchange(ref this.nodeLocator, locator);
+			var state = new InternalState
+			{
+				CurrentNodes = nodes,
+				Locator = locator,
+				OpFactory = opFactory
+			};
+
+			Interlocked.Exchange(ref this.state, state);
 
 			if (oldNodes != null)
 				for (var i = 0; i < oldNodes.Length; i++)
-					oldNodes[i].Dispose();
+					try { oldNodes[i].Dispose(); }
+					catch { }
 		}
 
 		void IDisposable.Dispose()
@@ -183,34 +164,70 @@ namespace NorthScale.Store
 
 				this.configListener = null;
 
-				var currentNodes = this.currentNodes;
+				var currentNodes = this.state.CurrentNodes;
 
 				// close the pools
 				if (currentNodes != null)
 				{
 					for (var i = 0; i < currentNodes.Length; i++)
 						currentNodes[i].Dispose();
-
-					this.currentNodes = null;
 				}
+
+				this.state = null;
 			}
 		}
 
+		#region [ IServerPool                  ]
+
 		IMemcachedNode IServerPool.Locate(string key)
 		{
-			return this.nodeLocator.Locate(key);
+			return this.state.Locator.Locate(key);
 		}
 
 		IOperationFactory IServerPool.OperationFactory
 		{
-			get { return this.operationFactory; }
+			get { return this.state.OpFactory; }
 		}
 
 		IEnumerable<IMemcachedNode> IServerPool.GetWorkingNodes()
 		{
-			return this.nodeLocator.GetWorkingNodes();
+			return this.state.Locator.GetWorkingNodes();
 		}
 
+		void IServerPool.Start()
+		{
+			// get the pool urls
+			this.poolUrls = this.configuration.Urls.ToArray();
+			if (this.poolUrls.Length == 0)
+				throw new InvalidOperationException("At least 1 pool url must be specified.");
+
+			this.configListener = new BucketConfigListener(this.poolUrls, this.bucketName, this.configuration.Credentials)
+			{
+				Timeout = (int)this.configuration.SocketPool.ConnectionTimeout.TotalMilliseconds,
+				DeadTimeout = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds
+			};
+
+			this.configListener.ClusterConfigChanged += this.InitNodes;
+
+			// start blocks until the first NodeListChanged event is triggered
+			this.configListener.Start();
+		}
+
+		#endregion
+		#region [ InternalState                ]
+
+		private class InternalState
+		{
+			public static readonly InternalState Empty = new InternalState { CurrentNodes = new IMemcachedNode[0], Locator = new NotFoundLocator() };
+
+			public IMemcachedNodeLocator Locator;
+			public VBucketNodeLocator ForwardLocator;
+			public IOperationFactory OpFactory;
+			public IMemcachedNode[] CurrentNodes;
+		}
+
+
+		#endregion
 		#region [ NotFoundLocator              ]
 
 		private class NotFoundLocator : IMemcachedNodeLocator

@@ -16,6 +16,7 @@ namespace NorthScale.Store
 		public ClusterNode[] nodes;
 
 		public VBucketConfig vBucketServerMap;
+		public VBucketConfig vBucketForwardServerMap;
 
 		public override int GetHashCode()
 		{
@@ -24,9 +25,16 @@ namespace NorthScale.Store
 			for (var i = 0; i < nodes.Length; i++)
 				cnehc.Add(nodes[i].GetHashCode());
 
-			return this.vBucketServerMap == null
-					? Enyim.HashCodeCombiner.Combine(this.name.GetHashCode(), this.streamingUri.GetHashCode(), cnehc.CurrentHash)
-					: Enyim.HashCodeCombiner.Combine(this.name.GetHashCode(), this.streamingUri.GetHashCode(), cnehc.CurrentHash, this.vBucketServerMap.GetHashCode());
+			if (vBucketForwardServerMap != null)
+				cnehc.Add(vBucketForwardServerMap.GetHashCode());
+
+			if (vBucketServerMap != null)
+				cnehc.Add(vBucketServerMap.GetHashCode());
+
+			cnehc.Add(this.name.GetHashCode());
+			cnehc.Add(this.streamingUri.GetHashCode());
+
+			return cnehc.CurrentHash;
 		}
 	}
 

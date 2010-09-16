@@ -8,6 +8,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		protected BinarySingleItemOperation(string key) : base(key) { }
 
 		protected abstract BinaryRequest Build();
+		protected BinaryResponse CurrentResponse { get; set; }
 
 		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{

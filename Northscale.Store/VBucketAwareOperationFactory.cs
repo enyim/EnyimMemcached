@@ -61,12 +61,27 @@ namespace NorthScale.Store
 			return new FlushOperation();
 		}
 
+		[Serializable]
+		public class InvalidVBucketException : Exception
+		{
+			public InvalidVBucketException() { }
+			public InvalidVBucketException(string message) : base(message) { }
+			public InvalidVBucketException(string message, Exception inner) : base(message, inner) { }
+			protected InvalidVBucketException(
+			  System.Runtime.Serialization.SerializationInfo info,
+			  System.Runtime.Serialization.StreamingContext context)
+				: base(info, context) { }
+		}
+
 		#region [ Custom operations            ]
 
-		private class VBStore : StoreOperation
+		private const string NotMyVBucket = "I'm not responsible for this vbucket";
+
+		private class VBStore : StoreOperation, IOpWithState
 		{
 			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBStore).FullName.Replace('+', '.'));
 			private VBucketNodeLocator locator;
+			private OpState state;
 
 			public VBStore(VBucketNodeLocator locator, StoreMode mode, string key, CacheItem value, uint expires)
 				: base(mode, key, value, expires)
@@ -83,12 +98,36 @@ namespace NorthScale.Store
 
 				return retval;
 			}
+
+			protected override bool ReadResponse(PooledSocket socket)
+			{
+				var r = base.ReadResponse(socket);
+				this.state = r ? OpState.Success : OpState.Failure;
+
+				if (!r)
+				{
+					if (this.CurrentResponse.GetResponseMessage() == NotMyVBucket)
+						this.state = OpState.InvalidVBucket;
+				}
+
+				return r;
+			}
+
+			#region IOpWithState Members
+
+			OpState IOpWithState.State
+			{
+				get { return this.state; }
+			}
+
+			#endregion
 		}
 
-		private class VBDelete : DeleteOperation
+		private class VBDelete : DeleteOperation, IOpWithState
 		{
 			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBDelete).FullName.Replace('+', '.'));
 			private VBucketNodeLocator locator;
+			private OpState state;
 
 			public VBDelete(VBucketNodeLocator locator, string key)
 				: base(key)
@@ -105,12 +144,36 @@ namespace NorthScale.Store
 
 				return retval;
 			}
+
+			protected override bool ReadResponse(PooledSocket socket)
+			{
+				var r = base.ReadResponse(socket);
+				this.state = r ? OpState.Success : OpState.Failure;
+
+				if (!r)
+				{
+					if (this.CurrentResponse.GetResponseMessage() == NotMyVBucket)
+						this.state = OpState.InvalidVBucket;
+				}
+
+				return r;
+			}
+
+			#region IOpWithState Members
+
+			OpState IOpWithState.State
+			{
+				get { return this.state; }
+			}
+
+			#endregion
 		}
 
-		private class VBMutator : MutatorOperation
+		private class VBMutator : MutatorOperation, IOpWithState
 		{
 			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBMutator).FullName.Replace('+', '.'));
 			private VBucketNodeLocator locator;
+			private OpState state;
 
 			public VBMutator(VBucketNodeLocator locator, MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
 				: base(mode, key, defaultValue, delta, expires)
@@ -127,6 +190,29 @@ namespace NorthScale.Store
 
 				return retval;
 			}
+
+			protected override bool ReadResponse(PooledSocket socket)
+			{
+				var r = base.ReadResponse(socket);
+				this.state = r ? OpState.Success : OpState.Failure;
+
+				if (!r)
+				{
+					if (this.CurrentResponse.GetResponseMessage() == NotMyVBucket)
+						this.state = OpState.InvalidVBucket;
+				}
+
+				return r;
+			}
+
+			#region IOpWithState Members
+
+			OpState IOpWithState.State
+			{
+				get { return this.state; }
+			}
+
+			#endregion
 		}
 
 		private class VBMget : MultiGetOperation
@@ -151,10 +237,11 @@ namespace NorthScale.Store
 			}
 		}
 
-		private class VBConcat : ConcatOperation
+		private class VBConcat : ConcatOperation, IOpWithState
 		{
 			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBConcat).FullName.Replace('+', '.'));
 			private VBucketNodeLocator locator;
+			private OpState state;
 
 			public VBConcat(VBucketNodeLocator locator, ConcatenationMode mode, string key, ArraySegment<byte> data)
 				: base(mode, key, data)
@@ -171,17 +258,42 @@ namespace NorthScale.Store
 
 				return retval;
 			}
+
+			protected override bool ReadResponse(PooledSocket socket)
+			{
+				var r = base.ReadResponse(socket);
+				this.state = r ? OpState.Success : OpState.Failure;
+
+				if (!r)
+				{
+					if (this.CurrentResponse.GetResponseMessage() == NotMyVBucket)
+						this.state = OpState.InvalidVBucket;
+				}
+
+				return r;
+			}
+
+			#region IOpWithState Members
+
+			OpState IOpWithState.State
+			{
+				get { return this.state; }
+			}
+
+			#endregion
 		}
 
-		private class VBGet : GetOperation
+		private class VBGet : GetOperation, IOpWithState
 		{
 			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBGet).FullName.Replace('+', '.'));
 			private VBucketNodeLocator locator;
+			private OpState state;
 
 			public VBGet(VBucketNodeLocator locator, string key)
 				: base(key)
 			{
 				this.locator = locator;
+				this.state = OpState.Unspecified;
 			}
 
 			protected override BinaryRequest Build()
@@ -193,10 +305,40 @@ namespace NorthScale.Store
 
 				return retval;
 			}
+
+			protected override bool ReadResponse(PooledSocket socket)
+			{
+				var r = base.ReadResponse(socket);
+				this.state = r ? OpState.Success : OpState.Failure;
+
+				if (!r)
+				{
+					if (this.CurrentResponse.GetResponseMessage() == NotMyVBucket)
+						this.state = OpState.InvalidVBucket;
+				}
+
+				return r;
+			}
+
+			#region IOpWithState Members
+
+			OpState IOpWithState.State
+			{
+				get { return this.state; }
+			}
+
+			#endregion
 		}
 
 		#endregion
 	}
+
+	interface IOpWithState
+	{
+		OpState State { get; }
+	}
+
+	enum OpState { Unspecified, Success, Failure, InvalidVBucket }
 }
 
 #region [ License information          ]
