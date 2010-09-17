@@ -161,7 +161,11 @@ namespace NorthScale.Store
 		{
 			if (startNode.Execute(op)) return true;
 
-			var iows = (IOperationWithState)op;
+			var iows = op as IOperationWithState;
+
+			// different op factory, we do not know how to retry
+			if (iows == null) 
+				return false;
 
 #if HAS_FORWARD_MAP
 			// node responded with invalid vbucket
