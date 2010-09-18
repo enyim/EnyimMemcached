@@ -28,6 +28,11 @@ namespace NorthScale.Store
 		private string bucketName;
 		private string bucketPassword;
 
+		private object RezSync = new Object();
+		private System.Threading.Timer resurrectTimer;
+		private bool isTimerActive;
+		private long deadTimeoutMsec;
+
 		public NorthScalePool(INorthScaleClientConfiguration configuration) : this(configuration, null) { }
 
 		/// <summary>
@@ -59,6 +64,8 @@ namespace NorthScale.Store
 				this.bucketName = null;
 				this.bucketPassword = null;
 			}
+
+			this.deadTimeoutMsec = (long)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds;
 		}
 
 		~NorthScalePool()
@@ -69,9 +76,22 @@ namespace NorthScale.Store
 
 		//public VBucketNodeLocator ForwardLocator { get { return this.state.ForwardLocator; } }
 
+
 		private void InitNodes(ClusterConfig config)
 		{
 			if (log.IsInfoEnabled) log.Info("Received new configuration.");
+
+			// we cannot overwrite the config while the timer is is running
+			lock (this.RezSync)
+				this.ReconfigurePool(config);
+		}
+
+		private void ReconfigurePool(ClusterConfig config)
+		{
+			// kill the timer first
+			this.isTimerActive = false;
+			if (this.resurrectTimer != null)
+				this.resurrectTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
 			if (config == null)
 			{
@@ -90,91 +110,196 @@ namespace NorthScale.Store
 						? null
 						: new PlainTextAuthenticator(null, this.bucketName, this.bucketPassword);
 
-			IMemcachedNode[] nodes;
-			IMemcachedNodeLocator locator;
-			IOperationFactory opFactory;
+			var state = (config == null || config.vBucketServerMap == null)
+							? this.InitBasic(config, auth)
+							: this.InitVBucket(config, auth);
 
-			if (config == null || config.vBucketServerMap == null)
-			{
-				if (log.IsInfoEnabled) log.Info("No vbucket. Server count: " + (config.nodes == null ? 0 : config.nodes.Length));
+			var nodes = state.CurrentNodes;
 
-				// no vbucket config, use the node list and the ports
-				var portType = this.configuration.Port;
+			state.Locator.Initialize(nodes);
 
-				var tmp = config == null
-						? Enumerable.Empty<IMemcachedNode>()
-							: (from node in config.nodes
-							   let ip = new IPEndPoint(IPAddress.Parse(node.hostname),
-														(portType == BucketPortType.Proxy
-															? node.ports.proxy
-															: node.ports.direct))
-							   where node.status == "healthy"
-							   select (IMemcachedNode)(new BinaryNode(ip, this.configuration.SocketPool, auth)));
-
-				nodes = tmp.ToArray();
-				locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator();
-				opFactory = new Enyim.Caching.Memcached.Protocol.Binary.BinaryOperationFactory();
-			}
-			else
-			{
-				// we have a vbucket config, which has its own server list
-				// it's supposed to be the same as the cluster config's list,
-				// but the order is significicant (because of the bucket indexes),
-				// so we we'll use this for initializing the locator
-				var vbsm = config.vBucketServerMap;
-
-				if (log.IsInfoEnabled) log.Info("Has vbucket. Server count: " + (vbsm.serverList == null ? 0 : vbsm.serverList.Length));
-
-				var endpoints = (from server in vbsm.serverList
-								 let parts = server.Split(':')
-								 select new IPEndPoint(IPAddress.Parse(parts[0]), Int32.Parse(parts[1])));
-
-				var epa = endpoints.ToArray();
-				var buckets = vbsm.vBucketMap.Select(a => new VBucket(a[0], a.Skip(1).ToArray())).ToArray();
-				var bucketNodeMap = buckets.ToLookup(vb => epa[vb.Master]);
-				var vbnl = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
-
-				nodes = endpoints.Select(ip => (IMemcachedNode)new BinaryNode(ip, this.configuration.SocketPool, auth)).ToArray();
-				locator = vbnl;
-				opFactory = new VBucketAwareOperationFactory(vbnl);
-			}
-
-			locator.Initialize(nodes);
-
-			var state = new InternalState
-			{
-				CurrentNodes = nodes,
-				Locator = locator,
-				OpFactory = opFactory
-			};
+			// we need to subscribe the failed event, 
+			// so we can periodically check the dead 
+			// nodes, since we do not get a config 
+			// update every time a node dies
+			for (var i = 0; i < nodes.Length; i++) nodes[i].Failed += this.NodeFail;
 
 			Interlocked.Exchange(ref this.state, state);
 
+			// kill the old nodes
 			if (oldNodes != null)
 				for (var i = 0; i < oldNodes.Length; i++)
-					try { oldNodes[i].Dispose(); }
+					try
+					{
+						oldNodes[i].Failed -= this.NodeFail;
+						oldNodes[i].Dispose();
+					}
 					catch { }
+		}
+
+		private InternalState InitVBucket(ClusterConfig config, ISaslAuthenticationProvider auth)
+		{
+			// we have a vbucket config, which has its own server list
+			// it's supposed to be the same as the cluster config's list,
+			// but the order is significicant (because of the bucket indexes),
+			// so we we'll use this for initializing the locator
+			var vbsm = config.vBucketServerMap;
+
+			if (log.IsInfoEnabled) log.Info("Has vbucket. Server count: " + (vbsm.serverList == null ? 0 : vbsm.serverList.Length));
+
+			var endpoints = (from server in vbsm.serverList
+							 let parts = server.Split(':')
+							 select new IPEndPoint(IPAddress.Parse(parts[0]), Int32.Parse(parts[1])));
+
+			var epa = endpoints.ToArray();
+			var buckets = vbsm.vBucketMap.Select(a => new VBucket(a[0], a.Skip(1).ToArray())).ToArray();
+			var bucketNodeMap = buckets.ToLookup(vb => epa[vb.Master]);
+			var vbnl = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
+
+			return new InternalState
+			{
+				CurrentNodes = endpoints.Select(ip => (IMemcachedNode)new BinaryNode(ip, this.configuration.SocketPool, auth)).ToArray(),
+				Locator = vbnl,
+				OpFactory = new VBucketAwareOperationFactory(vbnl)
+			};
+		}
+
+		private InternalState InitBasic(ClusterConfig config, ISaslAuthenticationProvider auth)
+		{
+			if (log.IsInfoEnabled) log.Info("No vbucket. Server count: " + (config.nodes == null ? 0 : config.nodes.Length));
+
+			// no vbucket config, use the node list and the ports
+			var portType = this.configuration.Port;
+
+			var tmp = config == null
+					? Enumerable.Empty<IMemcachedNode>()
+						: (from node in config.nodes
+						   let ip = new IPEndPoint(IPAddress.Parse(node.hostname),
+													(portType == BucketPortType.Proxy
+														? node.ports.proxy
+														: node.ports.direct))
+						   where node.status == "healthy"
+						   select (IMemcachedNode)(new BinaryNode(ip, this.configuration.SocketPool, auth)));
+
+			return new InternalState
+			{
+				CurrentNodes = tmp.ToArray(),
+				Locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator(),
+				OpFactory = new Enyim.Caching.Memcached.Protocol.Binary.BinaryOperationFactory()
+			};
 		}
 
 		void IDisposable.Dispose()
 		{
-			if (this.configListener != null)
-			{
-				this.configListener.Stop();
-
-				this.configListener = null;
-
-				var currentNodes = this.state.CurrentNodes;
-
-				// close the pools
-				if (currentNodes != null)
+			if (this.state != null)
+				lock (this.RezSync)
 				{
-					for (var i = 0; i < currentNodes.Length; i++)
-						currentNodes[i].Dispose();
+					if (this.state != null)
+					{
+						var currentNodes = this.state.CurrentNodes;
+						this.state = null;
+
+						this.configListener.Stop();
+						this.configListener = null;
+
+						if (this.resurrectTimer != null)
+							using (this.resurrectTimer)
+								this.resurrectTimer.Change(Timeout.Infinite, Timeout.Infinite);
+
+						this.resurrectTimer = null;
+
+						// close the pools
+						if (currentNodes != null)
+							for (var i = 0; i < currentNodes.Length; i++)
+								currentNodes[i].Dispose();
+					}
+				}
+		}
+
+		private void rezCallback(object o)
+		{
+			if (this.state == null) return;
+
+			if (log.IsDebugEnabled) log.Debug("Checking the dead servers.");
+
+			// how this works:
+			// 1. timer is created but suspended
+			// 2. Locate encounters a dead server, so it starts the timer which will trigger after deadTimeout has elapsed
+			// 3. if another server goes down before the timer is triggered, nothing happens in Locate (isRunning == true).
+			//		however that server will be inspected sooner than Dead Timeout.
+			//		   S1 died   S2 died    dead timeout
+			//		|----*--------*------------*-
+			//           |                     |
+			//          timer start           both servers are checked here
+			// 4. we iterate all the servers and record it in another list
+			// 5. if we found a dead server whihc responds to Ping(), the locator will be reinitialized
+			// 6. if at least one server is still down (Ping() == false), we restart the timer
+			// 7. if all servers are up, we set isRunning to false, so the timer is suspended
+			// 8. GOTO 2
+			lock (this.RezSync)
+			{
+				var nodes = this.state.CurrentNodes;
+				var aliveList = new List<IMemcachedNode>(nodes.Length);
+				var deadCount = 0;
+
+				for (var i = 0; i < nodes.Length; i++)
+				{
+					var n = nodes[i];
+					if (n.IsAlive)
+					{
+						if (log.IsDebugEnabled) log.DebugFormat("Alive: {0}", n.EndPoint);
+					}
+					else
+					{
+						if (log.IsDebugEnabled) log.DebugFormat("Dead: {0}", n.EndPoint);
+
+						if (n.Ping())
+						{
+							if (log.IsDebugEnabled) log.Debug("Ping ok.");
+						}
+						else
+						{
+							if (log.IsDebugEnabled) log.Debug("Still dead.");
+
+							deadCount++;
+						}
+					}
 				}
 
-				this.state = null;
+				// stop or restart the timer
+				if (deadCount == 0)
+				{
+					if (log.IsDebugEnabled) log.Debug("deadCount == 0, stopping the timer.");
+
+					this.isTimerActive = false;
+				}
+				else
+				{
+					if (log.IsDebugEnabled) log.DebugFormat("deadCount == {0}, starting the timer.", deadCount);
+
+					this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
+				}
 			}
+		}
+
+		private void NodeFail(IMemcachedNode node)
+		{
+			if (log.IsDebugEnabled) log.DebugFormat("Node {0} is dead, starting the timer.", node.EndPoint);
+
+			// the timer is stopped until we encounter the first dead server
+			// when we have one, we trigger it and it will run after DeadTimeout has elapsed
+			if (!this.isTimerActive)
+				lock (this.RezSync)
+					if (!this.isTimerActive)
+					{
+						if (this.resurrectTimer == null)
+							this.resurrectTimer = new Timer(this.rezCallback, null, this.deadTimeoutMsec, Timeout.Infinite);
+						else
+							this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
+
+						this.isTimerActive = true;
+						if (log.IsDebugEnabled) log.Debug("Timer started.");
+					}
 		}
 
 		#region [ IServerPool                  ]
