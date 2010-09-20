@@ -1,5 +1,32 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<Target Name="BeforeBuild" Condition=" $(Configuration) == 'Release' " DependsOnTargets="CreateAssemblyInfo;IncludeGeneratedAssemblyInfo">
+	<UsingTask TaskName="GitDescribeToVersion" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+		<ParameterGroup>
+			<Describe ParameterType="System.String" Required="true" />
+			<Version ParameterType="System.String" Output="true" />
+		</ParameterGroup>
+		<Task>
+			<Using Namespace="System.Reflection" />
+			<Using Namespace="System.Text.RegularExpressions" />
+			<Code Type="Fragment" Language="cs">
+				<![CDATA[
+					var m = Regex.Match(Describe, @"^(emc|ns)?(?'Major'\d+)\.(?'Minor'\d+)(-(?'Revision'\d+))?");
+					
+					if (m.Success)
+					{
+						var major = m.Groups["Major"].Value;
+						var minor = m.Groups["Minor"].Value;
+						
+						var gr = m.Groups["Revision"];
+						var revision = gr.Success ? gr.Value : "0";
+						
+						Version = major + "." + minor + "." + revision + ".0";
+					}
+				]]>
+			</Code>
+		</Task>
+	</UsingTask>
+	
+	<Target Name="BeforeBuild" Condition=" $(Configuration) == 'Release' And $(TagOutput) == 'true' " DependsOnTargets="CreateAssemblyInfo;IncludeGeneratedAssemblyInfo">
 		
 	</Target>
 
@@ -15,11 +42,17 @@
 
 		<Exec Command="git describe --tags --match $(GitTagMatch) > $(GitDescribe)" />
 		<ReadLinesFromFile File="$(GitDescribe)">
-			<Output TaskParameter="Lines" PropertyName="_AssemblyFileVersion"/>
+			<Output TaskParameter="Lines" PropertyName="_Describe"/>
 		</ReadLinesFromFile>
 
+		<GitDescribeToVersion Describe="$(_Describe)">
+			<Output TaskParameter="Version" PropertyName="_AssemblyVersion"/>
+		</GitDescribeToVersion>
+
 		<Delete Files="$(GeneratedAssemblyInfo)" />
-		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Lines="[assembly: System.Reflection.AssemblyFileVersion(&quot;$(_AssemblyFileVersion)&quot;)]" />
+		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Lines="
+[assembly: System.Reflection.AssemblyFileVersion(&quot;$(_Describe)&quot;)]
+[assembly: System.Reflection.AssemblyVersion(&quot;$(_AssemblyVersion)&quot;)]" />
 	</Target>
 
 	<Target Name="IncludeGeneratedAssemblyInfo">
