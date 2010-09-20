@@ -32,6 +32,17 @@ namespace Enyim.Caching.Memcached
 			this.resurrectTimer = new Timer(this.rezCallback, null, Timeout.Infinite, Timeout.Infinite);
 		}
 
+		~DefaultServerPool()
+		{
+			try { ((IDisposable)this).Dispose(); }
+			catch { }
+		}
+
+		protected virtual IMemcachedNode CreateNode(IPEndPoint endpoint)
+		{
+			return new MemcachedNode(endpoint, this.configuration.SocketPool);
+		}
+
 		private void rezCallback(object state)
 		{
 			if (log.IsDebugEnabled) log.Debug("Checking the dead servers.");
@@ -107,17 +118,6 @@ namespace Enyim.Caching.Memcached
 					this.resurrectTimer.Change((long)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds, Timeout.Infinite);
 				}
 			}
-		}
-
-		~DefaultServerPool()
-		{
-			try { ((IDisposable)this).Dispose(); }
-			catch { }
-		}
-
-		protected virtual IMemcachedNode CreateNode(IPEndPoint endpoint)
-		{
-			return new MemcachedNode(endpoint, this.configuration.SocketPool);
 		}
 
 		private void NodeFail(IMemcachedNode node)

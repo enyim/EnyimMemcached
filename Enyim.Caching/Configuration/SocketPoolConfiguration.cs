@@ -18,8 +18,8 @@ namespace Enyim.Caching.Configuration
 			get { return this.minPoolSize; }
 			set
 			{
-				if (value > 1000 || value > this.maxPoolSize)
-					throw new ArgumentOutOfRangeException("value", "MinPoolSize must be <= MaxPoolSize and must be <= 1000");
+				if (value > this.maxPoolSize)
+					throw new ArgumentOutOfRangeException("value", "MinPoolSize must be <= MaxPoolSize!");
 
 				this.minPoolSize = value;
 			}
@@ -30,8 +30,8 @@ namespace Enyim.Caching.Configuration
 			get { return this.maxPoolSize; }
 			set
 			{
-				if (value > 1000 || value < this.minPoolSize)
-					throw new ArgumentOutOfRangeException("value", "MaxPoolSize must be >= MinPoolSize and must be <= 1000");
+				if (value < this.minPoolSize)
+					throw new ArgumentOutOfRangeException("value", "MaxPoolSize must be >= MinPoolSize!");
 
 				this.maxPoolSize = value;
 			}

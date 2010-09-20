@@ -13,7 +13,7 @@ namespace Enyim.Caching.Configuration
 		/// Gets or sets a value indicating the minimum amount of sockets per server in the socket pool.
 		/// </summary>
 		/// <returns>The minimum amount of sockets per server in the socket pool.</returns>
-		[ConfigurationProperty("minPoolSize", IsRequired = false, DefaultValue = 10), IntegerValidator(MinValue = 0, MaxValue = 1000)]
+		[ConfigurationProperty("minPoolSize", IsRequired = false, DefaultValue = 10), IntegerValidator(MinValue = 0)]
 		public int MinPoolSize
 		{
 			get { return (int)base["minPoolSize"]; }
@@ -24,7 +24,7 @@ namespace Enyim.Caching.Configuration
 		/// Gets or sets a value indicating the maximum amount of sockets per server in the socket pool.
 		/// </summary>
 		/// <returns>The maximum amount of sockets per server in the socket pool.</returns>
-		[ConfigurationProperty("maxPoolSize", IsRequired = false, DefaultValue = 200), IntegerValidator(MinValue = 0, MaxValue = 1000)]
+		[ConfigurationProperty("maxPoolSize", IsRequired = false, DefaultValue = 200), IntegerValidator(MinValue = 0)]
 		public int MaxPoolSize
 		{
 			get { return (int)base["maxPoolSize"]; }
