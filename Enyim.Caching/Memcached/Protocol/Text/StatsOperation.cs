@@ -8,13 +8,21 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 	{
 		private log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
 
+		private string type;
 		private Dictionary<string, string> result;
 
-		public StatsOperation() { }
+		public StatsOperation(string type)
+		{
+			this.type = type;
+		}
 
 		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
-			return TextSocketHelper.GetCommandBuffer("stats" + TextSocketHelper.CommandTerminator);
+			var command = String.IsNullOrEmpty(this.type)
+							? "stats" + TextSocketHelper.CommandTerminator
+							: "stats " + this.type + TextSocketHelper.CommandTerminator;
+
+			return TextSocketHelper.GetCommandBuffer(command);
 		}
 
 		protected internal override bool ReadResponse(PooledSocket socket)

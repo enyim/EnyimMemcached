@@ -9,13 +9,21 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
 
+		private string type;
 		private Dictionary<string, string> result;
 
-		public StatsOperation() { }
+		public StatsOperation(string type)
+		{
+			this.type = type;
+		}
 
 		protected override BinaryRequest Build()
 		{
-			return new BinaryRequest(OpCode.Stat);
+			var request = new BinaryRequest(OpCode.Stat);
+			if (!String.IsNullOrEmpty(this.type))
+				request.Key = this.type;
+
+			return request;
 		}
 
 		protected internal override bool ReadResponse(PooledSocket socket)

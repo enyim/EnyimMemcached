@@ -44,9 +44,9 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 			return new ConcateOperation(mode, key, data);
 		}
 
-		IStatsOperation IOperationFactory.Stats()
+		IStatsOperation IOperationFactory.Stats(string type)
 		{
-			return new StatsOperation();
+			return new StatsOperation(type);
 		}
 
 		IFlushOperation IOperationFactory.Flush()

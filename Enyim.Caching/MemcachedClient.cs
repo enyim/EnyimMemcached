@@ -621,12 +621,17 @@ namespace Enyim.Caching
 		/// <returns></returns>
 		public ServerStats Stats()
 		{
+			return this.Stats(null);
+		}
+
+		public ServerStats Stats(string type)
+		{
 			var results = new Dictionary<IPEndPoint, Dictionary<string, string>>();
 			var handles = new List<WaitHandle>();
 
 			foreach (var node in this.pool.GetWorkingNodes())
 			{
-				var cmd = this.pool.OperationFactory.Stats();
+				var cmd = this.pool.OperationFactory.Stats(type);
 				var action = new Func<IOperation, bool>(node.Execute);
 				var mre = new ManualResetEvent(false);
 
@@ -639,11 +644,11 @@ namespace Enyim.Caching
 						action.EndInvoke(iar);
 
 						lock (results)
-							results[node.EndPoint] = cmd.Result;
+							results[((IMemcachedNode)iar.AsyncState).EndPoint] = cmd.Result;
 
 						mre.Set();
 					}
-				}, null);
+				}, node);
 			}
 
 			if (handles.Count > 0)

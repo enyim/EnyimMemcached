@@ -146,7 +146,7 @@ namespace Enyim.Caching.Memcached
 		#region [ InternalPoolImpl             ]
 		private class InternalPoolImpl : IDisposable
 		{
-			private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(InternalPoolImpl));
+			private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(InternalPoolImpl).FullName.Replace("+", "."));
 
 			/// <summary>
 			/// A list of already connected but free to use sockets
@@ -186,6 +186,8 @@ namespace Enyim.Caching.Memcached
 
 				this.semaphore = new Semaphore(minItems, maxItems);
 				this.freeItems = new InterlockedQueue<PooledSocket>();
+
+				this.InitPool();
 			}
 
 			private void InitPool()
@@ -203,6 +205,10 @@ namespace Enyim.Caching.Memcached
 								break;
 						}
 					}
+
+					if (log.IsDebugEnabled)
+						log.DebugFormat("Pool has been inited for {0} with {1} sockets", this.endPoint, this.minItems);
+
 				}
 				catch (Exception e)
 				{

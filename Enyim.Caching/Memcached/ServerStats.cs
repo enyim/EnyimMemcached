@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Net;
 
@@ -164,6 +165,13 @@ namespace Enyim.Caching.Memcached
 				return GetRaw(server, StatKeys[(int)item]);
 
 			throw new ArgumentOutOfRangeException("item");
+		}
+
+		public IEnumerable<KeyValuePair<IPEndPoint, string>> GetRaw(string key)
+		{
+			string tmp;
+
+			return this.results.Select(kvp => new KeyValuePair<IPEndPoint, string>(kvp.Key, kvp.Value.TryGetValue(key, out tmp) ? tmp : null)).ToList();
 		}
 	}
 }

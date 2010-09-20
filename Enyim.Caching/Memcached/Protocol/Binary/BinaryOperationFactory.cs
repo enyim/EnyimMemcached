@@ -38,9 +38,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return new ConcatOperation(mode, key, data) { Cas = cas };
 		}
 
-		IStatsOperation IOperationFactory.Stats()
+		IStatsOperation IOperationFactory.Stats(string type)
 		{
-			return new StatsOperation();
+			return new StatsOperation(type);
 		}
 
 		IFlushOperation IOperationFactory.Flush()

@@ -51,9 +51,9 @@ namespace NorthScale.Store
 			return new VBConcat(locator, mode, key, data) { Cas = cas };
 		}
 
-		IStatsOperation IOperationFactory.Stats()
+		IStatsOperation IOperationFactory.Stats(string type)
 		{
-			return new StatsOperation();
+			return new StatsOperation(type);
 		}
 
 		IFlushOperation IOperationFactory.Flush()
