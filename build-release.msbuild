@@ -24,8 +24,8 @@
 	</Target>
 
 	<Target Name="Compile" DependsOnTargets="BeforeBuild">
-		<MSBuild Projects="Enyim.Caching\Enyim.Caching.csproj" Targets="Rebuild" Properties="Configuration=Release;TagOutput=true;DefineConstants=SIGN=true" />
-		<MSBuild Projects="NorthScale.Store\NorthScale.Store.csproj" Targets="Rebuild" Properties="Configuration=Release;TagOutput=true;DefineConstants=SIGN=true" />
+		<MSBuild Projects="Enyim.Caching\Enyim.Caching.csproj" Targets="Rebuild" Properties="Configuration=Release;IsReleaseBuild=true" />
+		<MSBuild Projects="NorthScale.Store\NorthScale.Store.csproj" Targets="Rebuild" Properties="Configuration=Release;IsReleaseBuild=true" />
 	</Target>
 
 	<Target Name="PrepareFiles">

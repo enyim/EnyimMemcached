@@ -19,9 +19,9 @@ using System.Runtime.InteropServices;
 //[assembly: AssemblyVersion("2.5.0.0")]
 //[assembly: AssemblyFileVersion("2.4.0.0")]
 
-#if SIGN
-[assembly: AssemblyKeyName("enyim")]
-#endif
+//#if SIGN
+//[assembly: AssemblyKeyName("enyim")]
+//#endif
 
 #region [ License information          ]
 /* ************************************************************

@@ -25,9 +25,22 @@
 			</Code>
 		</Task>
 	</UsingTask>
+
+	<PropertyGroup>
+		<ShouldGenerate Condition="$(Configuration) == 'Release' And $(IsReleaseBuild) == 'true'">true</ShouldGenerate>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="$(ShouldGenerate) == 'true'">
+		<AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
+	</PropertyGroup>
 	
-	<Target Name="BeforeBuild" Condition=" $(Configuration) == 'Release' And $(TagOutput) == 'true' " DependsOnTargets="CreateAssemblyInfo;IncludeGeneratedAssemblyInfo">
-		
+	<Target Name="BeforeBuild">
+		<CallTarget Targets="CreateAssemblyInfoFromGit" Condition="$(ShouldGenerate) == 'true'" />
+		<CallTarget Targets="CreateStaticAssemblyInfo" Condition=" $(ShouldGenerate) != 'true'" />
+
+		<CreateItem Include="$(GeneratedAssemblyInfo)">
+			<Output TaskParameter="Include" ItemName="Compile"/>
+		</CreateItem>
 	</Target>
 
 	<PropertyGroup>
@@ -36,7 +49,7 @@
 		<GitTagMatch Condition=" '$(GitTagMatch)' == '' ">*</GitTagMatch>
 	</PropertyGroup>
 
-	<Target Name="CreateAssemblyInfo">
+	<Target Name="CreateAssemblyInfoFromGit">
 
 		<MakeDir Directories="obj\$(Configuration)" />
 
@@ -51,14 +64,19 @@
 
 		<Delete Files="$(GeneratedAssemblyInfo)" />
 		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Lines="
+[assembly: System.Reflection.AssemblyKeyName(&quot;enyim&quot;)]						  
 [assembly: System.Reflection.AssemblyFileVersion(&quot;$(_Describe)&quot;)]
 [assembly: System.Reflection.AssemblyVersion(&quot;$(_AssemblyVersion)&quot;)]" />
 	</Target>
 
-	<Target Name="IncludeGeneratedAssemblyInfo">
-		<CreateItem Include="$(GeneratedAssemblyInfo)">
-			<Output TaskParameter="Include" ItemName="Compile"/>
-		</CreateItem>
+	<Target Name="CreateStaticAssemblyInfo">
+
+		<MakeDir Directories="obj\$(Configuration)" />
+
+		<Delete Files="$(GeneratedAssemblyInfo)" />
+		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Lines="
+[assembly: System.Reflection.AssemblyFileVersion(&quot;2.4.6-custom&quot;)]
+[assembly: System.Reflection.AssemblyVersion(&quot;2.4.6.8&quot;)]" />
 	</Target>
 
 </Project>
