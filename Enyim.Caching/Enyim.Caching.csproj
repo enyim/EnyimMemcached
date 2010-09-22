@@ -142,6 +142,7 @@
     <Compile Include="HashkitCrc32.cs" />
     <Compile Include="HashkitMurmur.cs" />
     <Compile Include="HashkitOneAtATime.cs" />
+    <Compile Include="IMemcachedClient.cs" />
     <Compile Include="IUIntHashAlgorithm.cs" />
     <Compile Include="HashCodeCombiner.cs" />
     <Compile Include="InterlockedQueue.cs" />

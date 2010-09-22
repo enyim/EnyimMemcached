@@ -13,7 +13,7 @@ namespace Enyim.Caching
 	/// <summary>
 	/// Memcached client.
 	/// </summary>
-	public class MemcachedClient : IDisposable
+	public class MemcachedClient : IMemcachedClient
 	{
 		/// <summary>
 		/// Represents a value which indicates that an item should never expire.
