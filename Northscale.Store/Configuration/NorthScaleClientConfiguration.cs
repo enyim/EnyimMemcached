@@ -22,7 +22,7 @@ namespace NorthScale.Store.Configuration
 		public NorthScaleClientConfiguration()
 		{
 			this.Urls = new List<Uri>();
-			this.Port = BucketPortType.Proxy;
+			this.Port = BucketPortType.Direct;
 
 			this.SocketPool = new SocketPoolConfiguration();
 		}
