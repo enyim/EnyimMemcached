@@ -28,7 +28,7 @@ namespace NorthScale.Store
 		private string bucketName;
 		private string bucketPassword;
 
-		private object RezSync = new Object();
+		private object DeadSync = new Object();
 		private System.Threading.Timer resurrectTimer;
 		private bool isTimerActive;
 		private long deadTimeoutMsec;
@@ -82,7 +82,7 @@ namespace NorthScale.Store
 			if (log.IsInfoEnabled) log.Info("Received new configuration.");
 
 			// we cannot overwrite the config while the timer is is running
-			lock (this.RezSync)
+			lock (this.DeadSync)
 				this.ReconfigurePool(config);
 		}
 
@@ -192,7 +192,7 @@ namespace NorthScale.Store
 		void IDisposable.Dispose()
 		{
 			if (this.state != null)
-				lock (this.RezSync)
+				lock (this.DeadSync)
 				{
 					if (this.state != null)
 					{
@@ -236,7 +236,7 @@ namespace NorthScale.Store
 			// 6. if at least one server is still down (Ping() == false), we restart the timer
 			// 7. if all servers are up, we set isRunning to false, so the timer is suspended
 			// 8. GOTO 2
-			lock (this.RezSync)
+			lock (this.DeadSync)
 			{
 				var nodes = this.state.CurrentNodes;
 				var aliveList = new List<IMemcachedNode>(nodes.Length);
@@ -284,22 +284,56 @@ namespace NorthScale.Store
 
 		private void NodeFail(IMemcachedNode node)
 		{
-			if (log.IsDebugEnabled) log.DebugFormat("Node {0} is dead, starting the timer.", node.EndPoint);
+			var isDebug = log.IsDebugEnabled;
+			if (isDebug) log.DebugFormat("Node {0} is dead.", node.EndPoint);
 
-			// the timer is stopped until we encounter the first dead server
-			// when we have one, we trigger it and it will run after DeadTimeout has elapsed
-			if (!this.isTimerActive)
-				lock (this.RezSync)
-					if (!this.isTimerActive)
+			var state = this.state;
+
+			if (state.IsVbucket)
+			{
+				if (isDebug) log.Debug("We have a vbucket config, so we'll start the timer.");
+
+				// the timer is stopped until we encounter the first dead server
+				// when we have one, we trigger it and it will run after DeadTimeout has elapsed
+				if (!this.isTimerActive)
+					lock (this.DeadSync)
+						if (!this.isTimerActive)
+						{
+							if (this.resurrectTimer == null)
+								this.resurrectTimer = new Timer(this.rezCallback, null, this.deadTimeoutMsec, Timeout.Infinite);
+							else
+								this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
+
+							this.isTimerActive = true;
+							if (log.IsDebugEnabled) log.Debug("Timer started.");
+						}
+			}
+			else
+			{
+				if (isDebug) log.Debug("We have a standard config, so we'll recreate the node locator.");
+
+				// block the rest api listener until we're finished here
+				lock (DeadSync)
+				{
+					var newState = new InternalState
 					{
-						if (this.resurrectTimer == null)
-							this.resurrectTimer = new Timer(this.rezCallback, null, this.deadTimeoutMsec, Timeout.Infinite);
-						else
-							this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
+						CurrentNodes = state.CurrentNodes,
+						IsVbucket = false,
+						OpFactory = state.OpFactory,
+						Locator = this.configuration.CreateNodeLocator()
+					};
 
-						this.isTimerActive = true;
-						if (log.IsDebugEnabled) log.Debug("Timer started.");
-					}
+					if (isDebug) log.Debug("Initializing the locator with the list of working nodes.");
+
+					newState.Locator.Initialize(newState.CurrentNodes.Where(n => n.IsAlive).ToArray());
+
+					Interlocked.Exchange(ref this.state, newState);
+
+					if (isDebug) log.Debug("Replaced the internal state.");
+				}
+			}
+
+			if (isDebug) log.Debug("Fail handler is finished.");
 		}
 
 		#region [ IServerPool                  ]
@@ -349,6 +383,9 @@ namespace NorthScale.Store
 			public VBucketNodeLocator ForwardLocator;
 			public IOperationFactory OpFactory;
 			public IMemcachedNode[] CurrentNodes;
+
+			// if this is false, it's safe to reinitialize/recreate the locator when a server goes offline
+			public bool IsVbucket;
 		}
 
 

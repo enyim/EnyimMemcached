@@ -138,7 +138,7 @@ namespace Enyim.Caching.Memcached
 			switch (ld.Servers.Length)
 			{
 				case 0: return null;
-				case 1: return ld.Servers[0];
+				case 1: var tmp = ld.Servers[0]; return tmp.IsAlive ? tmp : null;
 			}
 
 			var retval = LocateNode(ld, this.GetKeyHash(key));
@@ -146,7 +146,7 @@ namespace Enyim.Caching.Memcached
 			// if the result is not alive then try to mutate the item key and 
 			// find another node this way we do not have to reinitialize every 
 			// time a node dies/comes back
-			// (DefaultServerPool will resurrect the nodes in the background without affecting the  hashring)
+			// (DefaultServerPool will resurrect the nodes in the background without affecting the hashring)
 			if (!retval.IsAlive)
 			{
 				for (var i = 0; i < ld.Servers.Length; i++)

@@ -242,11 +242,13 @@ namespace Enyim.Caching.Memcached
 			/// <returns>An <see cref="T:PooledSocket"/> instance which is connected to the memcached server, or <value>null</value> if the pool is dead.</returns>
 			public PooledSocket Acquire()
 			{
-				if (log.IsDebugEnabled) log.Debug("Acquiring stream from pool.");
+				bool hasDebug = log.IsDebugEnabled;
+
+				if (hasDebug) log.Debug("Acquiring stream from pool. " + this.endPoint);
 
 				if (!this.isAlive)
 				{
-					if (log.IsDebugEnabled) log.Debug("Pool is dead, returning null.");
+					if (hasDebug) log.Debug("Pool is dead, returning null. " + this.endPoint);
 
 					return null;
 				}
@@ -255,7 +257,7 @@ namespace Enyim.Caching.Memcached
 
 				if (!this.semaphore.WaitOne(this.config.ConnectionTimeout))
 				{
-					if (log.IsDebugEnabled) log.Debug("Pool is full, timeouting.");
+					if (hasDebug) log.Debug("Pool is full, timeouting. " + this.endPoint);
 
 					// everyone is so busy
 					throw new TimeoutException();
@@ -264,7 +266,7 @@ namespace Enyim.Caching.Memcached
 				// maybe we died while waiting
 				if (!this.isAlive)
 				{
-					if (log.IsDebugEnabled) log.Debug("Pool is dead, returning null.");
+					if (hasDebug) log.Debug("Pool is dead, returning null. " + this.endPoint);
 
 					return null;
 				}
@@ -277,7 +279,7 @@ namespace Enyim.Caching.Memcached
 					{
 						retval.Reset();
 
-						if (log.IsDebugEnabled) log.Debug("Socket was reset. " + retval.InstanceId);
+						if (hasDebug) log.Debug("Socket was reset. " + retval.InstanceId);
 
 						return retval;
 					}
@@ -293,7 +295,7 @@ namespace Enyim.Caching.Memcached
 				}
 
 				// free item pool is empty
-				if (log.IsDebugEnabled) log.Debug("Could not get a socket from the pool, Creating a new item.");
+				if (hasDebug) log.Debug("Could not get a socket from the pool, Creating a new item. " + this.endPoint);
 
 				try
 				{
@@ -302,13 +304,13 @@ namespace Enyim.Caching.Memcached
 				}
 				catch (Exception e)
 				{
-					log.Error("Failed to create socket.", e);
+					log.Error("Failed to create socket. " + this.endPoint, e);
 					this.MarkAsDead();
 
 					return null;
 				}
 
-				if (log.IsDebugEnabled) log.Debug("Done.");
+				if (hasDebug) log.Debug("Done.");
 
 				return retval;
 			}
