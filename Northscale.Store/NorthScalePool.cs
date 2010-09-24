@@ -220,7 +220,9 @@ namespace NorthScale.Store
 		{
 			if (this.state == null) return;
 
-			if (log.IsDebugEnabled) log.Debug("Checking the dead servers.");
+			var isDebug = log.IsDebugEnabled;
+
+			if (isDebug) log.Debug("Checking the dead servers.");
 
 			// how this works:
 			// 1. timer is created but suspended
@@ -238,44 +240,56 @@ namespace NorthScale.Store
 			// 8. GOTO 2
 			lock (this.DeadSync)
 			{
-				var nodes = this.state.CurrentNodes;
+				var currentState = this.state;
+				var nodes = currentState.CurrentNodes;
 				var aliveList = new List<IMemcachedNode>(nodes.Length);
 				var deadCount = 0;
+				var changed = false;
 
+				#region [ Ping the servers             ]
 				for (var i = 0; i < nodes.Length; i++)
 				{
 					var n = nodes[i];
 					if (n.IsAlive)
 					{
-						if (log.IsDebugEnabled) log.DebugFormat("Alive: {0}", n.EndPoint);
+						if (isDebug) log.DebugFormat("Alive: {0}", n.EndPoint);
 					}
 					else
 					{
-						if (log.IsDebugEnabled) log.DebugFormat("Dead: {0}", n.EndPoint);
+						if (isDebug) log.DebugFormat("Dead: {0}", n.EndPoint);
 
 						if (n.Ping())
 						{
-							if (log.IsDebugEnabled) log.Debug("Ping ok.");
+							changed = true;
+							if (isDebug) log.Debug("Ping ok.");
 						}
 						else
 						{
-							if (log.IsDebugEnabled) log.Debug("Still dead.");
+							if (isDebug) log.Debug("Still dead.");
 
 							deadCount++;
 						}
 					}
 				}
+				#endregion
+
+				if (changed && !currentState.IsVbucket)
+				{
+					if (isDebug) log.Debug("We have a standard config, so we'll recreate the node locator.");
+
+					ReinitializeLocator(currentState);
+				}
 
 				// stop or restart the timer
 				if (deadCount == 0)
 				{
-					if (log.IsDebugEnabled) log.Debug("deadCount == 0, stopping the timer.");
+					if (isDebug) log.Debug("deadCount == 0, stopping the timer.");
 
 					this.isTimerActive = false;
 				}
 				else
 				{
-					if (log.IsDebugEnabled) log.DebugFormat("deadCount == {0}, starting the timer.", deadCount);
+					if (isDebug) log.DebugFormat("deadCount == {0}, starting the timer.", deadCount);
 
 					this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
 				}
@@ -287,53 +301,59 @@ namespace NorthScale.Store
 			var isDebug = log.IsDebugEnabled;
 			if (isDebug) log.DebugFormat("Node {0} is dead.", node.EndPoint);
 
-			var state = this.state;
-
-			if (state.IsVbucket)
+			// block the rest api listener until we're finished here
+			lock (this.DeadSync)
 			{
-				if (isDebug) log.Debug("We have a vbucket config, so we'll start the timer.");
+				var currentState = this.state;
+
+				// we don't know who to reconfigure the pool when vbucket is
+				// enabled, so operations targeting the dead servers will fail
+				// when we have a normal config we just reconfigure the locator,
+				// so the items will be rehashed to the working servers
+				if (!currentState.IsVbucket)
+				{
+					if (isDebug) log.Debug("We have a standard config, so we'll recreate the node locator.");
+
+					ReinitializeLocator(currentState);
+				}
 
 				// the timer is stopped until we encounter the first dead server
 				// when we have one, we trigger it and it will run after DeadTimeout has elapsed
 				if (!this.isTimerActive)
-					lock (this.DeadSync)
-						if (!this.isTimerActive)
-						{
-							if (this.resurrectTimer == null)
-								this.resurrectTimer = new Timer(this.rezCallback, null, this.deadTimeoutMsec, Timeout.Infinite);
-							else
-								this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
-
-							this.isTimerActive = true;
-							if (log.IsDebugEnabled) log.Debug("Timer started.");
-						}
-			}
-			else
-			{
-				if (isDebug) log.Debug("We have a standard config, so we'll recreate the node locator.");
-
-				// block the rest api listener until we're finished here
-				lock (DeadSync)
 				{
-					var newState = new InternalState
-					{
-						CurrentNodes = state.CurrentNodes,
-						IsVbucket = false,
-						OpFactory = state.OpFactory,
-						Locator = this.configuration.CreateNodeLocator()
-					};
+					if (isDebug) log.Debug("Starting the recovery timer.");
 
-					if (isDebug) log.Debug("Initializing the locator with the list of working nodes.");
+					if (this.resurrectTimer == null)
+						this.resurrectTimer = new Timer(this.rezCallback, null, this.deadTimeoutMsec, Timeout.Infinite);
+					else
+						this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
 
-					newState.Locator.Initialize(newState.CurrentNodes.Where(n => n.IsAlive).ToArray());
+					this.isTimerActive = true;
 
-					Interlocked.Exchange(ref this.state, newState);
-
-					if (isDebug) log.Debug("Replaced the internal state.");
+					if (isDebug) log.Debug("Timer started.");
 				}
 			}
 
 			if (isDebug) log.Debug("Fail handler is finished.");
+		}
+
+		private void ReinitializeLocator(InternalState previousState)
+		{
+			var newState = new InternalState
+			{
+				CurrentNodes = previousState.CurrentNodes,
+				IsVbucket = false,
+				OpFactory = previousState.OpFactory,
+				Locator = this.configuration.CreateNodeLocator()
+			};
+
+			if (log.IsDebugEnabled) log.Debug("Initializing the locator with the list of working nodes.");
+
+			newState.Locator.Initialize(newState.CurrentNodes.Where(n => n.IsAlive).ToArray());
+
+			Interlocked.Exchange(ref this.state, newState);
+
+			if (log.IsDebugEnabled) log.Debug("Replaced the internal state.");
 		}
 
 		#region [ IServerPool                  ]
