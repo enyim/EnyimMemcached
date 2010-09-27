@@ -24,6 +24,7 @@ namespace Enyim.Caching.Memcached
 		private IPEndPoint endPoint;
 		private ISocketPoolConfiguration config;
 		private InternalPoolImpl internalPoolImpl;
+		private bool isInitialized;
 
 		public MemcachedNode(IPEndPoint endpoint, ISocketPoolConfiguration socketPoolConfig)
 		{
@@ -105,6 +106,14 @@ namespace Enyim.Caching.Memcached
 		/// <returns>An <see cref="T:PooledSocket"/> instance which is connected to the memcached server, or <value>null</value> if the pool is dead.</returns>
 		public PooledSocket Acquire()
 		{
+			if (!this.isInitialized)
+				lock (this.internalPoolImpl)
+					if (!this.isInitialized)
+					{
+						this.internalPoolImpl.InitPool();
+						this.isInitialized = true;
+					}
+
 			return this.internalPoolImpl.Acquire();
 		}
 
@@ -186,11 +195,9 @@ namespace Enyim.Caching.Memcached
 
 				this.semaphore = new Semaphore(minItems, maxItems);
 				this.freeItems = new InterlockedQueue<PooledSocket>();
-
-				this.InitPool();
 			}
 
-			private void InitPool()
+			internal void InitPool()
 			{
 				try
 				{
