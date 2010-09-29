@@ -87,14 +87,14 @@ namespace NorthScale.Store
 				return retval;
 			}
 
-			protected override bool ReadResponse(PooledSocket socket)
+			protected override bool ProcessResponse(BinaryResponse response)
 			{
-				var r = base.ReadResponse(socket);
+				var r = response.StatusCode == 0;
 				this.state = r ? OperationState.Success : OperationState.Failure;
 
 				if (!r)
 				{
-					if (this.CurrentResponse.GetResponseMessage() == NotMyVBucket)
+					if (response.GetStatusMessage() == NotMyVBucket)
 						this.state = OperationState.InvalidVBucket;
 				}
 
@@ -133,14 +133,14 @@ namespace NorthScale.Store
 				return retval;
 			}
 
-			protected override bool ReadResponse(PooledSocket socket)
+			protected override bool ProcessResponse(BinaryResponse response)
 			{
-				var r = base.ReadResponse(socket);
+				var r = response.StatusCode == 0;
 				this.state = r ? OperationState.Success : OperationState.Failure;
 
 				if (!r)
 				{
-					if (this.CurrentResponse.GetResponseMessage() == NotMyVBucket)
+					if (response.GetStatusMessage() == NotMyVBucket)
 						this.state = OperationState.InvalidVBucket;
 				}
 
@@ -179,14 +179,14 @@ namespace NorthScale.Store
 				return retval;
 			}
 
-			protected override bool ReadResponse(PooledSocket socket)
+			protected override bool ProcessResponse(BinaryResponse response)
 			{
-				var r = base.ReadResponse(socket);
+				var r = response.StatusCode == 0;
 				this.state = r ? OperationState.Success : OperationState.Failure;
 
 				if (!r)
 				{
-					if (this.CurrentResponse.GetResponseMessage() == NotMyVBucket)
+					if (response.GetStatusMessage() == NotMyVBucket)
 						this.state = OperationState.InvalidVBucket;
 				}
 
@@ -247,14 +247,14 @@ namespace NorthScale.Store
 				return retval;
 			}
 
-			protected override bool ReadResponse(PooledSocket socket)
+			protected override bool ProcessResponse(BinaryResponse response)
 			{
-				var r = base.ReadResponse(socket);
+				var r = response.StatusCode == 0;
 				this.state = r ? OperationState.Success : OperationState.Failure;
 
 				if (!r)
 				{
-					if (this.CurrentResponse.GetResponseMessage() == NotMyVBucket)
+					if (response.GetStatusMessage() == NotMyVBucket)
 						this.state = OperationState.InvalidVBucket;
 				}
 
@@ -294,14 +294,14 @@ namespace NorthScale.Store
 				return retval;
 			}
 
-			protected override bool ReadResponse(PooledSocket socket)
+			protected override bool ProcessResponse(BinaryResponse response)
 			{
-				var r = base.ReadResponse(socket);
+				var r = response.StatusCode == 0;
 				this.state = r ? OperationState.Success : OperationState.Failure;
 
 				if (!r)
 				{
-					if (this.CurrentResponse.GetResponseMessage() == NotMyVBucket)
+					if (response.GetStatusMessage() == NotMyVBucket)
 						this.state = OperationState.InvalidVBucket;
 				}
 
