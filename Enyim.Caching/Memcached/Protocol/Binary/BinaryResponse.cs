@@ -30,7 +30,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 		private string responseMessage;
 
-		public string GetResponseMessage()
+		public string GetStatusMessage()
 		{
 			return this.Data.Array == null
 					? null

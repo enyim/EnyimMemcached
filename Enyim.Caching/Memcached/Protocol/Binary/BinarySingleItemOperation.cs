@@ -8,11 +8,21 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		protected BinarySingleItemOperation(string key) : base(key) { }
 
 		protected abstract BinaryRequest Build();
-		protected BinaryResponse CurrentResponse { get; set; }
+		//protected BinaryResponse CurrentResponse { get; set; }
 
 		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
 			return this.Build().CreateBuffer();
+		}
+
+		protected abstract bool ProcessResponse(BinaryResponse response);
+
+		protected internal override bool ReadResponse(PooledSocket socket)
+		{
+			var response = new BinaryResponse();
+			this.Cas = response.CAS;
+
+			return response.Read(socket) & this.ProcessResponse(response);
 		}
 	}
 }

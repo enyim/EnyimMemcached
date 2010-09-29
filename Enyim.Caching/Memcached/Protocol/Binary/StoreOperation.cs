@@ -46,12 +46,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return request;
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected override bool ProcessResponse(BinaryResponse response)
 		{
-			var response = this.CurrentResponse = new BinaryResponse();
-			var retval = response.Read(socket);
-			this.Cas = response.CAS;
-
 #if EVEN_MORE_LOGGING
 			if (log.IsDebugEnabled)
 				if (retval)
@@ -60,7 +56,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 					log.DebugFormat("Store failed for key '{0}'. Reason: {1}", this.Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
 #endif
 
-			return retval;
+			return true;
 		}
 
 		StoreMode IStoreOperation.Mode

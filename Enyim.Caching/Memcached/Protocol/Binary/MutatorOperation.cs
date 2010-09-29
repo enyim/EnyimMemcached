@@ -49,22 +49,20 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return request;
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected override bool ProcessResponse(BinaryResponse response)
 		{
-			var response = this.CurrentResponse = new BinaryResponse();
-			var retval = response.Read(socket);
-			this.Cas = response.CAS;
-
-			if (retval)
+			if (response.StatusCode == 0)
 			{
 				var data = response.Data;
 				if (data.Count != 8)
 					throw new InvalidOperationException("result must be 8 bytes long, received: " + data.Count);
 
 				this.result = BinaryConverter.DecodeUInt64(data.Array, data.Offset);
+
+				return true;
 			}
 
-			return retval;
+			return false;
 		}
 
 		MutationMode IMutatorOperation.Mode

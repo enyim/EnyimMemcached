@@ -31,13 +31,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return request;
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected override bool ProcessResponse(BinaryResponse response)
 		{
-			var response = this.CurrentResponse = new BinaryResponse();
-			var retval = response.Read(socket);
-			this.Cas = response.CAS;
-
-			return retval;
+			return true;
 		}
 
 		ConcatenationMode IConcatOperation.Mode

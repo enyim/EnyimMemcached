@@ -21,11 +21,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return request;
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected override bool ProcessResponse(BinaryResponse response)
 		{
-			var response = this.CurrentResponse = new BinaryResponse();
-
-			if (response.Read(socket))
+			if (response.StatusCode == 0)
 			{
 				int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
 				this.result = new CacheItem((ushort)flags, response.Data);
