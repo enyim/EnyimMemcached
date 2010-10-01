@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using System.Diagnostics;
 
 namespace Enyim.Caching.Memcached
 {
@@ -33,14 +34,14 @@ namespace Enyim.Caching.Memcached
 				return new CacheItem(RawDataFlag, new ArraySegment<byte>(tmpByteArray));
 			}
 
-			TypeCode code = value == null ? TypeCode.Empty : Type.GetTypeCode(value.GetType());
+			TypeCode code = value == null ? TypeCode.DBNull : Type.GetTypeCode(value.GetType());
 
 			byte[] data;
 			int length = -1;
 
 			switch (code)
 			{
-				case TypeCode.Empty:
+				case TypeCode.DBNull:
 					data = DefaultTranscoder.EmptyArray;
 					length = 0;
 					break;
@@ -113,6 +114,9 @@ namespace Enyim.Caching.Memcached
 
 		object ITranscoder.Deserialize(CacheItem item)
 		{
+			if (item.Data == null || item.Data.Array == null)
+				return null;
+
 			if (item.Flags == RawDataFlag)
 			{
 				ArraySegment<byte> tmp = item.Data;
@@ -129,7 +133,7 @@ namespace Enyim.Caching.Memcached
 			}
 
 			TypeCode code = (TypeCode)(item.Flags & 0x00ff);
-			
+
 			byte[] data = item.Data.Array;
 			int offset = item.Data.Offset;
 			int count = item.Data.Count;
@@ -140,7 +144,18 @@ namespace Enyim.Caching.Memcached
 				// returns as a string, but the flag will be 0
 				// so treat all 0 flagged items as string
 				// this may help inter-client data management as well
+				//
+				// however we store 'null' as Empty + an empty array, 
+				// so this must special-cased for compatibilty with 
+				// earlier versions. we introduced DBNull as null marker in emc2.6
 				case TypeCode.Empty:
+					return (data == null || count == 0)
+							? null
+							: Encoding.UTF8.GetString(data, offset, count);
+
+				case TypeCode.DBNull:
+					return null;
+
 				case TypeCode.String:
 					return Encoding.UTF8.GetString(data, offset, count);
 
@@ -155,7 +170,7 @@ namespace Enyim.Caching.Memcached
 
 				case TypeCode.Int64:
 					return BitConverter.ToInt64(data, offset);
-					
+
 				case TypeCode.UInt16:
 					return BitConverter.ToUInt16(data, offset);
 
