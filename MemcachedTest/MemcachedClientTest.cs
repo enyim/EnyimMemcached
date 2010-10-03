@@ -10,11 +10,19 @@ using System.Text;
 
 namespace MemcachedTest
 {
+	[TestFixture]
 	public abstract class MemcachedClientTest
 	{
+		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MemcachedClientTest));
 		public const string TestObjectKey = "Hello_World";
 
 		protected abstract MemcachedClient GetClient();
+
+		[TestFixtureSetUp]
+		public void Setup()
+		{
+			log4net.Config.XmlConfigurator.Configure();
+		}
 
 		[global::System.Serializable]
 		public class TestData
@@ -97,7 +105,7 @@ namespace MemcachedTest
 		{
 			using (MemcachedClient client = GetClient())
 			{
-				Assert.IsTrue(client.Store(StoreMode.Set, "TestLong", 65432123456L), "StoreString long.");
+				Assert.IsTrue(client.Store(StoreMode.Set, "TestLong", 65432123456L), "StoreLong failed.");
 
 				Assert.AreEqual(65432123456L, client.Get<long>("TestLong"));
 			}
@@ -170,23 +178,42 @@ namespace MemcachedTest
 		{
 			using (MemcachedClient client = GetClient())
 			{
+				log.Debug("Cache should be empty.");
+
 				Assert.IsTrue(client.Store(StoreMode.Set, "VALUE", "1"), "Initialization failed");
+
+				log.Debug("Setting VALUE to 1.");
 
 				Assert.AreEqual("1", client.Get("VALUE"), "Store failed");
 
+				log.Debug("Adding VALUE; this should return false.");
 				Assert.IsFalse(client.Store(StoreMode.Add, "VALUE", "2"), "Add should have failed");
+
+				log.Debug("Checking if VALUE is still '1'.");
 				Assert.AreEqual("1", client.Get("VALUE"), "Item should not have been Added");
 
+				log.Debug("Replacing VALUE; this should return true.");
 				Assert.IsTrue(client.Store(StoreMode.Replace, "VALUE", "4"), "Replace failed");
+
+				log.Debug("Checking if VALUE is '4' so it got replaced.");
 				Assert.AreEqual("4", client.Get("VALUE"), "Item should have been replaced");
 
+				log.Debug("Removing VALUE.");
 				Assert.IsTrue(client.Remove("VALUE"), "Remove failed");
 
+				log.Debug("Replacing VALUE; this should return false.");
 				Assert.IsFalse(client.Store(StoreMode.Replace, "VALUE", "8"), "Replace should not have succeeded");
+
+				log.Debug("Checking if VALUE is 'null' so it was not replaced.");
 				Assert.IsNull(client.Get("VALUE"), "Item should not have been Replaced");
 
+				log.Debug("Adding VALUE; this should return true.");
 				Assert.IsTrue(client.Store(StoreMode.Add, "VALUE", "16"), "Item should have been Added");
+
+				log.Debug("Checking if VALUE is '16' so it was added.");
 				Assert.AreEqual("16", client.Get("VALUE"), "Add failed");
+
+				log.Debug("Passed AddSetReplaceTest.");
 			}
 		}
 

@@ -83,6 +83,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="b4.config" />
+    <None Include="103.config" />
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>

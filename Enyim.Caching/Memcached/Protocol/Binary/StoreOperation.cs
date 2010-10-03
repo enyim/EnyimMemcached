@@ -5,7 +5,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 {
 	public class StoreOperation : BinarySingleItemOperation, IStoreOperation
 	{
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
+		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(StoreOperation));
 
 		private StoreMode mode;
 		private CacheItem value;
@@ -50,10 +50,13 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		{
 #if EVEN_MORE_LOGGING
 			if (log.IsDebugEnabled)
-				if (retval)
+				if (response.StatusCode == 0)
 					log.DebugFormat("Store succeeded for key '{0}'. Reason: {1}", this.Key);
 				else
+				{
+					System.Diagnostics.Debugger.Break();
 					log.DebugFormat("Store failed for key '{0}'. Reason: {1}", this.Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
+				}
 #endif
 
 			return true;
