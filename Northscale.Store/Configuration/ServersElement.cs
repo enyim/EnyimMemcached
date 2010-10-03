@@ -1,4 +1,5 @@
 using System.Configuration;
+using System.ComponentModel;
 
 namespace NorthScale.Store.Configuration
 {
@@ -7,6 +8,15 @@ namespace NorthScale.Store.Configuration
 	/// </summary>
 	public sealed class ServersElement : ConfigurationElement
 	{
+		private static readonly object NullObject = new object();
+
+		protected override void Init()
+		{
+			base.Init();
+
+			base["bucketPassword"] = NullObject;
+		}
+
 		/// <summary>
 		/// Gets or sets the name of the bucket to be used. Can be overriden at the pool's constructor, and if not specified the "default" bucket will be used.
 		/// </summary>
@@ -24,7 +34,7 @@ namespace NorthScale.Store.Configuration
 		[ConfigurationProperty("bucketPassword", IsRequired = false)]
 		public string BucketPassword
 		{
-			get { return (string)base["bucketPassword"]; }
+			get { var v = base["bucketPassword"]; return v == NullObject ? null : v as string; }
 			set { base["bucketPassword"] = value; }
 		}
 

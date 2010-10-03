@@ -56,7 +56,7 @@ namespace NorthScale.Store
 			this.configuration = configuration;
 			this.bucketName = bucket ?? configuration.Bucket;
 			// parameter -> config -> name
-			this.bucketPassword = bucketPassword ?? configuration.BucketPassword ?? bucket;
+			this.bucketPassword = bucketPassword ?? configuration.BucketPassword ?? bucketName;
 
 			// make null both if we use the default bucket since we do not need to be authenticated
 			if (String.IsNullOrEmpty(this.bucketName) || this.bucketName == "default")
