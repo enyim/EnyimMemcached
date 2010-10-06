@@ -24,7 +24,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 #if EVEN_MORE_LOGGING
 			if (log.IsDebugEnabled)
 				if (response.StatusCode == 0)
-					log.DebugFormat("Delete succeeded for key '{0}'. Reason: {1}", this.Key);
+					log.DebugFormat("Delete succeeded for key '{0}'.", this.Key);
 				else
 					log.DebugFormat("Delete failed for key '{0}'. Reason: {1}", this.Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
 #endif
