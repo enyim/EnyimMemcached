@@ -74,12 +74,14 @@ namespace Enyim.Caching.Memcached
 			// and try to make the memcached instaces more stable and/or increase the deadTimeout
 			try
 			{
-				// try to connect to the server
-				using (var socket = this.CreateSocket()) ;
-
 				// we could connect to the server, let's recreate the socket pool
 				lock (SyncRoot)
 				{
+					if (this.isDisposed) return false;
+
+					// try to connect to the server
+					using (var socket = this.CreateSocket()) ;
+
 					if (this.internalPoolImpl.IsAlive)
 						return true;
 
@@ -114,7 +116,16 @@ namespace Enyim.Caching.Memcached
 						this.isInitialized = true;
 					}
 
-			return this.internalPoolImpl.Acquire();
+			try
+			{
+				return this.internalPoolImpl.Acquire();
+			}
+			catch (Exception e)
+			{
+				log.Error("Acquire failed. Maybe we're already disposed?");
+
+				return null;
+			}
 		}
 
 		~MemcachedNode()
@@ -141,9 +152,10 @@ namespace Enyim.Caching.Memcached
 				if (this.isDisposed) return;
 
 				this.isDisposed = true;
-
 				this.internalPoolImpl.Dispose();
-				this.internalPoolImpl = null;
+				// let's try without nulling the field, so Acquire will not fail
+				// poolimpl will handle the disposed state internally
+				//this.internalPoolImpl = null;
 			}
 		}
 
@@ -253,9 +265,9 @@ namespace Enyim.Caching.Memcached
 
 				if (hasDebug) log.Debug("Acquiring stream from pool. " + this.endPoint);
 
-				if (!this.isAlive)
+				if (!this.isAlive || this.isDisposed)
 				{
-					if (hasDebug) log.Debug("Pool is dead, returning null. " + this.endPoint);
+					if (hasDebug) log.Debug("Pool is dead or disposed, returning null. " + this.endPoint);
 
 					return null;
 				}
