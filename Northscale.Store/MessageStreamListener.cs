@@ -269,6 +269,9 @@ namespace NorthScale.Store
 			if (mr != null)
 				mr(message);
 
+			if (log.IsDebugEnabled)
+				log.Debug("Processing message: " + message);
+
 			this.lastMessage = message;
 			this.hasMessage = true;
 		}

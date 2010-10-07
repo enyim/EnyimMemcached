@@ -37,7 +37,7 @@ namespace Enyim.Caching.Configuration
 				throw new System.Configuration.ConfigurationErrorsException("The type " + type.AssemblyQualifiedName + " must implement " + interfaceType.AssemblyQualifiedName);
 		}
 
-		internal static IPEndPoint ResolveToEndPoint(string value)
+		public static IPEndPoint ResolveToEndPoint(string value)
 		{
 			if (String.IsNullOrEmpty(value))
 				throw new ArgumentNullException("value");
@@ -53,7 +53,7 @@ namespace Enyim.Caching.Configuration
 			return ResolveToEndPoint(parts[0], port);
 		}
 
-		internal static IPEndPoint ResolveToEndPoint(string host, int port)
+		public static IPEndPoint ResolveToEndPoint(string host, int port)
 		{
 			if (String.IsNullOrEmpty(host))
 				throw new ArgumentNullException("host");

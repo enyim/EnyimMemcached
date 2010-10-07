@@ -110,21 +110,30 @@ namespace NorthScale.Store
 						? null
 						: new PlainTextAuthenticator(null, this.bucketName, this.bucketPassword);
 
-			var state = (config == null || config.vBucketServerMap == null)
-							? this.InitBasic(config, auth)
-							: this.InitVBucket(config, auth);
+			try
+			{
+				var state = (config == null || config.vBucketServerMap == null)
+								? this.InitBasic(config, auth)
+								: this.InitVBucket(config, auth);
 
-			var nodes = state.CurrentNodes;
+				var nodes = state.CurrentNodes;
 
-			state.Locator.Initialize(nodes);
+				state.Locator.Initialize(nodes);
 
-			// we need to subscribe the failed event, 
-			// so we can periodically check the dead 
-			// nodes, since we do not get a config 
-			// update every time a node dies
-			for (var i = 0; i < nodes.Length; i++) nodes[i].Failed += this.NodeFail;
+				// we need to subscribe the failed event, 
+				// so we can periodically check the dead 
+				// nodes, since we do not get a config 
+				// update every time a node dies
+				for (var i = 0; i < nodes.Length; i++) nodes[i].Failed += this.NodeFail;
 
-			Interlocked.Exchange(ref this.state, state);
+				Interlocked.Exchange(ref this.state, state);
+			}
+			catch (Exception e)
+			{
+				log.Error("Failed to initialize the pool.", e);
+
+				Interlocked.Exchange(ref this.state, InternalState.Empty);
+			}
 
 			// kill the old nodes
 			if (oldNodes != null)
@@ -147,18 +156,40 @@ namespace NorthScale.Store
 
 			if (log.IsInfoEnabled) log.Info("Has vbucket. Server count: " + (vbsm.serverList == null ? 0 : vbsm.serverList.Length));
 
-			var endpoints = (from server in vbsm.serverList
-							 let parts = server.Split(':')
-							 select new IPEndPoint(IPAddress.Parse(parts[0]), Int32.Parse(parts[1])));
+			var epa = (from server in vbsm.serverList
+					   select ConfigurationHelper.ResolveToEndPoint(server)).ToArray();
 
-			var epa = endpoints.ToArray();
+			var epaLength = epa.Length;
+
+			for (var i = 0; i < vbsm.vBucketMap.Length; i++)
+			{
+				var vb = vbsm.vBucketMap[i];
+				if (vb == null || vb.Length == 0)
+					throw new InvalidOperationException("Server sent an empty vbucket definition at index " + i);
+				if (vb[0] >= epaLength || vb[0] < 0)
+					throw new InvalidOperationException(String.Format("VBucket line {0} has a master index {1} out of range of the server list ({2})", i, vb[0], epaLength));
+			}
+
 			var buckets = vbsm.vBucketMap.Select(a => new VBucket(a[0], a.Skip(1).ToArray())).ToArray();
-			var bucketNodeMap = buckets.ToLookup(vb => epa[vb.Master]);
+			var bucketNodeMap = buckets.ToLookup(vb =>
+			{
+				try
+				{
+					return epa[vb.Master];
+				}
+				catch (Exception e)
+				{
+					log.Error(e);
+
+					throw;
+				}
+			}
+			);
 			var vbnl = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
 
 			return new InternalState
 			{
-				CurrentNodes = endpoints.Select(ip => (IMemcachedNode)new BinaryNode(ip, this.configuration.SocketPool, auth)).ToArray(),
+				CurrentNodes = epa.Select(ip => (IMemcachedNode)new BinaryNode(ip, this.configuration.SocketPool, auth)).ToArray(),
 				Locator = vbnl,
 				OpFactory = new VBucketAwareOperationFactory(vbnl)
 			};
@@ -191,6 +222,8 @@ namespace NorthScale.Store
 
 		void IDisposable.Dispose()
 		{
+			GC.SuppressFinalize(this);
+
 			if (this.state != null)
 				lock (this.DeadSync)
 				{
@@ -307,7 +340,7 @@ namespace NorthScale.Store
 				var currentState = this.state;
 
 				// we don't know who to reconfigure the pool when vbucket is
-				// enabled, so operations targeting the dead servers will fail
+				// enabled, so operations targeting the dead servers will fail.
 				// when we have a normal config we just reconfigure the locator,
 				// so the items will be rehashed to the working servers
 				if (!currentState.IsVbucket)
