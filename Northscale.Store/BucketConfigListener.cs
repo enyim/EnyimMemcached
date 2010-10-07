@@ -68,12 +68,11 @@ namespace NorthScale.Store
 				var info = listenerRefs[listener];
 				if (info.RefCount == 1)
 				{
-					try
-					{ listener.Stop(); }
-					catch { }
-
 					listenerRefs.Remove(listener);
 					listeners.Remove(info.HashKey);
+
+					try { using (listener) listener.Stop(); }
+					catch { }
 				}
 				else
 				{

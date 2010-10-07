@@ -11,7 +11,7 @@ namespace NorthScale.Store
 	/// <summary>
 	/// Listens on a streamingUri and processes the messages
 	/// </summary>
-	internal class MessageStreamListener
+	internal class MessageStreamListener : IDisposable
 	{
 		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(MessageStreamListener));
 
@@ -87,7 +87,6 @@ namespace NorthScale.Store
 		{
 			if (this.IsStarted) throw new InvalidOperationException("already started");
 
-			this.client = this.CreateClient();
 			var success = ThreadPool.QueueUserWorkItem(this.Worker);
 
 			if (log.IsDebugEnabled) log.Debug("Starting the listener. Queue=" + success);
@@ -127,6 +126,9 @@ namespace NorthScale.Store
 
 			while (this.stopCounter == 0)
 			{
+				if (this.client == null)
+					this.client = this.CreateClient();
+
 				// false means that the url was not responding or failed while reading
 				this.statusPool = this.urls.ToDictionary(u => u, u => true);
 				this.urlIndex = 0;
@@ -149,6 +151,11 @@ namespace NorthScale.Store
 					{
 						Thread.Sleep(100);
 					}
+
+					// recreate the client after failure
+					this.CleanupRequests();
+					this.client.Dispose();
+					this.client = null;
 				}
 			}
 		}
@@ -317,6 +324,24 @@ namespace NorthScale.Store
 					emptyCounter = 0;
 					messageBuilder.Append(line);
 				}
+			}
+		}
+
+		void IDisposable.Dispose()
+		{
+			this.Dispose();
+		}
+
+		protected void Dispose()
+		{
+			this.CleanupRequests();
+
+			if (this.client != null)
+			{
+				using (this.client)
+					this.client.CancelAsync();
+
+				this.client = null;
 			}
 		}
 	}
