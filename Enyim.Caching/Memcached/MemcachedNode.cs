@@ -122,7 +122,7 @@ namespace Enyim.Caching.Memcached
 			}
 			catch (Exception e)
 			{
-				log.Error("Acquire failed. Maybe we're already disposed?");
+				log.Error("Acquire failed. Maybe we're already disposed?", e);
 
 				return null;
 			}
@@ -336,7 +336,7 @@ namespace Enyim.Caching.Memcached
 
 			private void MarkAsDead()
 			{
-				if (log.IsWarnEnabled) log.WarnFormat("Marking pool {0} as dead", this.endPoint);
+				if (log.IsWarnEnabled) log.WarnFormat("Marking node {0} as dead", this.endPoint);
 
 				this.isAlive = false;
 				this.markedAsDeadUtc = DateTime.UtcNow;

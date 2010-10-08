@@ -17,8 +17,11 @@ namespace Enyim.Caching.Memcached
 		private IMemcachedClientConfiguration configuration;
 		private IOperationFactory factory;
 		private IMemcachedNodeLocator nodeLocator;
+
+		private object DeadSync = new Object();
 		private System.Threading.Timer resurrectTimer;
 		private bool isTimerActive;
+		private long deadTimeoutMsec;
 
 		public DefaultServerPool(IMemcachedClientConfiguration configuration, IOperationFactory opFactory)
 		{
@@ -28,8 +31,7 @@ namespace Enyim.Caching.Memcached
 			this.configuration = configuration;
 			this.factory = opFactory;
 
-			// timer starts as disabled
-			this.resurrectTimer = new Timer(this.rezCallback, null, Timeout.Infinite, Timeout.Infinite);
+			this.deadTimeoutMsec = (long)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds;
 		}
 
 		~DefaultServerPool()
@@ -45,7 +47,9 @@ namespace Enyim.Caching.Memcached
 
 		private void rezCallback(object state)
 		{
-			if (log.IsDebugEnabled) log.Debug("Checking the dead servers.");
+			var isDebug = log.IsDebugEnabled;
+
+			if (isDebug) log.Debug("Checking the dead servers.");
 
 			// how this works:
 			// 1. timer is created but suspended
@@ -61,35 +65,36 @@ namespace Enyim.Caching.Memcached
 			// 6. if at least one server is still down (Ping() == false), we restart the timer
 			// 7. if all servers are up, we set isRunning to false, so the timer is suspended
 			// 8. GOTO 2
-			lock (this.resurrectTimer)
+			lock (this.DeadSync)
 			{
-				var aliveList = new List<IMemcachedNode>(this.allNodes.Length);
-				var mustInit = false;
+				var nodes = this.allNodes;
+				var aliveList = new List<IMemcachedNode>(nodes.Length);
+				var changed = false;
 				var deadCount = 0;
 
-				for (var i = 0; i < this.allNodes.Length; i++)
+				for (var i = 0; i < nodes.Length; i++)
 				{
-					var n = this.allNodes[i];
+					var n = nodes[i];
 					if (n.IsAlive)
 					{
-						if (log.IsDebugEnabled) log.DebugFormat("Alive: {0}", n.EndPoint);
+						if (isDebug) log.DebugFormat("Alive: {0}", n.EndPoint);
 
 						aliveList.Add(n);
 					}
 					else
 					{
-						if (log.IsDebugEnabled) log.DebugFormat("Dead: {0}", n.EndPoint);
+						if (isDebug) log.DebugFormat("Dead: {0}", n.EndPoint);
 
 						if (n.Ping())
 						{
-							if (log.IsDebugEnabled) log.Debug("Ping ok.");
-
-							mustInit = true;
+							changed = true;
 							aliveList.Add(n);
+
+							if (isDebug) log.Debug("Ping ok.");
 						}
 						else
 						{
-							if (log.IsDebugEnabled) log.Debug("Still dead.");
+							if (isDebug) log.Debug("Still dead.");
 
 							deadCount++;
 						}
@@ -97,9 +102,9 @@ namespace Enyim.Caching.Memcached
 				}
 
 				// reinit the locator
-				if (mustInit)
+				if (changed)
 				{
-					if (log.IsDebugEnabled) log.Debug("Reinitializing the locator.");
+					if (isDebug) log.Debug("Reinitializing the locator.");
 
 					this.nodeLocator.Initialize(aliveList);
 				}
@@ -107,34 +112,51 @@ namespace Enyim.Caching.Memcached
 				// stop or restart the timer
 				if (deadCount == 0)
 				{
-					if (log.IsDebugEnabled) log.Debug("deadCount == 0, stopping the timer.");
+					if (isDebug) log.Debug("deadCount == 0, stopping the timer.");
 
 					this.isTimerActive = false;
 				}
 				else
 				{
-					if (log.IsDebugEnabled) log.DebugFormat("deadCount == {0}, starting the timer.", deadCount);
+					if (isDebug) log.DebugFormat("deadCount == {0}, starting the timer.", deadCount);
 
-					this.resurrectTimer.Change((long)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds, Timeout.Infinite);
+					this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
 				}
 			}
 		}
 
 		private void NodeFail(IMemcachedNode node)
 		{
-			if (log.IsDebugEnabled) log.DebugFormat("Node {0} is dead, starting the timer.", node.EndPoint);
+			var isDebug = log.IsDebugEnabled;
+			if (isDebug) log.DebugFormat("Node {0} is dead.", node.EndPoint);
 
 			// the timer is stopped until we encounter the first dead server
 			// when we have one, we trigger it and it will run after DeadTimeout has elapsed
-			if (!this.isTimerActive)
-				lock (this.resurrectTimer)
-					if (!this.isTimerActive)
-					{
-						this.isTimerActive = true;
-						this.resurrectTimer.Change((long)configuration.SocketPool.DeadTimeout.TotalMilliseconds, Timeout.Infinite);
+			lock (DeadSync)
+			{
+				// re-initialize the locator
+				// TEST
+				var newLocator = this.configuration.CreateNodeLocator();
+				newLocator.Initialize(allNodes.Where(n => n.IsAlive).ToArray());
+				Interlocked.Exchange(ref this.nodeLocator, newLocator);
+				// TEST
 
-						if (log.IsDebugEnabled) log.Debug("Timer started.");
-					}
+				// the timer is stopped until we encounter the first dead server
+				// when we have one, we trigger it and it will run after DeadTimeout has elapsed
+				if (!this.isTimerActive)
+				{
+					if (isDebug) log.Debug("Starting the recovery timer.");
+
+					if (this.resurrectTimer == null)
+						this.resurrectTimer = new Timer(this.rezCallback, null, this.deadTimeoutMsec, Timeout.Infinite);
+					else
+						this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
+
+					this.isTimerActive = true;
+
+					if (isDebug) log.Debug("Timer started.");
+				}
+			}
 		}
 
 		#region [ IServerPool                  ]
@@ -180,28 +202,33 @@ namespace Enyim.Caching.Memcached
 
 		void IDisposable.Dispose()
 		{
-			if (this.allNodes != null)
-			{
-				GC.SuppressFinalize(this);
+			GC.SuppressFinalize(this);
 
-				for (var i = 0; i < this.allNodes.Length; i++)
-					try { this.allNodes[i].Dispose(); }
-					catch { }
+			lock (this.DeadSync)
+				if (this.allNodes != null)
+				{
+					// dispose the locator first, maybe it wants to access 
+					// the nodes one last time
+					var nd = this.nodeLocator as IDisposable;
+					if (nd != null)
+						try { nd.Dispose(); }
+						catch { }
 
-				this.allNodes = null;
+					this.nodeLocator = null;
 
-				var nd = this.nodeLocator as IDisposable;
-				if (nd != null)
-					try { nd.Dispose(); }
-					catch { }
+					for (var i = 0; i < this.allNodes.Length; i++)
+						try { this.allNodes[i].Dispose(); }
+						catch { }
 
-				this.nodeLocator = null;
+					this.allNodes = null;
 
-				using (this.resurrectTimer)
-					this.resurrectTimer.Change(Timeout.Infinite, Timeout.Infinite);
+					// stop the timer
+					if (this.resurrectTimer != null)
+						using (this.resurrectTimer)
+							this.resurrectTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
-				this.resurrectTimer = null;
-			}
+					this.resurrectTimer = null;
+				}
 		}
 
 		#endregion
