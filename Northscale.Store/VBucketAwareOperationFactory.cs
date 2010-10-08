@@ -89,6 +89,8 @@ namespace NorthScale.Store
 
 			protected override bool ProcessResponse(BinaryResponse response)
 			{
+				base.ProcessResponse(response);
+
 				var r = response.StatusCode == 0;
 				this.state = r ? OperationState.Success : OperationState.Failure;
 
@@ -135,6 +137,8 @@ namespace NorthScale.Store
 
 			protected override bool ProcessResponse(BinaryResponse response)
 			{
+				base.ProcessResponse(response);
+
 				var r = response.StatusCode == 0;
 				this.state = r ? OperationState.Success : OperationState.Failure;
 
@@ -181,6 +185,8 @@ namespace NorthScale.Store
 
 			protected override bool ProcessResponse(BinaryResponse response)
 			{
+				base.ProcessResponse(response);
+
 				var r = response.StatusCode == 0;
 				this.state = r ? OperationState.Success : OperationState.Failure;
 
@@ -249,6 +255,8 @@ namespace NorthScale.Store
 
 			protected override bool ProcessResponse(BinaryResponse response)
 			{
+				base.ProcessResponse(response);
+
 				var r = response.StatusCode == 0;
 				this.state = r ? OperationState.Success : OperationState.Failure;
 
@@ -296,6 +304,8 @@ namespace NorthScale.Store
 
 			protected override bool ProcessResponse(BinaryResponse response)
 			{
+				base.ProcessResponse(response);
+
 				var r = response.StatusCode == 0;
 				this.state = r ? OperationState.Success : OperationState.Failure;
 
