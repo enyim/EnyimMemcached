@@ -101,6 +101,20 @@ namespace MemcachedTest
 		}
 
 		[TestCase]
+		public void StoreNullTest()
+		{
+			using (MemcachedClient client = GetClient())
+			{
+				Assert.IsTrue(client.Store(StoreMode.Set, "TestNull", null), "StoreNull failed.");
+
+				object retval;
+
+				Assert.IsTrue(client.TryGet("TestNull", out retval), "Failed to retrieve TestNull");
+				Assert.IsNull(retval, "Retval should be null");
+			}
+		}
+
+		[TestCase]
 		public void StoreLongTest()
 		{
 			using (MemcachedClient client = GetClient())
