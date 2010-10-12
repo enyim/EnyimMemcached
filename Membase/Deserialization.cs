@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Net;
 
-namespace NorthScale.Store
+namespace Membase
 {
 #pragma warning disable 649
 	internal class ClusterConfig

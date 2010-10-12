@@ -6,7 +6,7 @@ using System.Text;
 using System.Web.Script.Serialization;
 using System.IO;
 
-namespace NorthScale.Store
+namespace Membase
 {
 	internal class ConfigHelper : IDisposable
 	{

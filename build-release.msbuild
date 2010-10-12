@@ -20,39 +20,39 @@
 	</UsingTask>
 	
 	<Target Name="BeforeBuild">
-		<RemoveDir Directories="Enyim.Caching\bin;Enyim.Caching\obj;NorthScale.Store\bin;NorthScale.Store\obj" ContinueOnError="true" />
+		<RemoveDir Directories="Enyim.Caching\bin;Enyim.Caching\obj;Membase\bin;Membase\obj" ContinueOnError="true" />
 	</Target>
 
 	<Target Name="Compile" DependsOnTargets="BeforeBuild">
 		<MSBuild Projects="Enyim.Caching\Enyim.Caching.csproj" Targets="Rebuild" Properties="Configuration=Release;IsReleaseBuild=true" />
-		<MSBuild Projects="NorthScale.Store\NorthScale.Store.csproj" Targets="Rebuild" Properties="Configuration=Release;IsReleaseBuild=true" />
+		<MSBuild Projects="Membase\Membase.csproj" Targets="Rebuild" Properties="Configuration=Release;IsReleaseBuild=true" />
 	</Target>
 
 	<Target Name="PrepareFiles">
 		<Move SourceFiles="Enyim.Caching\bin\Release\Enyim.Caching.dll.config" DestinationFiles="Enyim.Caching\bin\Release\Demo.config" />
-		<Move SourceFiles="NorthScale.Store\bin\Release\NorthScale.Store.dll.config" DestinationFiles="NorthScale.Store\bin\Release\Demo.config" />
+		<Move SourceFiles="Membase\bin\Release\Membase.dll.config" DestinationFiles="Membase\bin\Release\Demo.config" />
 
 		<Copy SourceFiles="LICENSE" DestinationFolder="Enyim.Caching\bin\Release\" />
-		<Copy SourceFiles="LICENSE" DestinationFolder="NorthScale.Store\bin\Release\" />
+		<Copy SourceFiles="LICENSE" DestinationFolder="Membase\bin\Release\" />
 	</Target>
 
 	<Target Name="Pack">
 		<GetFileVersion AssemblyPath="Enyim.Caching\bin\Release\Enyim.Caching.dll">
 			<Output TaskParameter="FileVersion" PropertyName="EnyimCachingVersion" />
 		</GetFileVersion>
-		<GetFileVersion AssemblyPath="NorthScale.Store\bin\Release\NorthScale.Store.dll">
-			<Output TaskParameter="FileVersion" PropertyName="NorthScaleStoreVersion" />
+		<GetFileVersion AssemblyPath="Membase\bin\Release\Membase.dll">
+			<Output TaskParameter="FileVersion" PropertyName="MembaseVersion" />
 		</GetFileVersion>
 
 		<CreateItem Include="Enyim.Caching\bin\Release\**\*.*">
 			<Output ItemName="EnyimItems" TaskParameter="Include" />
 		</CreateItem>
-		<CreateItem Include="NorthScale.Store\bin\Release\**\*.*">
-			<Output ItemName="NorthScaleItems" TaskParameter="Include" />
+		<CreateItem Include="Membase\bin\Release\**\*.*">
+			<Output ItemName="MembaseItems" TaskParameter="Include" />
 		</CreateItem>
 
 		<Zip Files="@(EnyimItems)" ZipFileName="Enyim.Caching.$([System.Text.RegularExpressions.Regex]::Replace($(EnyimCachingVersion), `^([^0-9]+)`, ``)).zip" ZipLevel="9" Flatten="true" />
-		<Zip Files="@(NorthScaleItems)" ZipFileName="NorthScale.Store.$([System.Text.RegularExpressions.Regex]::Replace($(NorthScaleStoreVersion), `^([^0-9]+)`, ``)).zip" ZipLevel="9" Flatten="true" />
+		<Zip Files="@(MembaseItems)" ZipFileName="Membase.$([System.Text.RegularExpressions.Regex]::Replace($(MembaseVersion), `^([^0-9]+)`, ``)).zip" ZipLevel="9" Flatten="true" />
 	</Target>
 
 	<Target Name="Build" DependsOnTargets="Compile;PrepareFiles;Pack">

@@ -7,7 +7,7 @@ using Enyim.Caching.Memcached;
 using System.IO;
 using System.Threading;
 
-namespace NorthScale.Store
+namespace Membase
 {
 	/// <summary>
 	/// Membase requires each item operation to have a vbucket index set in the request's "reserved" field. (This is used for replicatiom and failover.) This op factory provides customized operations handling these indexes.

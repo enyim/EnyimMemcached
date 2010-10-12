@@ -6,7 +6,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 
-namespace NorthScale.Store
+namespace Membase
 {
 	/// <summary>
 	/// Listens on a streamingUri and processes the messages

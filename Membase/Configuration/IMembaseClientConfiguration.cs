@@ -4,9 +4,9 @@ using System.Net;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 
-namespace NorthScale.Store.Configuration
+namespace Membase.Configuration
 {
-	public interface INorthScaleClientConfiguration
+	public interface IMembaseClientConfiguration
 	{
 		/// <summary>
 		/// Gets the name of the bucket to be used. If not specified the "default" bucket will be used.

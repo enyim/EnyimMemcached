@@ -5,8 +5,8 @@ using Enyim.Caching;
 using Enyim.Caching.Memcached;
 using System.Net;
 using Enyim.Caching.Configuration;
-using NorthScale.Store;
-using NorthScale.Store.Configuration;
+using Membase;
+using Membase.Configuration;
 using System.Threading;
 
 namespace DemoApp
@@ -17,24 +17,9 @@ namespace DemoApp
 		{
 			log4net.Config.XmlConfigurator.Configure();
 
-			// or just initialize the client from code
-			var nscc = new NorthScaleClientConfiguration();
-
-			nscc.SocketPool.ReceiveTimeout = new TimeSpan(0, 0, 2);
-			nscc.SocketPool.DeadTimeout = new TimeSpan(0, 0, 10);
-
-			nscc.Urls.Add(new Uri("http://192.168.2.210:8080/pools/default"));
-			nscc.Urls.Add(new Uri("http://192.168.2.212:8080/pools/default"));
-			nscc.Credentials = new NetworkCredential("A", "11111111");
-			//nscc.BucketPassword = "pass";
-
-			StressTest(new NorthScaleClient(nscc, "default"));
-
-			return;
-
 			var mcc = new MemcachedClientConfiguration();
 			mcc.AddServer("192.168.2.200:11211");
-			//mcc.AddServer("192.168.2.202:11211");
+			mcc.AddServer("192.168.2.202:11211");
 
 			mcc.SocketPool.ReceiveTimeout = new TimeSpan(0, 0, 4);
 			mcc.SocketPool.ConnectionTimeout = new TimeSpan(0, 0, 4);
@@ -44,13 +29,29 @@ namespace DemoApp
 
 			return;
 
-			var nc = new NorthScaleClient(nscc, "content");
+
+			// or just initialize the client from code
+			var nscc = new MembaseClientConfiguration();
+
+			nscc.SocketPool.ReceiveTimeout = new TimeSpan(0, 0, 2);
+			nscc.SocketPool.DeadTimeout = new TimeSpan(0, 0, 10);
+
+			nscc.Urls.Add(new Uri("http://192.168.2.200:8080/pools/default"));
+			nscc.Urls.Add(new Uri("http://192.168.2.202:8080/pools/default"));
+			//nscc.Credentials = new NetworkCredential("A", "11111111");
+			//nscc.BucketPassword = "pass";
+
+			StressTest(new MembaseClient(nscc, "default"));
+
+			return;
+
+			var nc = new MembaseClient(nscc, "content");
 
 			var stats1 = nc.Stats("slabs");
 			foreach (var kvp in stats1.GetRaw("curr_connections"))
 				Console.WriteLine("{0} -> {1}", kvp.Key, kvp.Value);
 
-			var nc2 = new NorthScaleClient(nscc, "content");
+			var nc2 = new MembaseClient(nscc, "content");
 
 			var stats2 = nc2.Stats();
 			foreach (var kvp in stats2.GetRaw("curr_connections"))

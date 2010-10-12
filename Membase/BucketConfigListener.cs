@@ -6,7 +6,7 @@ using System.Threading;
 using System.Net;
 using Enyim;
 
-namespace NorthScale.Store
+namespace Membase
 {
 	internal class BucketConfigListener
 	{

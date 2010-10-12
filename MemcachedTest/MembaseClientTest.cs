@@ -8,14 +8,26 @@ namespace MemcachedTest
 	///to contain all Enyim.Caching.MemcachedClient Unit Tests
 	///</summary>
 	[TestFixture]
-	public class NorthScaleMemcachedClientTest : BinaryMemcachedClientTest
+	public class NorthScaleMembaseClientTest : BinaryMemcachedClientTest
 	{
 		protected override MemcachedClient GetClient()
 		{
-			var client = new NorthScale.Store.NorthScaleClient("test/northscaleMemcached", null);
+			var client = new Membase.MembaseClient("test/membase", null);
 			client.FlushAll();
 
 			return client;
+		}
+
+		[TestFixtureSetUp]
+		public void Init()
+		{
+			log4net.Config.XmlConfigurator.Configure();
+		}
+
+		[TestCase]
+		public override void MultiGetTest()
+		{
+			base.MultiGetTest();
 		}
 	}
 }

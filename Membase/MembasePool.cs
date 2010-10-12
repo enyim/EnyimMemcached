@@ -1,24 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
 using System.Threading;
-using Enyim.Caching.Memcached;
-using NorthScale.Store.Configuration;
 using Enyim.Caching.Configuration;
+using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Protocol.Binary;
+using Membase.Configuration;
 
-namespace NorthScale.Store
+namespace Membase
 {
 	/// <summary>
-	/// Socket pool using the NorthScale server's dynamic node list
+	/// Socket pool using the Membase server's dynamic node list
 	/// </summary>
-	internal class NorthScalePool : IServerPool
+	internal class MembasePool : IServerPool
 	{
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(NorthScalePool));
+		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MembasePool));
 
-		private INorthScaleClientConfiguration configuration;
+		private IMembaseClientConfiguration configuration;
 
 		private Uri[] poolUrls;
 		private BucketConfigListener configListener;
@@ -33,25 +32,25 @@ namespace NorthScale.Store
 		private bool isTimerActive;
 		private long deadTimeoutMsec;
 
-		public NorthScalePool(INorthScaleClientConfiguration configuration) : this(configuration, null) { }
+		public MembasePool(IMembaseClientConfiguration configuration) : this(configuration, null) { }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:NorthScale.Store.NorthScalePool" /> class using the specified configuration 
+		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class using the specified configuration 
 		/// and bucket name. The name also will be used as the bucket password.
 		/// </summary>
 		/// <param name="configuration">The configuration to be used.</param>
 		/// <param name="bucket">The name of the bucket to connect to.</param>
-		public NorthScalePool(INorthScaleClientConfiguration configuration, string bucket) : this(configuration, bucket, null) { }
+		public MembasePool(IMembaseClientConfiguration configuration, string bucket) : this(configuration, bucket, null) { }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:NorthScale.Store.NorthScalePool" /> class using the specified configuration,
+		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class using the specified configuration,
 		/// bucket name and password.
 		/// </summary>
 		/// <param name="configuration">The configuration to be used.</param>
 		/// <param name="bucket">The name of the bucket to connect to.</param>
 		/// <param name="bucketPassword">The password to the bucket.</param>
 		/// <remarks> If the password is null, the bucket name will be used. Set to String.Empty to use an empty password.</remarks>
-		public NorthScalePool(INorthScaleClientConfiguration configuration, string bucket, string bucketPassword)
+		public MembasePool(IMembaseClientConfiguration configuration, string bucket, string bucketPassword)
 		{
 			this.configuration = configuration;
 			this.bucketName = bucket ?? configuration.Bucket;
@@ -68,7 +67,7 @@ namespace NorthScale.Store
 			this.deadTimeoutMsec = (long)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds;
 		}
 
-		~NorthScalePool()
+		~MembasePool()
 		{
 			try { ((IDisposable)this).Dispose(); }
 			catch { }

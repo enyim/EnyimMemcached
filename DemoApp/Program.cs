@@ -5,8 +5,8 @@ using Enyim.Caching;
 using Enyim.Caching.Memcached;
 using System.Net;
 using Enyim.Caching.Configuration;
-using NorthScale.Store;
-using NorthScale.Store.Configuration;
+using Membase;
+using Membase.Configuration;
 using System.Threading;
 
 namespace DemoApp

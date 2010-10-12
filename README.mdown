@@ -1,6 +1,6 @@
 # Enyim Memcached Client
 
-This is a .NET client library for [memcached](http://memcached.org) written in C#. Also it has a special client for [NorthScale](http://northscale.com)'s Memcached and Membase servers.
+This is a .NET client library for [memcached](http://memcached.org) written in C#. Also it has a special client for [Membase](http://membase.com)'s persistent memcached server.
 
 Features:
 

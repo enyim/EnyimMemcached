@@ -1,7 +1,7 @@
 using System.Configuration;
 using System.ComponentModel;
 
-namespace NorthScale.Store.Configuration
+namespace Membase.Configuration
 {
 	/// <summary>
 	/// Configures the <see cref="T:MemcachedClient"/>. This class cannot be inherited.

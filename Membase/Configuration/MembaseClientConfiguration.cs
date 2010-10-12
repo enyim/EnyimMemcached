@@ -5,12 +5,12 @@ using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using Enyim.Reflection;
 
-namespace NorthScale.Store.Configuration
+namespace Membase.Configuration
 {
 	/// <summary>
 	/// Configuration class
 	/// </summary>
-	public class NorthScaleClientConfiguration : INorthScaleClientConfiguration
+	public class MembaseClientConfiguration : IMembaseClientConfiguration
 	{
 		private Type nodeLocator;
 		private ITranscoder transcoder;
@@ -19,7 +19,7 @@ namespace NorthScale.Store.Configuration
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
 		/// </summary>
-		public NorthScaleClientConfiguration()
+		public MembaseClientConfiguration()
 		{
 			this.Urls = new List<Uri>();
 			this.Port = BucketPortType.Direct;
@@ -94,27 +94,27 @@ namespace NorthScale.Store.Configuration
 		public BucketPortType Port { get; set; }
 
 		#region [ interface                     ]
-		IList<Uri> INorthScaleClientConfiguration.Urls
+		IList<Uri> IMembaseClientConfiguration.Urls
 		{
 			get { return this.Urls; }
 		}
 
-		NetworkCredential INorthScaleClientConfiguration.Credentials
+		NetworkCredential IMembaseClientConfiguration.Credentials
 		{
 			get { return this.Credentials; }
 		}
 
-		ISocketPoolConfiguration INorthScaleClientConfiguration.SocketPool
+		ISocketPoolConfiguration IMembaseClientConfiguration.SocketPool
 		{
 			get { return this.SocketPool; }
 		}
 
-		IMemcachedKeyTransformer INorthScaleClientConfiguration.CreateKeyTransformer()
+		IMemcachedKeyTransformer IMembaseClientConfiguration.CreateKeyTransformer()
 		{
 			return this.KeyTransformer;
 		}
 
-		IMemcachedNodeLocator INorthScaleClientConfiguration.CreateNodeLocator()
+		IMemcachedNodeLocator IMembaseClientConfiguration.CreateNodeLocator()
 		{
 			var f = this.NodeLocatorFactory;
 			if (f != null) return f.Create();
@@ -124,17 +124,17 @@ namespace NorthScale.Store.Configuration
 					: (IMemcachedNodeLocator)FastActivator.Create(this.NodeLocator);
 		}
 
-		ITranscoder INorthScaleClientConfiguration.CreateTranscoder()
+		ITranscoder IMembaseClientConfiguration.CreateTranscoder()
 		{
 			return this.Transcoder;
 		}
 
-		string INorthScaleClientConfiguration.Bucket
+		string IMembaseClientConfiguration.Bucket
 		{
 			get { return this.Bucket; }
 		}
 
-		BucketPortType INorthScaleClientConfiguration.Port
+		BucketPortType IMembaseClientConfiguration.Port
 		{
 			get { return this.Port; }
 		}

@@ -1,30 +1,28 @@
-using System;
-using System.ComponentModel;
-using System.Configuration;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-namespace NorthScale.Store.Configuration
+namespace Membase.Configuration
 {
-	/// <summary>
-	/// Represents a configuration element that contains a Memcached node address. This class cannot be inherited. 
-	/// </summary>
-	public sealed class UriElement : ConfigurationElement
+	public enum BucketPortType
 	{
 		/// <summary>
-		/// Gets or sets the ip address of the node.
+		/// Connect to the nodes using moxy
 		/// </summary>
-		[ConfigurationProperty("uri", IsRequired = true, IsKey = true), UriValidator, TypeConverter(typeof(UriConverter))]
-		public Uri Uri
-		{
-			get { return (Uri)base["uri"]; }
-			set { base["uri"] = value; }
-		}
+		Proxy,
+
+		/// <summary>
+		/// Connect to the nodes directly using the Memcached port
+		/// </summary>
+		Direct
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kisk�, enyim.com
+ *    Copyright (c) 2010 Attila Kiskó, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

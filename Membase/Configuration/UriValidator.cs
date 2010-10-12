@@ -1,7 +1,7 @@
 using System;
 using System.Configuration;
 
-namespace NorthScale.Store.Configuration
+namespace Membase.Configuration
 {
 	public sealed class UriValidatorAttribute : ConfigurationValidatorAttribute
 	{

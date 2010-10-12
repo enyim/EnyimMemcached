@@ -3,63 +3,63 @@ using System.Linq;
 using System.Configuration;
 using Enyim.Caching;
 using Enyim.Caching.Memcached;
-using NorthScale.Store.Configuration;
+using Membase.Configuration;
 
-namespace NorthScale.Store
+namespace Membase
 {
 	/// <summary>
 	/// Client which can be used to connect to NothScale's Memcached and Membase servers.
 	/// </summary>
-	public class NorthScaleClient : MemcachedClient
+	public class MembaseClient : MemcachedClient
 	{
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(NorthScaleClient));
-		private static INorthScaleClientConfiguration DefaultConfig = (INorthScaleClientConfiguration)ConfigurationManager.GetSection("northscale");
+		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MembaseClient));
+		private static IMembaseClientConfiguration DefaultConfig = (IMembaseClientConfiguration)ConfigurationManager.GetSection("membase");
 
-		private NorthScalePool nsPool;
+		private MembasePool nsPool;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:NorthScale.Store.NorthScalePool" /> class using the default configuration and bucket.
+		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class using the default configuration and bucket.
 		/// </summary>
-		/// <remarks>The configuration is taken from the /configuration/northscale section.</remarks>
-		public NorthScaleClient() :
+		/// <remarks>The configuration is taken from the /configuration/membase section.</remarks>
+		public MembaseClient() :
 			this(DefaultConfig, null) { }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:NorthScale.Store.NorthScalePool" /> class 
+		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class 
 		/// using the default configuration and the specified bucket name.
 		/// </summary>
 		/// <param name="bucketName">The name of the bucket this client will connect to.</param>
-		public NorthScaleClient(string bucketName) :
+		public MembaseClient(string bucketName) :
 			this(DefaultConfig, bucketName) { }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:NorthScale.Store.NorthScalePool" /> class 
+		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class 
 		/// using the specified configuration and bucket name.
 		/// </summary>
 		/// <param name="sectionName">The name of the configuration section to load.</param>
 		/// <param name="bucketName">The name of the bucket this client will connect to.</param>
-		public NorthScaleClient(string sectionName, string bucketName) :
-			this((INorthScaleClientConfiguration)ConfigurationManager.GetSection(sectionName), bucketName) { }
+		public MembaseClient(string sectionName, string bucketName) :
+			this((IMembaseClientConfiguration)ConfigurationManager.GetSection(sectionName), bucketName) { }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:NorthScale.Store.NorthScalePool" /> class 
+		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class 
 		/// using a custom configuration provider.
 		/// </summary>
 		/// <param name="configuration">The custom configuration provider.</param>
-		public NorthScaleClient(INorthScaleClientConfiguration configuration) :
+		public MembaseClient(IMembaseClientConfiguration configuration) :
 			this(configuration, null)
 		{
-			this.nsPool = (NorthScalePool)this.Pool;
+			this.nsPool = (MembasePool)this.Pool;
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:NorthScale.Store.NorthScalePool" /> class 
+		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class 
 		/// using a custom configuration provider and the specified bucket name.
 		/// </summary>
 		/// <param name="configuration">The custom configuration provider.</param>
 		/// <param name="bucketName">The name of the bucket this client will connect to. Note: this will override the configuration's BucketName property.</param>
-		public NorthScaleClient(INorthScaleClientConfiguration configuration, string bucketName) :
-			base(new NorthScalePool(configuration, IsDefaultBucket(bucketName) ? null : bucketName),
+		public MembaseClient(IMembaseClientConfiguration configuration, string bucketName) :
+			base(new MembasePool(configuration, IsDefaultBucket(bucketName) ? null : bucketName),
 					configuration.CreateKeyTransformer(),
 					configuration.CreateTranscoder()) { }
 
@@ -164,7 +164,7 @@ namespace NorthScale.Store
 			var iows = op as IOperationWithState;
 
 			// different op factory, we do not know how to retry
-			if (iows == null) 
+			if (iows == null)
 				return false;
 
 #if HAS_FORWARD_MAP

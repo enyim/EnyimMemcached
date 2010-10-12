@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 
-namespace NorthScale.Store.Configuration
+namespace Membase.Configuration
 {
 	/// <summary>
 	/// Represents a collection of <see cref="T:EndPointElement"/> instances. This class cannot be inherited.

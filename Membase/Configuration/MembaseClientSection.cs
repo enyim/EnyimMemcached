@@ -7,12 +7,12 @@ using System.Web.Configuration;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 
-namespace NorthScale.Store.Configuration
+namespace Membase.Configuration
 {
 	/// <summary>
-	/// Configures the <see cref="T:MemcachedClient"/>. This class cannot be inherited.
+	/// Configures the <see cref="T:MembaseClient"/>. This class cannot be inherited.
 	/// </summary>
-	public sealed class NorthScaleClientSection : ConfigurationSection, INorthScaleClientConfiguration
+	public sealed class MembaseClientSection : ConfigurationSection, IMembaseClientConfiguration
 	{
 		[ConfigurationProperty("servers", IsRequired = true)]
 		public ServersElement Servers
@@ -75,32 +75,32 @@ namespace NorthScale.Store.Configuration
 		}
 
 		#region [ interface                     ]
-		IList<Uri> INorthScaleClientConfiguration.Urls
+		IList<Uri> IMembaseClientConfiguration.Urls
 		{
 			get { return this.Servers.Urls.ToUriCollection(); }
 		}
 
-		ISocketPoolConfiguration INorthScaleClientConfiguration.SocketPool
+		ISocketPoolConfiguration IMembaseClientConfiguration.SocketPool
 		{
 			get { return this.SocketPool; }
 		}
 
-		IMemcachedKeyTransformer INorthScaleClientConfiguration.CreateKeyTransformer()
+		IMemcachedKeyTransformer IMembaseClientConfiguration.CreateKeyTransformer()
 		{
 			return this.KeyTransformer.CreateInstance() ?? new DefaultKeyTransformer();
 		}
 
-		IMemcachedNodeLocator INorthScaleClientConfiguration.CreateNodeLocator()
+		IMemcachedNodeLocator IMembaseClientConfiguration.CreateNodeLocator()
 		{
 			return this.NodeLocator.CreateInstance() ?? new KetamaNodeLocator();
 		}
 
-		ITranscoder INorthScaleClientConfiguration.CreateTranscoder()
+		ITranscoder IMembaseClientConfiguration.CreateTranscoder()
 		{
 			return this.Transcoder.CreateInstance() ?? new DefaultTranscoder();
 		}
 
-		NetworkCredential INorthScaleClientConfiguration.Credentials
+		NetworkCredential IMembaseClientConfiguration.Credentials
 		{
 			get
 			{
@@ -111,17 +111,17 @@ namespace NorthScale.Store.Configuration
 			}
 		}
 
-		string INorthScaleClientConfiguration.Bucket
+		string IMembaseClientConfiguration.Bucket
 		{
 			get { return this.Servers.Bucket; }
 		}
 
-		string INorthScaleClientConfiguration.BucketPassword
+		string IMembaseClientConfiguration.BucketPassword
 		{
 			get { return this.Servers.BucketPassword; }
 		}
 
-		BucketPortType INorthScaleClientConfiguration.Port
+		BucketPortType IMembaseClientConfiguration.Port
 		{
 			get { return this.Servers.Port; }
 		}
