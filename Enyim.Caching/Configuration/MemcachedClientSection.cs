@@ -89,7 +89,7 @@ namespace Enyim.Caching.Configuration
 		/// <summary>
 		/// Gets or sets the type of the communication between client and server.
 		/// </summary>
-		[ConfigurationProperty("protocol", IsRequired = false, DefaultValue = MemcachedProtocol.Text)]
+		[ConfigurationProperty("protocol", IsRequired = false, DefaultValue = MemcachedProtocol.Binary)]
 		public MemcachedProtocol Protocol
 		{
 			get { return (MemcachedProtocol)base["protocol"]; }
