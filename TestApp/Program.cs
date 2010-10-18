@@ -15,6 +15,8 @@ namespace DemoApp
 	{
 		static void Main(string[] args)
 		{
+			log4net.Config.XmlConfigurator.Configure();
+
 			// or just initialize the client from code
 			var nscc = new MembaseClientConfiguration();
 
@@ -34,9 +36,7 @@ namespace DemoApp
 			Console.ReadLine();
 
 			return;
-#if log4net
-			log4net.Config.XmlConfigurator.Configure();
-#endif
+
 			var mcc = new MemcachedClientConfiguration();
 			mcc.AddServer("192.168.2.200:11211");
 			mcc.AddServer("192.168.2.202:11211");

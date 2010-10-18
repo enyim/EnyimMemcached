@@ -18,14 +18,6 @@ namespace MemcachedTest
 			return client;
 		}
 
-		[TestFixtureSetUp]
-		public void Init()
-		{
-#if log4net
-			log4net.Config.XmlConfigurator.Configure();
-#endif
-		}
-
 		[TestCase]
 		public override void MultiGetTest()
 		{
