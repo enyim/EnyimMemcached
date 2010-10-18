@@ -1,0 +1,6 @@
+﻿# Enyim Memcached Version History
+
+## Version 2.7
+
+ * Fixed the config section to default to the Binary protocol. (The MemcachedClientConfiguration was already doing this for some time.)
+ * Removed log4net from the project and made the log provider configurable. See http://github.com/enyim/EnyimMemcached/wiki/Configure-Logging

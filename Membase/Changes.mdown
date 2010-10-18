@@ -1,0 +1,8 @@
+﻿# Membase Client Version History
+
+## Version 2.10
+
+ * Changed the namespace to Membase and the client's name to MembaseClient to follow the name change of the product (& the company).
+ * Includes all the changes from Enyim.Caching 2.7
+
+Make sure you update your configuration files accordingly!
