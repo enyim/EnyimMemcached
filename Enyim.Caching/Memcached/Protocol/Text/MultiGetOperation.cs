@@ -7,7 +7,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 {
 	public class MultiGetOperation : MultiItemOperation, IMultiGetOperation
 	{
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(MultiGetOperation));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MultiGetOperation));
 
 		private Dictionary<string, CacheItem> result;
 

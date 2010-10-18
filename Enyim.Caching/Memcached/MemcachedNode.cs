@@ -16,7 +16,7 @@ namespace Enyim.Caching.Memcached
 	[DebuggerDisplay("{{MemcachedNode [ Address: {EndPoint}, IsAlive = {IsAlive} ]}}")]
 	public class MemcachedNode : IMemcachedNode
 	{
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MemcachedNode));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MemcachedNode));
 		private static readonly object SyncRoot = new Object();
 
 		private bool isDisposed;
@@ -167,7 +167,7 @@ namespace Enyim.Caching.Memcached
 		#region [ InternalPoolImpl             ]
 		private class InternalPoolImpl : IDisposable
 		{
-			private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(InternalPoolImpl).FullName.Replace("+", "."));
+			private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(InternalPoolImpl).FullName.Replace("+", "."));
 
 			/// <summary>
 			/// A list of already connected but free to use sockets

@@ -15,8 +15,28 @@ namespace DemoApp
 	{
 		static void Main(string[] args)
 		{
-			log4net.Config.XmlConfigurator.Configure();
+			// or just initialize the client from code
+			var nscc = new MembaseClientConfiguration();
 
+			nscc.SocketPool.ReceiveTimeout = new TimeSpan(0, 0, 2);
+			nscc.SocketPool.DeadTimeout = new TimeSpan(0, 0, 10);
+
+			nscc.Urls.Add(new Uri("http://192.168.2.160:8091/pools/default"));
+			nscc.Urls.Add(new Uri("http://192.168.2.162:8091/pools/default"));
+			nscc.Credentials = new NetworkCredential("A", "11111111");
+			//nscc.BucketPassword = "pass";
+
+			ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_A_"));
+			//ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_B_"));
+			//ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_C_"));
+			//ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_D_"));
+
+			Console.ReadLine();
+
+			return;
+#if log4net
+			log4net.Config.XmlConfigurator.Configure();
+#endif
 			var mcc = new MemcachedClientConfiguration();
 			mcc.AddServer("192.168.2.200:11211");
 			mcc.AddServer("192.168.2.202:11211");
@@ -25,25 +45,10 @@ namespace DemoApp
 			mcc.SocketPool.ConnectionTimeout = new TimeSpan(0, 0, 4);
 			mcc.SocketPool.DeadTimeout = new TimeSpan(0, 0, 10);
 
-			StressTest(new MemcachedClient(mcc));
+			StressTest(new MemcachedClient(mcc), "TesT_");
 
 			return;
 
-
-			// or just initialize the client from code
-			var nscc = new MembaseClientConfiguration();
-
-			nscc.SocketPool.ReceiveTimeout = new TimeSpan(0, 0, 2);
-			nscc.SocketPool.DeadTimeout = new TimeSpan(0, 0, 10);
-
-			nscc.Urls.Add(new Uri("http://192.168.2.200:8080/pools/default"));
-			nscc.Urls.Add(new Uri("http://192.168.2.202:8080/pools/default"));
-			//nscc.Credentials = new NetworkCredential("A", "11111111");
-			//nscc.BucketPassword = "pass";
-
-			StressTest(new MembaseClient(nscc, "default"));
-
-			return;
 
 			var nc = new MembaseClient(nscc, "content");
 
@@ -58,7 +63,7 @@ namespace DemoApp
 				Console.WriteLine("{0} -> {1}", kvp.Key, kvp.Value);
 		}
 
-		private static void StressTest(MemcachedClient client)
+		private static void StressTest(MemcachedClient client, string keyPrefix)
 		{
 			var i = 0;
 			var last = true;
@@ -69,7 +74,7 @@ namespace DemoApp
 
 			while (true)
 			{
-				var key = "Test_Key_" + i;
+				var key = keyPrefix + i;
 				var state = client.Store(StoreMode.Set, key, i) & client.Get<int>(key) == i;
 
 				Action updateTitle = () => Console.Title = "Success: " + counters[true] + " Fail: " + counters[false];
@@ -86,18 +91,18 @@ namespace DemoApp
 				}
 				else if (i % 200 == 0)
 				{
-					Console.ForegroundColor = state ? ConsoleColor.White : ConsoleColor.Red;
+					//Console.ForegroundColor = state ? ConsoleColor.White : ConsoleColor.Red;
 
-					Console.Write(progress[(i / 200) % 4]);
-					if (Console.CursorLeft == 0)
-					{
-						Console.CursorLeft = Console.WindowWidth - 1;
-						Console.CursorTop -= 1;
-					}
-					else
-					{
-						Console.CursorLeft -= 1;
-					}
+					//Console.Write(progress[(i / 200) % 4]);
+					//if (Console.CursorLeft == 0)
+					//{
+					//    Console.CursorLeft = Console.WindowWidth - 1;
+					//    Console.CursorTop -= 1;
+					//}
+					//else
+					//{
+					//    Console.CursorLeft -= 1;
+					//}
 
 					updateTitle();
 				}

@@ -67,7 +67,7 @@ namespace Membase
 
 		private class VBStore : StoreOperation, IOperationWithState
 		{
-			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBStore).FullName.Replace('+', '.'));
+			private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(VBStore).FullName.Replace('+', '.'));
 			private VBucketNodeLocator locator;
 			private OperationState state;
 
@@ -115,7 +115,7 @@ namespace Membase
 
 		private class VBDelete : DeleteOperation, IOperationWithState
 		{
-			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBDelete).FullName.Replace('+', '.'));
+			private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(VBDelete).FullName.Replace('+', '.'));
 			private VBucketNodeLocator locator;
 			private OperationState state;
 
@@ -163,7 +163,7 @@ namespace Membase
 
 		private class VBMutator : MutatorOperation, IOperationWithState
 		{
-			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBMutator).FullName.Replace('+', '.'));
+			private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(VBMutator).FullName.Replace('+', '.'));
 			private VBucketNodeLocator locator;
 			private OperationState state;
 
@@ -211,7 +211,7 @@ namespace Membase
 
 		private class VBMget : MultiGetOperation
 		{
-			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBMget).FullName.Replace('+', '.'));
+			private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(VBMget).FullName.Replace('+', '.'));
 			private VBucketNodeLocator locator;
 
 			public VBMget(VBucketNodeLocator locator, IList<string> keys)
@@ -233,7 +233,7 @@ namespace Membase
 
 		private class VBConcat : ConcatOperation, IOperationWithState
 		{
-			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBConcat).FullName.Replace('+', '.'));
+			private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(VBConcat).FullName.Replace('+', '.'));
 			private VBucketNodeLocator locator;
 			private OperationState state;
 
@@ -281,7 +281,7 @@ namespace Membase
 
 		private class VBGet : GetOperation, IOperationWithState
 		{
-			private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(VBGet).FullName.Replace('+', '.'));
+			private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(VBGet).FullName.Replace('+', '.'));
 			private VBucketNodeLocator locator;
 			private OperationState state;
 

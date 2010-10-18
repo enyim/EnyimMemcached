@@ -12,7 +12,7 @@ namespace Membase
 	/// </summary>
 	public class MembaseClient : MemcachedClient
 	{
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MembaseClient));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MembaseClient));
 		private static IMembaseClientConfiguration DefaultConfig = (IMembaseClientConfiguration)ConfigurationManager.GetSection("membase");
 
 		private MembasePool nsPool;

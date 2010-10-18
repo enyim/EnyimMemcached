@@ -6,7 +6,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 {
 	public class StatsOperation : Operation, IStatsOperation
 	{
-		private log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
+		private static Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StatsOperation));
 
 		private string type;
 		private Dictionary<string, string> result;

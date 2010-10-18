@@ -6,7 +6,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 {
 	public class MultiGetOperation : BinaryMultiItemOperation, IMultiGetOperation
 	{
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(MultiGetOperation));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MultiGetOperation));
 
 		private Dictionary<string, CacheItem> result;
 		private Dictionary<int, string> idToKey;

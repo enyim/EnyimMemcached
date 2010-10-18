@@ -14,7 +14,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 	/// </summary>
 	public class BinaryNode : MemcachedNode
 	{
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(BinaryNode));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(BinaryNode));
 
 		ISaslAuthenticationProvider authenticationProvider;
 

@@ -10,7 +10,7 @@ namespace Membase
 {
 	internal class ConfigHelper : IDisposable
 	{
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(ConfigHelper));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(ConfigHelper));
 
 		private WebClientWithTimeout wcwt;
 

@@ -7,7 +7,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 {
 	public class StatsOperation : BinaryOperation, IStatsOperation
 	{
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(StatsOperation));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StatsOperation));
 
 		private string type;
 		private Dictionary<string, string> result;

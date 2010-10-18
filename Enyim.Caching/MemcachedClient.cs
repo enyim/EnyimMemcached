@@ -20,7 +20,7 @@ namespace Enyim.Caching
 		/// </summary>
 		public static readonly TimeSpan Infinite = TimeSpan.Zero;
 		internal static readonly MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MemcachedClient));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MemcachedClient));
 
 		private IServerPool pool;
 		private IMemcachedKeyTransformer keyTransformer;

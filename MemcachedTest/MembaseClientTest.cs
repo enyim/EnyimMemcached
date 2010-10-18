@@ -21,7 +21,9 @@ namespace MemcachedTest
 		[TestFixtureSetUp]
 		public void Init()
 		{
+#if log4net
 			log4net.Config.XmlConfigurator.Configure();
+#endif
 		}
 
 		[TestCase]

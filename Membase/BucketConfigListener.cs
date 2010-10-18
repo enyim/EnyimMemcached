@@ -10,7 +10,7 @@ namespace Membase
 {
 	internal class BucketConfigListener
 	{
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(BucketConfigListener));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(BucketConfigListener));
 
 		private Uri[] poolUrls;
 		private string bucketName;

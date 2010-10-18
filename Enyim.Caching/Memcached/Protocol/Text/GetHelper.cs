@@ -5,7 +5,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 {
 	internal static class GetHelper
 	{
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(GetHelper));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(GetHelper));
 
 		public static void FinishCurrent(PooledSocket socket)
 		{

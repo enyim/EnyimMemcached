@@ -13,7 +13,7 @@ namespace Membase
 	/// </summary>
 	internal class MessageStreamListener : IDisposable
 	{
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(MessageStreamListener));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MessageStreamListener));
 
 		private Uri[] urls;
 		private int stopCounter = 0;
@@ -47,7 +47,7 @@ namespace Membase
 			this.uriConverter = converter;
 
 			// this holds the resolved urls, key is coming from the 'urls' array
-			this.realUrls = this.urls.ToDictionary(u => u, u => (Uri)null);
+			this.realUrls = this.urls.Distinct().ToDictionary(u => u, u => (Uri)null);
 		}
 
 		protected event Action<string> MessageReceived;

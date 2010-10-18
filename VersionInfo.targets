@@ -26,33 +26,44 @@
 		</Task>
 	</UsingTask>
 
+	<UsingTask TaskName="GetRandomFileName" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+		<ParameterGroup>
+			<Name ParameterType="System.String" Output="true" />
+			<Format ParameterType="System.String" Required="false"/>
+		</ParameterGroup>
+		<Task>
+			<Code Type="Fragment" Language="cs">
+				<![CDATA[
+					var tmp = System.IO.Path.GetRandomFileName();
+					Name = String.IsNullOrEmpty(Format) ? tmp : String.Format(Format, tmp);
+				]]>
+			</Code>
+		</Task>
+	</UsingTask>
+
 	<PropertyGroup>
-		<ShouldGenerate Condition="$(Configuration) == 'Release' And $(IsReleaseBuild) == 'true'">true</ShouldGenerate>
+		<ShouldGenerate Condition="$(IsReleaseBuild) == 'true'">true</ShouldGenerate>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="$(ShouldGenerate) == 'true'">
 		<AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
 	</PropertyGroup>
-	
-	<Target Name="BeforeBuild">
-		<CallTarget Targets="CreateAssemblyInfoFromGit" Condition="$(ShouldGenerate) == 'true'" />
-		<CallTarget Targets="CreateStaticAssemblyInfo" Condition=" $(ShouldGenerate) != 'true'" />
-
-		<CreateItem Include="$(GeneratedAssemblyInfo)">
-			<Output TaskParameter="Include" ItemName="Compile"/>
-		</CreateItem>
-	</Target>
 
 	<PropertyGroup>
-		<GeneratedAssemblyInfo>obj\$(Configuration)\.assemblyinfo</GeneratedAssemblyInfo>
-		<GitDescribe>obj\$(Configuration)\.describe</GitDescribe>
 		<GitTagMatch Condition=" '$(GitTagMatch)' == '' ">*</GitTagMatch>
 	</PropertyGroup>
 
-	<Target Name="CreateAssemblyInfoFromGit">
+	<Target Name="CreateRandomFileNames">
+		<MakeDir Directories="obj\$(Configuration)" ContinueOnError="true" />
+		<GetRandomFileName Format="obj\$(Configuration)\{0}.cs">
+			<Output TaskParameter="Name" PropertyName="GeneratedAssemblyInfo" />
+		</GetRandomFileName>
+		<GetRandomFileName Format="obj\$(Configuration)\{0}.txt">
+			<Output TaskParameter="Name" PropertyName="GitDescribe" />
+		</GetRandomFileName>
+	</Target>
 
-		<MakeDir Directories="obj\$(Configuration)" />
-
+	<Target Name="CreateAssemblyInfoFromGit" DependsOnTargets="CreateRandomFileNames" Condition="$(ShouldGenerate) == 'true'">
 		<Exec Command="git describe --tags --match $(GitTagMatch) > $(GitDescribe)" />
 		<ReadLinesFromFile File="$(GitDescribe)">
 			<Output TaskParameter="Lines" PropertyName="_Describe"/>
@@ -65,18 +76,31 @@
 		<Delete Files="$(GeneratedAssemblyInfo)" />
 		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Lines="
 [assembly: System.Reflection.AssemblyKeyName(&quot;enyim&quot;)]						  
-[assembly: System.Reflection.AssemblyFileVersion(&quot;$(_Describe)&quot;)]
+[assembly: System.Reflection.AssemblyFileVersion(&quot;$(_AssemblyVersion)&quot;)]
+[assembly: System.Reflection.AssemblyTitle(&quot;$(_Describe)&quot;)]
 [assembly: System.Reflection.AssemblyVersion(&quot;$(_AssemblyVersion)&quot;)]" />
 	</Target>
 
-	<Target Name="CreateStaticAssemblyInfo">
-
-		<MakeDir Directories="obj\$(Configuration)" />
-
+	<Target Name="CreateStaticAssemblyInfo" DependsOnTargets="CreateRandomFileNames" Condition="$(ShouldGenerate) != 'true'">
 		<Delete Files="$(GeneratedAssemblyInfo)" />
 		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Lines="
-[assembly: System.Reflection.AssemblyFileVersion(&quot;2.4.6-custom&quot;)]
-[assembly: System.Reflection.AssemblyVersion(&quot;2.4.6.8&quot;)]" />
+[assembly: System.Reflection.AssemblyTitle(&quot;2.4.6-custom&quot;)]						  
+[assembly: System.Reflection.AssemblyFileVersion(&quot;2.4.6.0&quot;)]
+[assembly: System.Reflection.AssemblyVersion(&quot;2.4.6.0&quot;)]" />
 	</Target>
 
+	<Target Name="Cleanup">
+		<Delete Files="$(GeneratedAssemblyInfo)" Condition="'$(GeneratedAssemblyInfo)' != ''" ContinueOnError="true" />
+		<Delete Files="$(GitDescribe)" Condition="'$(GitDescribe)' != ''" ContinueOnError="true" />
+	</Target>
+
+	<Target Name="BeforeBuild" DependsOnTargets="CreateAssemblyInfoFromGit;CreateStaticAssemblyInfo">
+		<CreateItem Include="$(GeneratedAssemblyInfo)">
+			<Output TaskParameter="Include" ItemName="Compile"/>
+		</CreateItem>
+	</Target>
+
+	<Target Name="AfterBuild">
+		<CallTarget Targets="Cleanup" />
+	</Target>
 </Project>

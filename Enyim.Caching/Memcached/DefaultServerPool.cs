@@ -10,7 +10,7 @@ namespace Enyim.Caching.Memcached
 {
 	public class DefaultServerPool : IServerPool, IDisposable
 	{
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(DefaultServerPool));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(DefaultServerPool));
 
 		private IMemcachedNode[] allNodes;
 

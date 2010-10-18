@@ -15,7 +15,7 @@ namespace Membase
 	/// </summary>
 	internal class MembasePool : IServerPool
 	{
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MembasePool));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MembasePool));
 
 		private IMembaseClientConfiguration configuration;
 

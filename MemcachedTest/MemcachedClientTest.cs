@@ -13,7 +13,7 @@ namespace MemcachedTest
 	[TestFixture]
 	public abstract class MemcachedClientTest
 	{
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MemcachedClientTest));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MemcachedClientTest));
 		public const string TestObjectKey = "Hello_World";
 
 		protected abstract MemcachedClient GetClient();
@@ -21,7 +21,9 @@ namespace MemcachedTest
 		[TestFixtureSetUp]
 		public void Setup()
 		{
+#if log4net
 			log4net.Config.XmlConfigurator.Configure();
+#endif
 		}
 
 		[global::System.Serializable]

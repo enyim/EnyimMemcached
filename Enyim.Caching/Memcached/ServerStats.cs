@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached
 	public sealed class ServerStats
 	{
 		private const int OpAllowsSum = 1;
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(ServerStats));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(ServerStats));
 
 		/// <summary>
 		/// Defines a value which indicates that the statstics should be retrieved for all servers in the pool.

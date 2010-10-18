@@ -8,7 +8,7 @@ namespace Enyim.Caching.Memcached.Protocol
 	/// </summary>
 	public abstract class Operation : IOperation
 	{
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(Operation));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(Operation));
 
 		protected Operation() { }
 

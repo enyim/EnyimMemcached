@@ -5,7 +5,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 {
 	public class StoreOperation : BinarySingleItemOperation, IStoreOperation
 	{
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(StoreOperation));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StoreOperation));
 
 		private StoreMode mode;
 		private CacheItem value;

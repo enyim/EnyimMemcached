@@ -14,7 +14,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 
 		public const string CommandTerminator = "\r\n";
 
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(TextSocketHelper));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(TextSocketHelper));
 
 		/// <summary>
 		/// Reads the response of the server.

@@ -12,7 +12,7 @@ namespace Enyim.Caching.Memcached
 	[DebuggerDisplay("[ Address: {endpoint}, IsAlive = {IsAlive} ]")]
 	public class PooledSocket : IDisposable
 	{
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(PooledSocket));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(PooledSocket));
 
 		private bool isAlive = true;
 		private Socket socket;
@@ -375,7 +375,7 @@ namespace Enyim.Caching.Memcached
 				if (errorCode == SocketError.Success && retval > 0)
 					return retval;
 
-				throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode));
+				throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode == SocketError.Success ? "?" : errorCode.ToString()));
 			}
 
 			public override long Seek(long offset, SeekOrigin origin)

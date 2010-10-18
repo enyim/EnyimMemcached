@@ -5,7 +5,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 {
 	public class DeleteOperation : BinarySingleItemOperation, IDeleteOperation
 	{
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(DeleteOperation));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(DeleteOperation));
 		public DeleteOperation(string key) : base(key) { }
 
 		protected override BinaryRequest Build()

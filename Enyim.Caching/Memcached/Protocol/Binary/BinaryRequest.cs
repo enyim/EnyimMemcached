@@ -7,7 +7,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 {
 	public class BinaryRequest
 	{
-		private static log4net.ILog log = log4net.LogManager.GetLogger(typeof(BinaryRequest));
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(BinaryRequest));
 		private static int InstanceCounter;
 
 		public OpCode Operation;
@@ -43,7 +43,6 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			// body size
 			ArraySegment<byte> body = this.Data;
 			int bodyLength = body.Array == null ? 0 : body.Count;
-			if (bodyLength > 1024 * 1024) throw new InvalidOperationException("BodyTooLong");
 
 			// total payload size
 			int totalLength = extraLength + keyLength + bodyLength;

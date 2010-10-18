@@ -1,1 +1,1 @@
-%SYSTEMROOT%\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe build-release.msbuild /P:NoWarn=1591
+powershell -noprofile -command "&'.\build.ps1'"
