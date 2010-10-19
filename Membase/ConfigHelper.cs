@@ -70,8 +70,12 @@ namespace Membase
 		{
 			var root = this.GetBucketsRoot(poolUri);
 			var allBuckets = this.DeserializeUri<ClusterConfig[]>(root);
+			var retval = allBuckets.FirstOrDefault(b => b.name == name);
 
-			return allBuckets.FirstOrDefault(b => b.name == name);
+			if (retval == null && log.IsWarnEnabled)
+				log.WarnFormat("Could not find the pool '{0}' at {1}", name, poolUri);
+
+			return retval;
 		}
 
 		public Uri[] GetBucketStreamingUris(Uri[] pools, string name)
