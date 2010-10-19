@@ -12,7 +12,7 @@
     <WarningLevel>4</WarningLevel>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
   </PropertyGroup>
-  <Import Project="..\CommonProperties.targets" />
+  <Import Project="..\build\CommonProperties.targets" />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <NoWarn>1591</NoWarn>
   </PropertyGroup>

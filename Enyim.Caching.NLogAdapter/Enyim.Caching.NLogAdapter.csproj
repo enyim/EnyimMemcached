@@ -14,7 +14,7 @@
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
-  <Import Project="..\CommonProperties.targets" />
+  <Import Project="..\build\CommonProperties.targets" />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>1591</NoWarn>
@@ -55,5 +55,5 @@
   <PropertyGroup>
     <GitTagMatch>emc*</GitTagMatch>
   </PropertyGroup>
-  <Import Project="..\VersionInfo.targets" />
+  <Import Project="..\build\VersionInfo.targets" />
 </Project>

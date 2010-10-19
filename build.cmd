@@ -1,1 +1,1 @@
-powershell -noprofile -command "&'.\build.ps1'"
+@powershell -noprofile -command "&'.\build\build.ps1'"

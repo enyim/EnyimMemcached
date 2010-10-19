@@ -12,7 +12,7 @@
     <AssemblyName>Membase</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
   </PropertyGroup>
-  <Import Project="..\CommonProperties.targets" />
+  <Import Project="..\build\CommonProperties.targets" />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>1591</NoWarn>
@@ -69,11 +69,16 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="Demo.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Changes.mdown">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <GitTagMatch>ns*</GitTagMatch>
+    <GitTagMatch>mb*</GitTagMatch>
   </PropertyGroup>
-  <Import Project="..\VersionInfo.targets" />
+  <Import Project="..\build\VersionInfo.targets" />
 </Project>

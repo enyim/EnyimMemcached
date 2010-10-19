@@ -9,7 +9,7 @@
 			<Using Namespace="System.Text.RegularExpressions" />
 			<Code Type="Fragment" Language="cs">
 				<![CDATA[
-					var m = Regex.Match(Describe, @"^(emc|ns)?(?'Major'\d+)\.(?'Minor'\d+)(-(?'Revision'\d+))?");
+					var m = Regex.Match(Describe, @"^([a-zA-Z]*)(?'Major'\d+)\.(?'Minor'\d+)(-(?'Revision'\d+))?");
 					
 					if (m.Success)
 					{

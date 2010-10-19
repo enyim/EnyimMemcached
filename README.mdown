@@ -1,6 +1,6 @@
 # Enyim Memcached Client
 
-This is a .NET client library for [memcached](http://memcached.org) written in C#. Also it has a special client for [Membase](http://membase.com)'s persistent memcached server.
+This is a .NET client library for [memcached](http://memcached.org) written in C#. There is also a client for [Membase](http://membase.com)'s persistent memcached server.
 
 Features:
 
@@ -10,7 +10,6 @@ Features:
 * CheckAndSet operations
 * Persistent connections for more speed
 * SASL Authentication
-
 
 ## Requirements
 
@@ -33,5 +32,4 @@ The best bug reports come with a patch: fork the code on GitHub, then send a pul
 
 ## Questions?
 
-First, have a look at the [wiki](http://github.com/enyim/EnyimMemcached/wiki). If you still have questions, please feel free to ask them on the mailing list, which can be found here:  
-[http://groups.google.com/group/enyim-memcached/](http://groups.google.com/group/enyim-memcached/)
+First, have a look at the [wiki](http://github.com/enyim/EnyimMemcached/wiki). If you still have questions, please feel free to ask them on the mailing list, which can be found at: [http://groups.google.com/group/enyim-memcached/](http://groups.google.com/group/enyim-memcached/)

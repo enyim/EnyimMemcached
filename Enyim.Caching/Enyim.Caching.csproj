@@ -12,7 +12,7 @@
     <AssemblyName>Enyim.Caching</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
   </PropertyGroup>
-  <Import Project="..\CommonProperties.targets" />
+  <Import Project="..\build\CommonProperties.targets" />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>1591</NoWarn>
@@ -327,11 +327,16 @@
     <Compile Include="UIntEqualityComparer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="Demo.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Changes.mdown">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <GitTagMatch>emc*</GitTagMatch>
   </PropertyGroup>
-  <Import Project="..\VersionInfo.targets" />
+  <Import Project="..\build\VersionInfo.targets" />
 </Project>

@@ -3,7 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{319FC4D5-5302-46B4-887A-65CC10157B64}"
 	ProjectSection(SolutionItems) = preProject
-		CHANGES = CHANGES
 		LICENSE = LICENSE
 		README.mdown = README.mdown
 	EndProjectSection
@@ -35,11 +34,9 @@ Global
 		{0ACEA848-04B3-4E9C-8F74-D051006CA43D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0ACEA848-04B3-4E9C-8F74-D051006CA43D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0ACEA848-04B3-4E9C-8F74-D051006CA43D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0ACEA848-04B3-4E9C-8F74-D051006CA43D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7225B6E0-A1FB-4F64-A5C5-1F640E21C90B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{708A2350-A26C-444D-B975-8164263951A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{708A2350-A26C-444D-B975-8164263951A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{708A2350-A26C-444D-B975-8164263951A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -47,7 +44,6 @@ Global
 		{607B1927-A964-48B2-AEA3-6810D10A6831}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{607B1927-A964-48B2-AEA3-6810D10A6831}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{607B1927-A964-48B2-AEA3-6810D10A6831}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{607B1927-A964-48B2-AEA3-6810D10A6831}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9D3F12E6-6BDD-4DED-8B25-D877780640B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9D3F12E6-6BDD-4DED-8B25-D877780640B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9D3F12E6-6BDD-4DED-8B25-D877780640B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
