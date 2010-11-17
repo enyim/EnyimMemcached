@@ -3,3 +3,4 @@
 TestResults/*
 *.suo
 *.user
+build/output/*
