@@ -165,6 +165,7 @@ namespace Enyim.Caching.Memcached
 		}
 
 		#region [ InternalPoolImpl             ]
+
 		private class InternalPoolImpl : IDisposable
 		{
 			private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(InternalPoolImpl).FullName.Replace("+", "."));
@@ -274,7 +275,7 @@ namespace Enyim.Caching.Memcached
 
 				PooledSocket retval = null;
 
-				if (!this.semaphore.WaitOne(this.config.ConnectionTimeout))
+				if (!this.semaphore.WaitOne(this.config.QueueTimeout))
 				{
 					if (hasDebug) log.Debug("Pool is full, timeouting. " + this.endPoint);
 
@@ -294,6 +295,7 @@ namespace Enyim.Caching.Memcached
 				if (this.freeItems.Dequeue(out retval))
 				{
 					#region [ get it from the pool         ]
+
 					try
 					{
 						retval.Reset();
@@ -310,6 +312,7 @@ namespace Enyim.Caching.Memcached
 
 						return null;
 					}
+
 					#endregion
 				}
 
@@ -434,6 +437,7 @@ namespace Enyim.Caching.Memcached
 				this.Dispose();
 			}
 		}
+
 		#endregion
 		#region [ Comparer                     ]
 		internal sealed class Comparer : IEqualityComparer<IMemcachedNode>

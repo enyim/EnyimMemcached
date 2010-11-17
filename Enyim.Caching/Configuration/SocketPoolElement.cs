@@ -23,8 +23,9 @@ namespace Enyim.Caching.Configuration
 		/// <summary>
 		/// Gets or sets a value indicating the maximum amount of sockets per server in the socket pool.
 		/// </summary>
-		/// <returns>The maximum amount of sockets per server in the socket pool.</returns>
-		[ConfigurationProperty("maxPoolSize", IsRequired = false, DefaultValue = 200), IntegerValidator(MinValue = 0)]
+		/// <returns>The maximum amount of sockets per server in the socket pool. The default is 20.</returns>
+		/// <remarks>It should be 0.75 * (number of threads) for optimal performance.</remarks>
+		[ConfigurationProperty("maxPoolSize", IsRequired = false, DefaultValue = 20), IntegerValidator(MinValue = 0)]
 		public int MaxPoolSize
 		{
 			get { return (int)base["maxPoolSize"]; }
@@ -40,6 +41,17 @@ namespace Enyim.Caching.Configuration
 		{
 			get { return (TimeSpan)base["connectionTimeout"]; }
 			set { base["connectionTimeout"] = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets a value that specifies the amount of time after which the getting a connection from the pool will fail. The default is 100 msec.
+		/// </summary>
+		/// <returns>The value of the queue timeout.</returns>
+		[ConfigurationProperty("queueTimeout", IsRequired = false, DefaultValue = "00:00:00.100"), PositiveTimeSpanValidator, TypeConverter(typeof(InfiniteTimeSpanConverter))]
+		public TimeSpan QueueTimeout
+		{
+			get { return (TimeSpan)base["queueTimeout"]; }
+			set { base["queueTimeout"] = value; }
 		}
 
 		/// <summary>

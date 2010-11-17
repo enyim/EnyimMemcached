@@ -8,10 +8,11 @@ namespace Enyim.Caching.Configuration
 	public class SocketPoolConfiguration : ISocketPoolConfiguration
 	{
 		private int minPoolSize = 10;
-		private int maxPoolSize = 200;
+		private int maxPoolSize = 20;
 		private TimeSpan connectionTimeout = new TimeSpan(0, 0, 10);
 		private TimeSpan receiveTimeout = new TimeSpan(0, 0, 10);
 		private TimeSpan deadTimeout = new TimeSpan(0, 0, 10);
+		private TimeSpan queueTimeout = new TimeSpan(0, 0, 0, 0, 100);
 
 		int ISocketPoolConfiguration.MinPoolSize
 		{
@@ -25,6 +26,11 @@ namespace Enyim.Caching.Configuration
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets a value indicating the maximum amount of sockets per server in the socket pool.
+		/// </summary>
+		/// <returns>The maximum amount of sockets per server in the socket pool. The default is 20.</returns>
+		/// <remarks>It should be 0.75 * (number of threads) for optimal performance.</remarks>
 		int ISocketPoolConfiguration.MaxPoolSize
 		{
 			get { return this.maxPoolSize; }
@@ -58,6 +64,18 @@ namespace Enyim.Caching.Configuration
 					throw new ArgumentOutOfRangeException("value", "value must be positive");
 
 				this.receiveTimeout = value;
+			}
+		}
+
+		TimeSpan ISocketPoolConfiguration.QueueTimeout
+		{
+			get { return this.queueTimeout; }
+			set
+			{
+				if (value < TimeSpan.Zero)
+					throw new ArgumentOutOfRangeException("value", "value must be positive");
+
+				this.queueTimeout = value;
 			}
 		}
 

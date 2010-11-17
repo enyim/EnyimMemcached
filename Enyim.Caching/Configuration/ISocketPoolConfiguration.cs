@@ -38,6 +38,16 @@ namespace Enyim.Caching.Configuration
 		}
 
 		/// <summary>
+		/// Gets or sets a value that specifies the amount of time after which the getting a connection from the pool will fail.
+		/// </summary>
+		/// <returns>The value of the queue timeout.</returns>
+		TimeSpan QueueTimeout
+		{
+			get;
+			set;
+		}
+
+		/// <summary>
 		/// Gets or sets a value that specifies the amount of time after which receiving data from the socket will fail.
 		/// </summary>
 		/// <returns>The value of the receive timeout.</returns>
