@@ -105,15 +105,21 @@ namespace Membase
 			var oldNodes = this.state == null ? null : this.state.CurrentNodes;
 
 			// default bucket does not require authentication
-			var auth = this.bucketName == null
-						? null
-						: new PlainTextAuthenticator(null, this.bucketName, this.bucketPassword);
+			// membase 1.6 tells us if a bucket needs authentication,
+			// so let's try to use the config's password
+			var password = config.authType == "sasl"
+										? config.saslPassword
+										: this.bucketPassword;
+
+			var authenticator = this.bucketName == null
+						   ? null
+						   : new PlainTextAuthenticator(null, this.bucketName, password);
 
 			try
 			{
 				var state = (config == null || config.vBucketServerMap == null)
-								? this.InitBasic(config, auth)
-								: this.InitVBucket(config, auth);
+								? this.InitBasic(config, authenticator)
+								: this.InitVBucket(config, authenticator);
 
 				var nodes = state.CurrentNodes;
 

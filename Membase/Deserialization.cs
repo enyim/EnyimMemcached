@@ -18,6 +18,13 @@ namespace Membase
 		public VBucketConfig vBucketServerMap;
 		public VBucketConfig vBucketForwardServerMap;
 
+		// mecached|membase
+		public string bucketType;
+		// sasl
+		public string authType;
+		// password for the bucket
+		public string saslPassword;
+
 		public override int GetHashCode()
 		{
 			var cnehc = new Enyim.HashCodeCombiner();
