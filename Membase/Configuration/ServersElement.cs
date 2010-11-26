@@ -1,5 +1,6 @@
-using System.Configuration;
+using System;
 using System.ComponentModel;
+using System.Configuration;
 
 namespace Membase.Configuration
 {
@@ -77,6 +78,20 @@ namespace Membase.Configuration
 			set { base["port"] = value; }
 		}
 
+		[ConfigurationProperty("retryCount", IsRequired = false, DefaultValue = 0)]
+		public int RetryCount
+		{
+			get { return (int)base["retryCount"]; }
+			set { base["retryCount"] = value; }
+		}
+
+		[ConfigurationProperty("retryTimeout", IsRequired = false, DefaultValue = "00:00:02"), PositiveTimeSpanValidator]
+		[TypeConverter(typeof(TimeSpanConverter))]
+		public TimeSpan RetryTimeout
+		{
+			get { return (TimeSpan)base["retryTimeout"]; }
+			set { base["retryTimeout"] = value; }
+		}
 	}
 }
 

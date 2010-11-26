@@ -53,6 +53,9 @@ namespace Membase.Configuration
 		/// Determines which port the client should use to connect to the nodes
 		/// </summary>
 		BucketPortType Port { get; }
+
+		TimeSpan RetryTimeout { get; }
+		int RetryCount { get; }
 	}
 }
 

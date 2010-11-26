@@ -1,4 +1,5 @@
-﻿using System;
+﻿//#define DEBUG_RETRY
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -48,10 +49,15 @@ namespace Membase
 
 			// this holds the resolved urls, key is coming from the 'urls' array
 			this.realUrls = this.urls.Distinct().ToDictionary(u => u, u => (Uri)null);
+
+			this.RetryCount = 0;
+			this.RetryTimeout = new TimeSpan(0, 0, 0, 0, 500);
 		}
 
 		protected event Action<string> MessageReceived;
 		protected bool IsStarted { get; private set; }
+		public int RetryCount { get; set; }
+		public TimeSpan RetryTimeout { get; set; }
 
 		/// <summary>
 		/// The credentials used to connect to the urls.
@@ -143,14 +149,7 @@ namespace Membase
 
 					this.Trigger(null);
 
-					DateTime now = DateTime.UtcNow;
-
-					var waitUntil = this.DeadTimeout;
-					while (this.stopCounter == 0
-							&& (DateTime.UtcNow - now).TotalMilliseconds < waitUntil)
-					{
-						Thread.Sleep(100);
-					}
+					this.SleepUntil(this.DeadTimeout);
 
 					// recreate the client after failure
 					this.CleanupRequests();
@@ -159,6 +158,26 @@ namespace Membase
 				}
 			}
 		}
+
+		/// <summary>
+		/// Sleeps until the time elapses. Returns false if the sleep was aborted.
+		/// </summary>
+		/// <param name="milliseconds"></param>
+		/// <returns></returns>
+		private bool SleepUntil(int milliseconds)
+		{
+			DateTime now = DateTime.UtcNow;
+
+			while (this.stopCounter == 0
+					&& (DateTime.UtcNow - now).TotalMilliseconds < milliseconds)
+			{
+				Thread.Sleep(100);
+			}
+
+			return this.stopCounter == 0;
+		}
+
+		private int currentRetryCount;
 
 		private void ProcessPool()
 		{
@@ -173,7 +192,7 @@ namespace Membase
 				// the break here will go into the outer while, and reinitialize the lookup table and the indexer
 				if (current.Key == null)
 				{
-					if (log.IsWarnEnabled) log.Debug("Could not found a working node.");
+					if (log.IsWarnEnabled) log.Warn("Could not found a working node.");
 
 					return;
 				}
@@ -181,18 +200,36 @@ namespace Membase
 				try
 				{
 					if (log.IsDebugEnabled) log.Debug("Start receiving messages.");
+					this.currentRetryCount = 0;
 
-					// start working on the current url
-					// if it fails in the meanwhile, we'll get another url
-					this.ReadMessages(current.Value);
-
-					if (this.stopCounter > 0)
+					while (this.stopCounter == 0)
 					{
-						if (log.IsDebugEnabled) log.Debug("Processing is aborted.");
+						try
+						{
+							// start working on the current url
+							// if it fails in the meanwhile, we'll get another url
+							this.ReadMessages(current.Value);
 
-						return;
+							// we can only get here properly if the istener is stopped, so just quit the whole loop
+							if (log.IsDebugEnabled) log.Debug("Processing is aborted.");
+							return;
+						}
+						catch (Exception x)
+						{
+							if (log.IsDebugEnabled) log.Debug("ReadMessage failed with exception:", x);
+
+							if (this.currentRetryCount == this.RetryCount)
+							{
+								if (log.IsDebugEnabled) log.Debug("Reached the retry limit, rethrowing.", x);
+								throw;
+							}
+						}
+
+						if (log.IsDebugEnabled) log.DebugFormat("Counter is {0}, sleeping for {1} then retrying.", this.currentRetryCount, this.RetryTimeout);
+
+						SleepUntil((int)this.RetryTimeout.TotalMilliseconds);
+						this.currentRetryCount++;
 					}
-					else if (log.IsWarnEnabled) log.Warn("Streaming uri stopped streaming");
 				}
 				catch (Exception e)
 				{
@@ -287,6 +324,16 @@ namespace Membase
 		{
 			if (this.stopCounter > 0) return;
 
+#if DEBUG_RETRY
+			ThreadPool.QueueUserWorkItem(o =>
+			{
+				Thread.Sleep(4000);
+				CleanupRequests();
+			});
+
+			if (this.currentRetryCount > 0) throw new IOException();
+#endif
+
 			this.CleanupRequests();
 
 			this.request = this.client.GetWebRequest(uri, uri.GetHashCode().ToString());
@@ -294,7 +341,7 @@ namespace Membase
 
 			// the url is supposed to send data indefinitely
 			// the only way out of here is either calling Stop() or failing by an exception
-			// somehow stream.Dispose() hangs, so we skipping it for a while
+			// (somehow stream.Dispose() hangs, so we'll not use the 'using' construct)
 			var stream = this.response.GetResponseStream();
 			var reader = new StreamReader(stream, Encoding.UTF8, false);
 
@@ -304,8 +351,10 @@ namespace Membase
 
 			while ((line = reader.ReadLine()) != null)
 			{
-				if (this.stopCounter > 0)
-					return;
+				if (this.stopCounter > 0) return;
+
+				// we're successfully reading the stream, so reset the retry counter
+				this.currentRetryCount = 0;
 
 				if (line.Length == 0)
 				{
@@ -325,6 +374,11 @@ namespace Membase
 					messageBuilder.Append(line);
 				}
 			}
+
+			if (log.IsErrorEnabled)
+				log.Error("The infinite loop just finished, probably the server closed the connection without errors. (?)");
+
+			throw new InvalidOperationException("Remote host closed the streaming connection");
 		}
 
 		void IDisposable.Dispose()

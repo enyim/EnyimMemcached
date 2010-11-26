@@ -421,7 +421,9 @@ namespace Membase
 			this.configListener = new BucketConfigListener(this.poolUrls, this.bucketName, this.configuration.Credentials)
 			{
 				Timeout = (int)this.configuration.SocketPool.ConnectionTimeout.TotalMilliseconds,
-				DeadTimeout = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds
+				DeadTimeout = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds,
+				RetryCount = this.configuration.RetryCount,
+				RetryTimeout = this.configuration.RetryTimeout
 			};
 
 			this.configListener.ClusterConfigChanged += this.InitNodes;

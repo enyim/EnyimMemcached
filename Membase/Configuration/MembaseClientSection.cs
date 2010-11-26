@@ -75,6 +75,7 @@ namespace Membase.Configuration
 		}
 
 		#region [ interface                     ]
+
 		IList<Uri> IMembaseClientConfiguration.Urls
 		{
 			get { return this.Servers.Urls.ToUriCollection(); }
@@ -124,6 +125,16 @@ namespace Membase.Configuration
 		BucketPortType IMembaseClientConfiguration.Port
 		{
 			get { return this.Servers.Port; }
+		}
+
+		int IMembaseClientConfiguration.RetryCount
+		{
+			get { return this.Servers.RetryCount; }
+		}
+
+		TimeSpan IMembaseClientConfiguration.RetryTimeout
+		{
+			get { return this.Servers.RetryTimeout; }
 		}
 
 		#endregion

@@ -93,6 +93,9 @@ namespace Membase.Configuration
 		/// </summary>
 		public BucketPortType Port { get; set; }
 
+		public int RetryCount { get; set; }
+		public TimeSpan RetryTimeout { get; set; }
+
 		#region [ interface                     ]
 		IList<Uri> IMembaseClientConfiguration.Urls
 		{
@@ -137,6 +140,16 @@ namespace Membase.Configuration
 		BucketPortType IMembaseClientConfiguration.Port
 		{
 			get { return this.Port; }
+		}
+
+		int IMembaseClientConfiguration.RetryCount
+		{
+			get { return this.RetryCount; }
+		}
+
+		TimeSpan IMembaseClientConfiguration.RetryTimeout
+		{
+			get { return this.RetryTimeout; }
 		}
 
 		#endregion

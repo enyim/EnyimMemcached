@@ -30,12 +30,18 @@ namespace Membase
 
 			this.Timeout = 10000;
 			this.DeadTimeout = 10000;
+
+			this.RetryCount = 0;
+			this.RetryTimeout = new TimeSpan(0, 0, 0, 0, 500);
 		}
 
 		/// <summary>
 		/// Connection timeout in milliseconds for connecting the pool.
 		/// </summary>
 		public int Timeout { get; set; }
+
+		public int RetryCount { get; set; }
+		public TimeSpan RetryTimeout { get; set; }
 
 		/// <summary>
 		/// Time to wait in milliseconds to reconnect to the pool when all nodes are down.
@@ -89,6 +95,8 @@ namespace Membase
 
 			hcc.Add(this.Timeout);
 			hcc.Add(this.DeadTimeout);
+			hcc.Add(this.RetryCount);
+			hcc.Add(this.RetryTimeout.GetHashCode());
 			hcc.Add(this.bucketName.GetHashCode());
 
 			if (credential != null)
@@ -115,6 +123,8 @@ namespace Membase
 					retval.Timeout = this.Timeout;
 					retval.DeadTimeout = this.DeadTimeout;
 					retval.Credentials = this.credential;
+					retval.RetryCount = this.RetryCount;
+					retval.RetryTimeout = this.RetryTimeout;
 
 					retval.Subscribe(this.HandleMessage);
 
@@ -166,6 +176,7 @@ namespace Membase
 			// everything failed
 			if (String.IsNullOrEmpty(message))
 			{
+				this.lastHash = null;
 				this.RaiseConfigChanged(null);
 				return;
 			}
@@ -183,6 +194,8 @@ namespace Membase
 				lastHash = configHash;
 				this.RaiseConfigChanged(config);
 			}
+			else if (log.IsDebugEnabled)
+				log.Debug("Last message was the same as current, ignoring.");
 		}
 
 		public void Start()
