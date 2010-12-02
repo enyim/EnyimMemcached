@@ -653,10 +653,7 @@ namespace Enyim.Caching
 
 			if (handles.Count > 0)
 			{
-				WaitHandle.WaitAll(handles.ToArray());
-
-				foreach (var wh in handles)
-					wh.Close();
+				SafeWaitAllAndDispose(handles.ToArray());
 			}
 
 			return new ServerStats(results);
@@ -691,8 +688,6 @@ namespace Enyim.Caching
 		{
 			return PerformMultiGet<object>(keys, (mget, kvp) => this.transcoder.Deserialize(kvp.Value));
 		}
-
-
 
 		public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
 		{
@@ -773,13 +768,27 @@ namespace Enyim.Caching
 
 			if (handles.Count > 0)
 			{
-				WaitHandle.WaitAll(handles.ToArray());
-
-				foreach (var wh in handles)
-					wh.Close();
+				SafeWaitAllAndDispose(handles.ToArray());
 			}
 
 			return retval;
+		}
+
+		private static void SafeWaitAllAndDispose(WaitHandle[] waitHandles)
+		{
+			try
+			{
+				if (Thread.CurrentThread.GetApartmentState() == ApartmentState.MTA)
+					WaitHandle.WaitAll(waitHandles);
+				else
+					for (var i = 0; i < waitHandles.Length; i++)
+						waitHandles[i].WaitOne();
+			}
+			finally
+			{
+				for (var i = 0; i < waitHandles.Length; i++)
+					waitHandles[i].Close();
+			}
 		}
 
 		#region [ Expiration helper            ]
