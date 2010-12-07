@@ -45,7 +45,7 @@ namespace Enyim.Collections
 				if (Object.ReferenceEquals(this.headNode, head))
 				{
 					// is tail falling behind
-					if (Object.ReferenceEquals(head.Next, tail.Next))
+					if (Object.ReferenceEquals(head, tail))
 					{
 						// is the queue empty?
 						if (Object.ReferenceEquals(next, null))
@@ -58,7 +58,7 @@ namespace Enyim.Collections
 
 						Interlocked.CompareExchange<Node>(
 							ref this.tailNode,
-							next.Next,
+							next,
 							tail);
 					}
 					else // No need to deal with tail
@@ -136,7 +136,7 @@ namespace Enyim.Collections
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kiskï¿½, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
