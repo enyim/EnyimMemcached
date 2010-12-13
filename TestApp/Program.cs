@@ -24,11 +24,14 @@ namespace DemoApp
 			nscc.SocketPool.DeadTimeout = new TimeSpan(0, 0, 10);
 
 			nscc.Urls.Add(new Uri("http://192.168.2.160:8091/pools/default"));
-			nscc.Urls.Add(new Uri("http://192.168.2.162:8091/pools/default"));
+			//nscc.Urls.Add(new Uri("http://192.168.2.162:8091/pools/default"));
 			nscc.Credentials = new NetworkCredential("A", "11111111");
+			nscc.PerformanceMonitorFactory = new Membase.Configuration.DefaultPerformanceMonitorFactory();
 			//nscc.BucketPassword = "pass";
 
 			ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_A_"));
+			ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient("content"), "TesT_B_"));
+
 			//ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_B_"));
 			//ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_C_"));
 			//ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_D_"));
