@@ -8,6 +8,7 @@ using Enyim.Caching.Memcached;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Configuration;
+using Membase.Configuration;
 
 namespace MemcachedTest
 {
@@ -130,11 +131,35 @@ namespace MemcachedTest
 
 			using (new MemcachedClient(mcc)) ;
 		}
+
+		[TestCase]
+		public void TestPerfMonByMembaseFactory()
+		{
+			var config = ConfigurationManager.GetSection("test/membasePerfMon") as IMembaseClientConfiguration;
+
+			Assert.IsInstanceOf<TestPerfMon>(config.CreatePerformanceMonitor());
+		}
+
+		[TestCase]
+		public void TestPerfMonByType()
+		{
+			var config = ConfigurationManager.GetSection("test/memcachedPerfMonWithType") as IMemcachedClientConfiguration;
+
+			Assert.IsInstanceOf<TestPerfMon>(config.CreatePerformanceMonitor());
+		}
+
+		[TestCase]
+		public void TestPerfMonByFactory()
+		{
+			var config = ConfigurationManager.GetSection("test/memcachedPerfMonWithFactory") as IMemcachedClientConfiguration;
+
+			Assert.IsInstanceOf<TestPerfMon>(config.CreatePerformanceMonitor());
+		}
 	}
 
 	class TestTranscoderFactory : IProviderFactory<ITranscoder>
 	{
-		void IProviderFactory<ITranscoder>.Initialize(Dictionary<string, string> parameters)
+		void IProvider.Initialize(Dictionary<string, string> parameters)
 		{
 			Assert.IsTrue(parameters.ContainsKey("test"));
 		}
@@ -147,7 +172,7 @@ namespace MemcachedTest
 
 	class TestLocatorFactory : IProviderFactory<IMemcachedNodeLocator>
 	{
-		void IProviderFactory<IMemcachedNodeLocator>.Initialize(Dictionary<string, string> parameters)
+		void IProvider.Initialize(Dictionary<string, string> parameters)
 		{
 			Assert.IsTrue(parameters.ContainsKey("test"));
 		}
@@ -160,7 +185,7 @@ namespace MemcachedTest
 
 	class TestKeyTransformerFactory : IProviderFactory<IMemcachedKeyTransformer>
 	{
-		void IProviderFactory<IMemcachedKeyTransformer>.Initialize(Dictionary<string, string> parameters)
+		void IProvider.Initialize(Dictionary<string, string> parameters)
 		{
 			Assert.IsTrue(parameters.ContainsKey("test"));
 		}
@@ -210,6 +235,73 @@ namespace MemcachedTest
 		{
 			return null;
 		}
+	}
+
+	class TestMembasePerfMonFactory : IMembasePerformanceMonitorFactory
+	{
+		IPerformanceMonitor IMembasePerformanceMonitorFactory.Create(string bucket)
+		{
+			return new TestPerfMon();
+		}
+
+		void IProvider.Initialize(Dictionary<string, string> parameters)
+		{
+			Assert.IsTrue(parameters.ContainsKey("test"));
+		}
+	}
+
+	class TestMemcachedPerfMonFactory : IProviderFactory<IPerformanceMonitor>
+	{
+		void IProvider.Initialize(Dictionary<string, string> parameters)
+		{
+			Assert.IsTrue(parameters.ContainsKey("test"));
+		}
+
+		IPerformanceMonitor IProviderFactory<IPerformanceMonitor>.Create()
+		{
+			return new TestPerfMon();
+		}
+	}
+
+	class TestPerfMon : IPerformanceMonitor
+	{
+		#region IPerformanceMonitor Members
+
+		void IPerformanceMonitor.Get(int amount, bool success)
+		{
+			throw new NotImplementedException();
+		}
+
+		void IPerformanceMonitor.Store(StoreMode mode, int amount, bool success)
+		{
+			throw new NotImplementedException();
+		}
+
+		void IPerformanceMonitor.Delete(int amount, bool success)
+		{
+			throw new NotImplementedException();
+		}
+
+		void IPerformanceMonitor.Mutate(MutationMode mode, int amount, bool success)
+		{
+			throw new NotImplementedException();
+		}
+
+		void IPerformanceMonitor.Concatenate(ConcatenationMode mode, int amount, bool success)
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
+
+		#region IDisposable Members
+
+		void IDisposable.Dispose()
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
 	}
 
 }
