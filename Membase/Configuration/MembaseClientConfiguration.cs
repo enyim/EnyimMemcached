@@ -89,6 +89,11 @@ namespace Membase.Configuration
 		}
 
 		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IPerformanceMonitor"/> instance which will be used monitor the performance of the client.
+		/// </summary>
+		public IMembasePerformanceMonitorFactory PerformanceMonitorFactory { get; set; }
+
+		/// <summary>
 		/// Determines which port the client should use to connect to the nodes
 		/// </summary>
 		public BucketPortType Port { get; set; }
@@ -150,6 +155,18 @@ namespace Membase.Configuration
 		TimeSpan IMembaseClientConfiguration.RetryTimeout
 		{
 			get { return this.RetryTimeout; }
+		}
+
+		string IMembaseClientConfiguration.BucketPassword
+		{
+			get { return this.BucketPassword; }
+		}
+
+		IPerformanceMonitor IMembaseClientConfiguration.CreatePerformanceMonitor()
+		{
+			return this.PerformanceMonitorFactory == null
+					? null
+					: this.PerformanceMonitorFactory.Create(this.Bucket);
 		}
 
 		#endregion

@@ -62,7 +62,9 @@
   <ItemGroup>
     <None Include="b4.config" />
     <None Include="103.config" />
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
 </Project>

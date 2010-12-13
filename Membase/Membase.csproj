@@ -45,6 +45,8 @@
     <Compile Include="BucketConfigListener.cs" />
     <Compile Include="ConfigHelper.cs" />
     <Compile Include="Configuration\BucketPortType.cs" />
+    <Compile Include="Configuration\DefaultPerformanceMonitorFactory.cs" />
+    <Compile Include="Configuration\IMembasePerformanceMonitorFactory.cs" />
     <Compile Include="Configuration\IMembaseClientConfiguration.cs" />
     <Compile Include="Configuration\MembaseClientConfiguration.cs" />
     <Compile Include="Configuration\MembaseClientSection.cs" />

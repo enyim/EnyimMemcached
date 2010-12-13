@@ -1,5 +1,10 @@
 ﻿# Membase Client Version History
 
+## Version 2.11-indev
+
+ * Performance monitoring support. The included DefaultPerformanceMonitor will use Windows performance counters. See [the wiki](http://github.com/enyim/EnyimMemcached/wiki/Configure-the-Performance-Monitor) about configuring this feature.
+ * Includes all the changes from Enyim.Caching 2.8-indev
+
 ## Version 2.10
 
  * Changed the namespace to Membase and the client's name to MembaseClient to follow the name change of the product (& the company).

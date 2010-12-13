@@ -61,7 +61,8 @@ namespace Membase
 		public MembaseClient(IMembaseClientConfiguration configuration, string bucketName) :
 			base(new MembasePool(configuration, IsDefaultBucket(bucketName) ? null : bucketName),
 					configuration.CreateKeyTransformer(),
-					configuration.CreateTranscoder()) { }
+					configuration.CreateTranscoder(),
+					configuration.CreatePerformanceMonitor()) { }
 
 		private static bool IsDefaultBucket(string name)
 		{
@@ -81,6 +82,7 @@ namespace Membase
 				{
 					value = this.Transcoder.Deserialize(command.Result);
 					cas = command.CasValue;
+					if (this.PerformanceMonitor != null) this.PerformanceMonitor.Get(1, true);
 
 					return true;
 				}
@@ -88,6 +90,7 @@ namespace Membase
 
 			value = null;
 			cas = 0;
+			if (this.PerformanceMonitor != null) this.PerformanceMonitor.Get(1, false);
 
 			return false;
 		}
@@ -102,11 +105,15 @@ namespace Membase
 				var command = this.Pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires, cas);
 				var success = ExecuteWithRedirect(node, command);
 
+				if (this.PerformanceMonitor != null) this.PerformanceMonitor.Mutate(mode, 1, success);
+
 				cas = command.CasValue;
 
 				if (success)
 					return command.Result;
 			}
+
+			if (this.PerformanceMonitor != null) this.PerformanceMonitor.Mutate(mode, 1, false);
 
 			return defaultValue;
 		}
@@ -122,9 +129,12 @@ namespace Membase
 				var retval = this.ExecuteWithRedirect(node, command);
 
 				cas = command.CasValue;
+				if (this.PerformanceMonitor != null) this.PerformanceMonitor.Concatenate(mode, 1, true);
 
 				return retval;
 			}
+
+			if (this.PerformanceMonitor != null) this.PerformanceMonitor.Concatenate(mode, 1, false);
 
 			return false;
 		}
@@ -143,6 +153,8 @@ namespace Membase
 				{
 					log.Error(e);
 
+					if (this.PerformanceMonitor != null) this.PerformanceMonitor.Store(mode, 1, false);
+
 					return false;
 				}
 
@@ -151,8 +163,12 @@ namespace Membase
 
 				cas = command.CasValue;
 
+				if (this.PerformanceMonitor != null) this.PerformanceMonitor.Store(mode, 1, true);
+
 				return retval;
 			}
+
+			if (this.PerformanceMonitor != null) this.PerformanceMonitor.Store(mode, 1, false);
 
 			return false;
 		}

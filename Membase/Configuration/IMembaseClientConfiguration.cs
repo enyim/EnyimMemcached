@@ -45,6 +45,11 @@ namespace Membase.Configuration
 		ITranscoder CreateTranscoder();
 
 		/// <summary>
+		/// Creates an <see cref="T:Enyim.Caching.Memcached.IPerformanceMonitor"/> instance which will be used to monitor the performance of the client.
+		/// </summary>
+		IPerformanceMonitor CreatePerformanceMonitor();
+
+		/// <summary>
 		/// Gets the credentials used to connect to the REST API of the cluster.
 		/// </summary>
 		NetworkCredential Credentials { get; }

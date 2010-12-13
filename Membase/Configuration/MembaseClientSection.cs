@@ -52,13 +52,23 @@ namespace Membase.Configuration
 		}
 
 		/// <summary>
-		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialzie or deserialize items.
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialize or deserialize items.
 		/// </summary>
 		[ConfigurationProperty("transcoder", IsRequired = false)]
 		public ProviderElement<ITranscoder> Transcoder
 		{
 			get { return (ProviderElement<ITranscoder>)base["transcoder"]; }
 			set { base["transcoder"] = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IPerformanceMonitor"/> which will be used monitor the performance of the client.
+		/// </summary>
+		[ConfigurationProperty("performanceMonitor", IsRequired = false)]
+		public FactoryElement<IMembasePerformanceMonitorFactory> PerformanceMonitorFactory
+		{
+			get { return (FactoryElement<IMembasePerformanceMonitorFactory>)base["performanceMonitor"]; }
+			set { base["performanceMonitor"] = value; }
 		}
 
 		/// <summary>
@@ -99,6 +109,11 @@ namespace Membase.Configuration
 		ITranscoder IMembaseClientConfiguration.CreateTranscoder()
 		{
 			return this.Transcoder.CreateInstance() ?? new DefaultTranscoder();
+		}
+
+		IPerformanceMonitor IMembaseClientConfiguration.CreatePerformanceMonitor()
+		{
+			return this.PerformanceMonitorFactory.CreateInstance().Create(this.Servers.Bucket);
 		}
 
 		NetworkCredential IMembaseClientConfiguration.Credentials
