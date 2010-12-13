@@ -25,31 +25,26 @@ namespace Enyim.Caching
 		private IServerPool pool;
 		private IMemcachedKeyTransformer keyTransformer;
 		private ITranscoder transcoder;
+		private IPerformanceMonitor performanceMonitor;
 
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the default configuration section (enyim/memcached).
 		/// </summary>
-		public MemcachedClient() : this(DefaultSettings) { }
+		public MemcachedClient()
+			: this(DefaultSettings) { }
 
 		protected IServerPool Pool { get { return this.pool; } }
 		protected IMemcachedKeyTransformer KeyTransformer { get { return this.keyTransformer; } }
 		protected ITranscoder Transcoder { get { return this.transcoder; } }
+		protected IPerformanceMonitor PerformanceMonitor { get { return this.performanceMonitor; } }
 
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the specified configuration section. 
 		/// This overload allows to create multiple MemcachedClients with different pool configurations.
 		/// </summary>
 		/// <param name="sectionName">The name of the configuration section to be used for configuring the behavior of the client.</param>
-		public MemcachedClient(string sectionName) : this(GetSection(sectionName)) { }
-
-		private static IMemcachedClientConfiguration GetSection(string sectionName)
-		{
-			MemcachedClientSection section = (MemcachedClientSection)ConfigurationManager.GetSection(sectionName);
-			if (section == null)
-				throw new ConfigurationErrorsException("Section " + sectionName + " is not found.");
-
-			return section;
-		}
+		public MemcachedClient(string sectionName)
+			: this(GetSection(sectionName)) { }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClient"/> using the specified configuration instance.
@@ -62,17 +57,22 @@ namespace Enyim.Caching
 
 			this.keyTransformer = configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
 			this.transcoder = configuration.CreateTranscoder() ?? new DefaultTranscoder();
+			this.performanceMonitor = configuration.CreatePerformanceMonitor();
 
 			this.pool = configuration.CreatePool();
 			this.pool.Start();
 		}
 
 		public MemcachedClient(IServerPool pool, IMemcachedKeyTransformer keyTransformer, ITranscoder transcoder)
+			: this(pool, keyTransformer, transcoder, null) { }
+
+		public MemcachedClient(IServerPool pool, IMemcachedKeyTransformer keyTransformer, ITranscoder transcoder, IPerformanceMonitor performanceMonitor)
 		{
 			if (pool == null) throw new ArgumentNullException("pool");
 			if (keyTransformer == null) throw new ArgumentNullException("keyTransformer");
 			if (transcoder == null) throw new ArgumentNullException("transcoder");
 
+			this.performanceMonitor = performanceMonitor;
 			this.keyTransformer = keyTransformer;
 			this.transcoder = transcoder;
 
@@ -84,6 +84,15 @@ namespace Enyim.Caching
 		{
 			try { ((IDisposable)this).Dispose(); }
 			catch { }
+		}
+
+		private static IMemcachedClientConfiguration GetSection(string sectionName)
+		{
+			MemcachedClientSection section = (MemcachedClientSection)ConfigurationManager.GetSection(sectionName);
+			if (section == null)
+				throw new ConfigurationErrorsException("Section " + sectionName + " is not found.");
+
+			return section;
 		}
 
 		/// <summary>
@@ -163,12 +172,16 @@ namespace Enyim.Caching
 					value = this.transcoder.Deserialize(command.Result);
 					cas = command.CasValue;
 
+					if (this.performanceMonitor != null) this.performanceMonitor.Get(1, true);
+
 					return true;
 				}
 			}
 
 			value = null;
 			cas = 0;
+
+			if (this.performanceMonitor != null) this.performanceMonitor.Get(1, false);
 
 			return false;
 		}
@@ -296,6 +309,8 @@ namespace Enyim.Caching
 				{
 					log.Error(e);
 
+					if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, false);
+
 					return false;
 				}
 
@@ -303,9 +318,12 @@ namespace Enyim.Caching
 				var retval = node.Execute(command);
 
 				cas = command.CasValue;
+				if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, true);
 
 				return retval;
 			}
+
+			if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, false);
 
 			return false;
 		}
@@ -516,9 +534,13 @@ namespace Enyim.Caching
 
 				cas = command.CasValue;
 
+				if (this.performanceMonitor != null) this.performanceMonitor.Mutate(mode, 1, success);
+
 				if (success)
 					return command.Result;
 			}
+
+			if (this.performanceMonitor != null) this.performanceMonitor.Mutate(mode, 1, false);
 
 			// TODO not sure about the return value when the command fails
 			return defaultValue;
@@ -593,9 +615,12 @@ namespace Enyim.Caching
 				var retval = node.Execute(command);
 
 				cas = command.CasValue;
+				if (this.performanceMonitor != null) this.performanceMonitor.Concatenate(mode, 1, true);
 
 				return retval;
 			}
+
+			if (this.performanceMonitor != null) this.performanceMonitor.Concatenate(mode, 1, false);
 
 			return false;
 		}
@@ -707,7 +732,6 @@ namespace Enyim.Caching
 
 			var retval = new Dictionary<string, T>(hashed.Count);
 			var handles = new List<WaitHandle>();
-			var i = 0;
 
 			//execute each list of keys on their respective node
 			foreach (var slice in byServer)
@@ -725,8 +749,6 @@ namespace Enyim.Caching
 				var mre = new ManualResetEvent(false);
 				handles.Add(mre);
 
-				if (log.IsDebugEnabled) log.Debug(i + " Expecting: " + nodeKeys.Length);
-
 				//execute the mgets in parallel
 				action.BeginInvoke(mget, iar =>
 				{
@@ -735,7 +757,22 @@ namespace Enyim.Caching
 						using (iar.AsyncWaitHandle)
 							if (action.EndInvoke(iar))
 							{
-								if (log.IsDebugEnabled) log.Debug(iar.AsyncState + " Success: " + mget.Result.Count);
+								if (this.performanceMonitor != null)
+								{
+									// full list of keys sent to the server
+									var expectedKeys = (string[])iar.AsyncState;
+									var expectedCount = expectedKeys.Length;
+
+									// number of items returned
+									var resultCount = mget.Result.Count;
+
+									// log the results
+									this.performanceMonitor.Get(resultCount, true);
+
+									// log the missing keys
+									if (resultCount != expectedCount)
+										this.performanceMonitor.Get(expectedCount - resultCount, true);
+								}
 
 								// deserialize the items in the dictionary
 								foreach (var kvp in mget.Result)
@@ -761,11 +798,10 @@ namespace Enyim.Caching
 						// indicate that we finished processing
 						mre.Set();
 					}
-				}, i);
-
-				i++;
+				}, nodeKeys);
 			}
 
+			// wait for all nodes to finish
 			if (handles.Count > 0)
 			{
 				SafeWaitAllAndDispose(handles.ToArray());
@@ -774,6 +810,10 @@ namespace Enyim.Caching
 			return retval;
 		}
 
+		/// <summary>
+		/// Waits for all WaitHandles and works in both STA and MTA mode.
+		/// </summary>
+		/// <param name="waitHandles"></param>
 		private static void SafeWaitAllAndDispose(WaitHandle[] waitHandles)
 		{
 			try
@@ -840,18 +880,18 @@ namespace Enyim.Caching
 		/// <remarks>You should only call this when you are not using static instances of the client, so it can close all conections and release the sockets.</remarks>
 		public void Dispose()
 		{
+			GC.SuppressFinalize(this);
+
 			if (this.pool != null)
 			{
-				GC.SuppressFinalize(this);
+				try { this.pool.Dispose(); }
+				finally { this.pool = null; }
+			}
 
-				try
-				{
-					this.pool.Dispose();
-				}
-				finally
-				{
-					this.pool = null;
-				}
+			if (this.performanceMonitor != null)
+			{
+				try { this.performanceMonitor.Dispose(); }
+				finally { this.performanceMonitor = null; }
 			}
 		}
 

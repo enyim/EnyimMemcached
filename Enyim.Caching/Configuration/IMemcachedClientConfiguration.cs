@@ -41,6 +41,8 @@ namespace Enyim.Caching.Configuration
 		ITranscoder CreateTranscoder();
 
 		IServerPool CreatePool();
+
+		IPerformanceMonitor CreatePerformanceMonitor();
 	}
 }
 

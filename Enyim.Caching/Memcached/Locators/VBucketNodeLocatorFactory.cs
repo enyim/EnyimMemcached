@@ -26,7 +26,7 @@ namespace Enyim.Caching.Memcached
 		private string hashAlgo;
 		private VBucket[] buckets;
 
-		void IProviderFactory<IMemcachedNodeLocator>.Initialize(Dictionary<string, string> parameters)
+		void IProvider.Initialize(Dictionary<string, string> parameters)
 		{
 			ConfigurationHelper.TryGetAndRemove(parameters, "hashAlgorithm", out this.hashAlgo, true);
 

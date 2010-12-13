@@ -74,6 +74,16 @@ namespace Enyim.Caching.Configuration
 		}
 
 		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IPerformanceMonitor"/> which will be used monitor the performance of the client.
+		/// </summary>
+		[ConfigurationProperty("performanceMonitor", IsRequired = false)]
+		public ProviderElement<IPerformanceMonitor> PerformanceMonitor
+		{
+			get { return (ProviderElement<IPerformanceMonitor>)base["performanceMonitor"]; }
+			set { base["performanceMonitor"] = value; }
+		}
+
+		/// <summary>
 		/// Called after deserialization.
 		/// </summary>
 		protected override void PostDeserialize()
@@ -97,6 +107,7 @@ namespace Enyim.Caching.Configuration
 		}
 
 		#region [ IMemcachedClientConfiguration]
+
 		IList<IPEndPoint> IMemcachedClientConfiguration.Servers
 		{
 			get { return this.Servers.ToIPEndPointCollection(); }
@@ -136,6 +147,11 @@ namespace Enyim.Caching.Configuration
 			}
 
 			throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);
+		}
+
+		IPerformanceMonitor IMemcachedClientConfiguration.CreatePerformanceMonitor()
+		{
+			return this.PerformanceMonitor.CreateInstance();
 		}
 
 		#endregion

@@ -15,7 +15,7 @@ namespace Enyim.Caching.Memcached
 	{
 		private string hashName;
 
-		void IProviderFactory<IMemcachedNodeLocator>.Initialize(Dictionary<string, string> parameters)
+		void IProvider.Initialize(Dictionary<string, string> parameters)
 		{
 			ConfigurationHelper.TryGetAndRemove(parameters, "hashName", out this.hashName, false);
 		}
