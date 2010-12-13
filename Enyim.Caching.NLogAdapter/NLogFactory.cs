@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Enyim.Caching
 {
-	class Class1 : Enyim.Caching.ILogFactory
+	public class NLogFactory : Enyim.Caching.ILogFactory
 	{
 		ILog ILogFactory.GetLogger(string name)
 		{
@@ -21,7 +21,4 @@ namespace Enyim.Caching
 			return new NLogWrapper(log);
 		}
 	}
-
-
-
 }
