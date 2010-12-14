@@ -52,6 +52,27 @@ namespace Membase
 
 			this.RetryCount = 0;
 			this.RetryTimeout = new TimeSpan(0, 0, 0, 0, 500);
+
+			// domain unloads are not guaranteed to call the finalizers
+			// and when users do not abide the IDIsposabel contract
+			// we end up a job in the thread pool which never quits
+			// and prevents the unloading of the app domain
+			// this is not big deal in normal applications because the
+			// process exit aborts everything, but it's a huge issue in
+			// asp.net because the app domain will not be unloaded
+			// but still, the best way to deal with this is issue to dispose the client
+			AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
+		}
+
+		void CurrentDomain_DomainUnload(object sender, EventArgs e)
+		{
+			this.Dispose();
+		}
+
+		~MessageStreamListener()
+		{
+			try { this.Dispose(); }
+			catch { }
 		}
 
 		protected event Action<string> MessageReceived;
@@ -388,6 +409,8 @@ namespace Membase
 
 		protected void Dispose()
 		{
+			AppDomain.CurrentDomain.DomainUnload -= CurrentDomain_DomainUnload;
+
 			this.CleanupRequests();
 
 			if (this.client != null)
