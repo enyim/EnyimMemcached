@@ -78,6 +78,17 @@ namespace Membase.Configuration
 			set { base["port"] = value; }
 		}
 
+        /// <summary>
+        /// NOTE: Temporary Fix to ignore hostnames given by server (the client uri specified in the app.config file will be used instead)
+        /// Tells the client to ignore IP given by server 
+        /// </summary>
+        [ConfigurationProperty("ignoreServerHostnames", IsRequired = false)]
+        public bool IgnoreServerHostnames
+        {
+            get { return (bool)base["ignoreServerHostnames"]; }
+            set { base["ignoreServerHostnames"] = value; }
+        }
+
 		[ConfigurationProperty("retryCount", IsRequired = false, DefaultValue = 0)]
 		public int RetryCount
 		{

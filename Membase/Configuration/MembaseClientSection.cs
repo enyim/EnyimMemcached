@@ -142,6 +142,14 @@ namespace Membase.Configuration
 			get { return this.Servers.Port; }
 		}
 
+        /// <summary>
+        /// NOTE: Temporary Fix to ignore hostnames given by server (the client uri specified in the app.config file will be used instead)
+        /// </summary>
+        bool IMembaseClientConfiguration.IgnoreServerHostnames
+        {
+            get { return this.Servers.IgnoreServerHostnames; }
+        }
+
 		int IMembaseClientConfiguration.RetryCount
 		{
 			get { return this.Servers.RetryCount; }

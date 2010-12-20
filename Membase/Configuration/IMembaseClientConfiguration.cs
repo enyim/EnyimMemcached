@@ -59,6 +59,11 @@ namespace Membase.Configuration
 		/// </summary>
 		BucketPortType Port { get; }
 
+        /// <summary>
+        /// NOTE: Temporary Fix to ignore hostnames given by server (the client uri specified in the app.config file will be used instead)
+        /// </summary>
+        bool IgnoreServerHostnames { get; }
+
 		TimeSpan RetryTimeout { get; }
 		int RetryCount { get; }
 	}

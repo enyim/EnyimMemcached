@@ -38,7 +38,13 @@ namespace Membase.Configuration
 		/// <remarks> If null, the bucket name will be used. Set to String.Empty to use an empty password.</remarks>
 		public string BucketPassword { get; set; }
 
-		/// <summary>
+        /// <summary>
+        /// NOTE: Temporary Fix to ignore hostnames given by server (the client uri specified in the app.config file will be used instead)
+        /// Tells the client to ignore IP given by server 
+        /// </summary>
+        public bool IgnoreServerHostnames { get; set; }
+
+        /// <summary>
 		/// Gets a list of <see cref="T:IPEndPoint"/> each representing a Memcached server in the pool.
 		/// </summary>
 		public IList<Uri> Urls { get; private set; }
@@ -97,6 +103,15 @@ namespace Membase.Configuration
 		/// Determines which port the client should use to connect to the nodes
 		/// </summary>
 		public BucketPortType Port { get; set; }
+
+
+        /// <summary>
+        /// NOTE: Temporary Fix to ignore hostnames given by server (the client uri specified in the app.config file will be used instead)
+        /// </summary>
+        bool IMembaseClientConfiguration.IgnoreServerHostnames
+        {
+            get { return this.IgnoreServerHostnames; }
+        }
 
 		public int RetryCount { get; set; }
 		public TimeSpan RetryTimeout { get; set; }

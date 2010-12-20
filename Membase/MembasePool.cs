@@ -115,6 +115,13 @@ namespace Membase
 						   ? null
 						   : new PlainTextAuthenticator(null, this.bucketName, password);
 
+            // NOTE: Temporary Fix to ignore hostnames given by server (the client uri specified in the app.config file will be used instead)
+            if (this.configuration.IgnoreServerHostnames && config.nodes.Length == this.poolUrls.Length)
+            {
+                for (int i = 0; i < config.nodes.Length; i++)
+                    config.nodes[i].hostname = this.poolUrls[i].Host;
+            }
+
 			try
 			{
 				var state = (config == null || config.vBucketServerMap == null)
