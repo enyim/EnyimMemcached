@@ -6,6 +6,18 @@ using System.Net;
 namespace Membase
 {
 #pragma warning disable 649
+	internal class ClusterInfo
+	{
+		public string name;
+		public ClusterNode[] nodes;
+		public ClusterBucketInfo buckets;
+	}
+
+	internal class ClusterBucketInfo
+	{
+		public string uri;
+	}
+
 	internal class ClusterConfig
 	{
 		public string name;

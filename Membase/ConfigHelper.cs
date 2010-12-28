@@ -5,79 +5,136 @@ using System.Net;
 using System.Text;
 using System.Web.Script.Serialization;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace Membase
 {
-	internal class ConfigHelper : IDisposable
+	internal class ConfigHelper
 	{
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(ConfigHelper));
 
 		private WebClientWithTimeout wcwt;
-
-		public ConfigHelper() : this(new WebClientWithTimeout()) { }
 
 		public ConfigHelper(WebClientWithTimeout client)
 		{
 			this.wcwt = client;
 		}
 
-		public ICredentials Credentials
+		/// <summary>
+		/// Deserializes the content of an url as a json object
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="uri"></param>
+		/// <returns></returns>
+		private T DeserializeUri<T>(Uri uri, bool forceAuth)
 		{
-			get { return this.wcwt.Credentials; }
-			set { this.wcwt.Credentials = value; }
-		}
-
-		public int Timeout
-		{
-			get { return this.wcwt.Timeout; }
-			set
+			if (forceAuth)
 			{
-				this.wcwt.Timeout = value;
-				this.wcwt.ReadWriteTimeout = value;
-			}
-		}
+				var cred = this.wcwt.Credentials;
 
-		private T DeserializeUri<T>(Uri uri)
-		{
+				if (cred == null)
+				{
+					if (log.IsDebugEnabled) log.Debug("Cannot force basic auth, the client has no credentials specified.");
+					return default(T);
+				}
+
+				var nc = cred.GetCredential(uri, "Basic");
+				if (nc == null)
+				{
+					if (log.IsDebugEnabled) log.DebugFormat("Cannot force basic auth, the client did not gave us a credential for this url: {0}.", uri);
+					return default(T);
+				}
+
+				// this will send the basic auth header even though the server did not ask for it
+				// 1.6.4+ requires you to authenticate to get protected bucket info (but it does not give you a 401 error to force the auth)
+				this.wcwt.Encoding = Encoding.UTF8;
+				this.wcwt.Headers["Authorization"] = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(nc.UserName + ":" + nc.Password));
+			}
+
 			var info = this.wcwt.DownloadString(uri);
 			var jss = new JavaScriptSerializer();
 
 			return jss.Deserialize<T>(info);
 		}
 
-		private Uri GetBucketsRoot(Uri poolUri)
+		private ClusterInfo GetClusterInfo(Uri clusterUrl)
 		{
-			var poolInfo = DeserializeUri<Dictionary<string, object>>(poolUri);
+			var info = DeserializeUri<ClusterInfo>(clusterUrl, false);
 
-			object tmp;
-			Dictionary<string, object> dict;
+			if (info == null)
+				throw new ArgumentException("invalid pool url: " + clusterUrl);
 
-			// get the buckets member which will hold the url of the bucket listing REST endpoint 
-			if (!poolInfo.TryGetValue("buckets", out tmp)
-				|| (dict = tmp as Dictionary<string, object>) == null)
-				throw new ArgumentException("invalid pool url: " + poolUri);
-
-			string bucketsUrl;
-
-			// get the { uri: VALUE } part
-			if (!dict.TryGetValue("uri", out tmp) || (bucketsUrl = tmp as string) == null)
+			if (info.buckets == null || String.IsNullOrEmpty(info.buckets.uri))
 				throw new ArgumentException("got an invalid response, missing { buckets : { uri : '' } }");
 
-			return new Uri(poolUri, bucketsUrl);
+			return info;
 		}
 
+		/// <summary>
+		/// Asks the cluster for the specified bucket's configuration.
+		/// </summary>
+		/// <param name="poolUri"></param>
+		/// <param name="name"></param>
+		/// <returns></returns>
 		public ClusterConfig ResolveBucket(Uri poolUri, string name)
 		{
-			var root = this.GetBucketsRoot(poolUri);
-			var allBuckets = this.DeserializeUri<ClusterConfig[]>(root);
+			var info = this.GetClusterInfo(poolUri);
+			var root = new Uri(poolUri, info.buckets.uri);
+
+			// first try the default auth mechanism: auth if 401, otherwise do nothing
+			var allBuckets = this.DeserializeUri<ClusterConfig[]>(root, false);
 			var retval = allBuckets.FirstOrDefault(b => b.name == name);
 
-			if (retval == null && log.IsWarnEnabled)
-				log.WarnFormat("Could not find the pool '{0}' at {1}", name, poolUri);
+			// we did not find the bucket
+			if (retval == null)
+			{
+				if (log.IsDebugEnabled) log.DebugFormat("Could not find the pool '{0}' at {1}, trying with forceAuth=true", name, poolUri);
+
+				// check if we're connecting to a 1.6.4 server
+				var node = info.nodes == null ? null : info.nodes.FirstOrDefault();
+				if (node == null)
+				{
+					if (log.IsDebugEnabled) log.Debug("No nodes are defined for the first bucket.");
+				}
+				else
+				{
+					// ignore git revisino and other garbage, only take x.y.z
+					var m = Regex.Match(node.version, @"^\d+\.\d+\.\d+");
+					if (!m.Success)
+					{
+						if (log.IsDebugEnabled) log.DebugFormat("Invalid version number: {0}", node.version);
+					}
+					else
+					{
+						var version = new Version(m.Value);
+
+						// let's try to load the config with forced authentication
+						if (version >= new Version(1, 6, 4))
+						{
+							allBuckets = this.DeserializeUri<ClusterConfig[]>(root, true);
+							retval = allBuckets.FirstOrDefault(b => b.name == name);
+						}
+						else
+							if (log.IsDebugEnabled) log.DebugFormat("This is a {0} server, skipping forceAuth.", node.version);
+					}
+				}
+
+				if (retval == null)
+				{
+					if (log.IsWarnEnabled) log.WarnFormat("Could not find the pool '{0}' at {1}", name, poolUri);
+				}
+				else if (log.IsDebugEnabled) log.DebugFormat("Found config for bucket {0}.", name);
+			}
 
 			return retval;
 		}
 
+		/// <summary>
+		/// Finds the comet endpoint of the specified bucket. This checks all controller urls until one returns a config or all fails.
+		/// </summary>
+		/// <param name="pools"></param>
+		/// <param name="name"></param>
+		/// <returns></returns>
 		public Uri[] GetBucketStreamingUris(Uri[] pools, string name)
 		{
 			if (pools == null) throw new ArgumentNullException("pools");
@@ -102,45 +159,6 @@ namespace Membase
 			}
 
 			return retval.Count == 0 ? null : retval.ToArray();
-		}
-
-		public ClusterNode[] GetWorkingNodes(Uri[] pools, string name)
-		{
-			if (pools == null) throw new ArgumentNullException("pools");
-			if (pools.Length == 0) throw new ArgumentException("must specify at least one url", "pools");
-
-			for (var i = 0; i < pools.Length; i++)
-			{
-				try
-				{
-					var current = pools[i];
-					var bucket = this.ResolveBucket(current, name);
-
-					if (bucket != null)
-						return bucket.nodes.Where(b => b.status == "healthy").ToArray();
-				}
-				catch (Exception e)
-				{
-					log.Error(e);
-				}
-			}
-
-			return null;
-		}
-
-		void IDisposable.Dispose()
-		{
-			if (this.wcwt != null)
-			{
-				this.wcwt.Dispose();
-				this.wcwt = null;
-				GC.SuppressFinalize(this);
-			}
-		}
-
-		~ConfigHelper()
-		{
-			((IDisposable)this).Dispose();
 		}
 	}
 }
