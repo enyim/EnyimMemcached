@@ -226,16 +226,21 @@ namespace Membase
 		{
 			try
 			{
-				var helper = new ConfigHelper(client);
-				var bucket = helper.ResolveBucket(root, bucketName);
+				var bucket = ConfigHelper.ResolveBucket(client, root, bucketName);
 				if (bucket == null)
 					return null;
+
+				if (String.IsNullOrEmpty(bucket.streamingUri))
+				{
+					log.ErrorFormat("Url {0} for bucket {1} returned a config with no streamingUri", root, bucketName);
+					return null;
+				}
 
 				return new Uri(root, bucket.streamingUri);
 			}
 			catch (Exception e)
 			{
-				log.Error("Error resolving streaming uri", e);
+				log.Error("Error resolving streaming uri: " + root, e);
 
 				return null;
 			}

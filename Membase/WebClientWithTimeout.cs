@@ -12,6 +12,7 @@ namespace Membase
 	internal class WebClientWithTimeout : WebClient
 	{
 		private static readonly string ClientUA;
+		private static int InstanceCounter = 0;
 
 		static WebClientWithTimeout()
 		{
@@ -55,12 +56,19 @@ namespace Membase
 			{
 				hrw.ReadWriteTimeout = this.ReadWriteTimeout;
 				hrw.KeepAlive = false;
+
+				if (this.PreAuthenticate && this.Credentials != null)
+				{
+					var nc = this.Credentials.GetCredential(address, "Basic");
+					if (nc != null)
+					{
+						hrw.Headers["Authorization"] = "Basic " + Convert.ToBase64String(this.Encoding.GetBytes(nc.UserName + ":" + nc.Password));
+					}
+				}
 			}
 
 			return retval;
 		}
-
-		private static int instanceCounter = 0;
 
 		/// <summary>
 		/// Returns a <see cref="WebRequest"/> object for the specified resource. The returned instance will have a custom ConnectionGroup to avoid running into connection limits.
@@ -70,7 +78,7 @@ namespace Membase
 		public WebRequest GetWebRequest(Uri address, string connectionGroupName)
 		{
 			var retval = this.GetWebRequest(address);
-			retval.ConnectionGroupName = connectionGroupName + ":" + Interlocked.Increment(ref instanceCounter);// connectionGroupName;
+			retval.ConnectionGroupName = connectionGroupName + ":" + Interlocked.Increment(ref InstanceCounter);// connectionGroupName;
 
 			return retval;
 		}
@@ -80,6 +88,10 @@ namespace Membase
 		/// Connection timeout in msec.
 		/// </summary>
 		public int Timeout { get; set; }
+		/// <summary>
+		/// This will send the credentials (using basic auth) every time without getting a 401 response from the server.
+		/// </summary>
+		public bool PreAuthenticate { get; set; }
 	}
 }
 

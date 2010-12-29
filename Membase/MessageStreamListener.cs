@@ -103,7 +103,8 @@ namespace Membase
 				// make it infinite so it will not stop abort the socket thinking that the server have died
 				ReadWriteTimeout = System.Threading.Timeout.Infinite,
 				// this is just the connect timeout
-				Timeout = this.Timeout
+				Timeout = this.Timeout,
+				PreAuthenticate = true
 			};
 		}
 
@@ -174,8 +175,11 @@ namespace Membase
 
 					// recreate the client after failure
 					this.CleanupRequests();
-					this.client.Dispose();
-					this.client = null;
+					if (this.client != null)
+					{
+						this.client.Dispose();
+						this.client = null;
+					}
 				}
 			}
 		}
