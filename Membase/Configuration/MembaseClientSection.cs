@@ -113,7 +113,15 @@ namespace Membase.Configuration
 
 		IPerformanceMonitor IMembaseClientConfiguration.CreatePerformanceMonitor()
 		{
-			return this.PerformanceMonitorFactory.CreateInstance().Create(this.Servers.Bucket);
+			var pmf = this.PerformanceMonitorFactory;
+			if (pmf.ElementInformation.IsPresent)
+			{
+				var f = pmf.CreateInstance();
+				if (f != null)
+					return f.Create(this.Servers.Bucket);
+			}
+
+			return null;
 		}
 
 		NetworkCredential IMembaseClientConfiguration.Credentials

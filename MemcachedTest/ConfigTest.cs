@@ -133,6 +133,16 @@ namespace MemcachedTest
 		}
 
 		[TestCase]
+		public void TestPerfMonNull()
+		{
+			Assert.IsNull(((IMemcachedClientConfiguration)ConfigurationManager.GetSection("test/validConfig")).CreatePerformanceMonitor());
+			Assert.IsNull(((IMembaseClientConfiguration)ConfigurationManager.GetSection("test/membase")).CreatePerformanceMonitor());
+
+			Assert.IsNull(((IMemcachedClientConfiguration)new Enyim.Caching.Configuration.MemcachedClientConfiguration()).CreatePerformanceMonitor());
+			Assert.IsNull(((IMembaseClientConfiguration)new Membase.Configuration.MembaseClientConfiguration()).CreatePerformanceMonitor());
+		}
+
+		[TestCase]
 		public void TestPerfMonByMembaseFactory()
 		{
 			var config = ConfigurationManager.GetSection("test/membasePerfMon") as IMembaseClientConfiguration;

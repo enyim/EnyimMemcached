@@ -52,7 +52,7 @@ namespace Enyim.Caching.Configuration
 				var type = this.Factory;
 				if (type == null)
 				{
-					if (this.IsOptional)
+					if (this.IsOptional || !this.ElementInformation.IsPresent)
 						return null;
 
 					throw new ConfigurationErrorsException("factory must be defined");

@@ -73,6 +73,8 @@ namespace MemcachedTest
 				Assert.AreEqual(td2.FieldB, "World", "Object was corrupted.");
 				Assert.AreEqual(td2.FieldC, 19810619, "Object was corrupted.");
 				Assert.AreEqual(td2.FieldD, true, "Object was corrupted.");
+				Assert.Catch(() => client.Get((string)null));
+				Assert.Catch(() => client.Get(String.Empty));
 			}
 		}
 
