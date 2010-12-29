@@ -40,9 +40,10 @@ namespace Membase.Configuration
 		}
 
 		/// <summary>
-		/// Gets or sets the user name used to connect to a secured cluster
+		/// (Obsolete) Gets or sets the user name used to connect to a secured cluster
 		/// </summary>
 		[ConfigurationProperty("userName", IsRequired = false)]
+		[Obsolete("The bucket name&password will be used for authentication. This property will be removed in the next version.")]
 		public string UserName
 		{
 			get { return (string)base["userName"]; }
@@ -50,9 +51,10 @@ namespace Membase.Configuration
 		}
 
 		/// <summary>
-		/// Gets or sets the password used to connect to a secured cluster
+		/// (Obsolete) Gets or sets the password used to connect to a secured cluster
 		/// </summary>
 		[ConfigurationProperty("password", IsRequired = false)]
+		[Obsolete("The bucket name&password will be used for authentication. This property will be removed in the next version.")]
 		public string Password
 		{
 			get { return (string)base["password"]; }
@@ -71,7 +73,7 @@ namespace Membase.Configuration
 		/// <summary>
 		/// Determines which port the client should use to connect to the nodes
 		/// </summary>
-		[ConfigurationProperty("port", IsRequired = false, DefaultValue = BucketPortType.Proxy)]
+		[ConfigurationProperty("port", IsRequired = false, DefaultValue = BucketPortType.Direct)]
 		public BucketPortType Port
 		{
 			get { return (BucketPortType)base["port"]; }

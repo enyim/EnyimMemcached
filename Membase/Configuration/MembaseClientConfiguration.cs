@@ -43,6 +43,7 @@ namespace Membase.Configuration
 		/// </summary>
 		public IList<Uri> Urls { get; private set; }
 
+		[Obsolete("The bucket name&password will be used for authentication. This property will be removed in the next version.")]
 		public NetworkCredential Credentials { get; set; }
 
 		/// <summary>
@@ -107,6 +108,7 @@ namespace Membase.Configuration
 			get { return this.Urls; }
 		}
 
+		[Obsolete("The bucket name&password will be used for authentication. This property will be removed in the next version.")]
 		NetworkCredential IMembaseClientConfiguration.Credentials
 		{
 			get { return this.Credentials; }

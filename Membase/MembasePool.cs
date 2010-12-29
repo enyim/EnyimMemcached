@@ -32,36 +32,52 @@ namespace Membase
 		private bool isTimerActive;
 		private long deadTimeoutMsec;
 
-		public MembasePool(IMembaseClientConfiguration configuration) : this(configuration, null) { }
-
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class using the specified configuration 
-		/// and bucket name. The name also will be used as the bucket password.
+		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" />.
 		/// </summary>
 		/// <param name="configuration">The configuration to be used.</param>
-		/// <param name="bucket">The name of the bucket to connect to.</param>
-		public MembasePool(IMembaseClientConfiguration configuration, string bucket) : this(configuration, bucket, null) { }
+		public MembasePool(IMembaseClientConfiguration configuration)
+		{
+			if (configuration == null) throw new ArgumentNullException("configuration");
+
+			this.Initialize(configuration, configuration.Bucket, configuration.BucketPassword);
+		}
+
+		/// <summary>Obsolete. Use .ctor(config, bucket, password) to explicitly set the bucket password.</summary>
+		[Obsolete("Use .ctor(config, bucket, password) to explicitly set the bucket password.", true)]
+		public MembasePool(IMembaseClientConfiguration configuration, string bucket)
+		{
+			throw new InvalidOperationException("Use .ctor(config, bucket, password) to explicitly set the bucket password.");
+		}
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class using the specified configuration,
 		/// bucket name and password.
 		/// </summary>
 		/// <param name="configuration">The configuration to be used.</param>
-		/// <param name="bucket">The name of the bucket to connect to.</param>
-		/// <param name="bucketPassword">The password to the bucket.</param>
-		/// <remarks> If the password is null, the bucket name will be used. Set to String.Empty to use an empty password.</remarks>
-		public MembasePool(IMembaseClientConfiguration configuration, string bucket, string bucketPassword)
+		/// <param name="bucketName">The name of the bucket to connect to. Overrides the configuration's Bucket property.</param>
+		/// <param name="bucketPassword">The password to the bucket. Overrides the configuration's BucketPassword property.</param>
+		public MembasePool(IMembaseClientConfiguration configuration, string bucketName, string bucketPassword)
+		{
+			if (configuration == null) throw new ArgumentNullException("configuration");
+
+			this.Initialize(configuration, bucketName, bucketPassword);
+		}
+
+		private void Initialize(IMembaseClientConfiguration configuration, string bucketName, string bucketPassword)
 		{
 			this.configuration = configuration;
-			this.bucketName = bucket ?? configuration.Bucket;
-			// parameter -> config -> name
-			this.bucketPassword = bucketPassword ?? configuration.BucketPassword ?? bucketName;
 
 			// make null both if we use the default bucket since we do not need to be authenticated
-			if (String.IsNullOrEmpty(this.bucketName) || this.bucketName == "default")
+			if (String.IsNullOrEmpty(bucketName) || bucketName == "default")
 			{
 				this.bucketName = null;
 				this.bucketPassword = null;
+			}
+			else
+			{
+				this.bucketName = bucketName;
+				this.bucketPassword = bucketPassword ?? String.Empty;
 			}
 
 			this.deadTimeoutMsec = (long)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds;
@@ -74,7 +90,6 @@ namespace Membase
 		}
 
 		//public VBucketNodeLocator ForwardLocator { get { return this.state.ForwardLocator; } }
-
 
 		private void InitNodes(ClusterConfig config)
 		{
@@ -418,7 +433,7 @@ namespace Membase
 			if (this.poolUrls.Length == 0)
 				throw new InvalidOperationException("At least 1 pool url must be specified.");
 
-			this.configListener = new BucketConfigListener(this.poolUrls, this.bucketName, this.configuration.Credentials)
+			this.configListener = new BucketConfigListener(this.poolUrls, this.bucketName, this.bucketPassword)
 			{
 				Timeout = (int)this.configuration.SocketPool.ConnectionTimeout.TotalMilliseconds,
 				DeadTimeout = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds,

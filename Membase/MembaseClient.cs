@@ -13,60 +13,68 @@ namespace Membase
 	public class MembaseClient : MemcachedClient
 	{
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MembaseClient));
-		private static IMembaseClientConfiguration DefaultConfig = (IMembaseClientConfiguration)ConfigurationManager.GetSection("membase");
+		private static readonly IMembaseClientConfiguration DefaultConfig = (IMembaseClientConfiguration)ConfigurationManager.GetSection("membase");
 
-		private MembasePool nsPool;
+		private MembasePool poolInstance;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class using the default configuration and bucket.
+		/// Initializes a new instance of the <see cref="T:Membase.MembaseClient" /> class using the default configuration and bucket.
 		/// </summary>
 		/// <remarks>The configuration is taken from the /configuration/membase section.</remarks>
-		public MembaseClient() :
-			this(DefaultConfig, null) { }
+		public MembaseClient() : this(DefaultConfig, null, null) { }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class 
-		/// using the default configuration and the specified bucket name.
+		/// Initializes a new instance of the <see cref="T:Membase.MembaseClient" /> class using the default configuration and the specified bucket.
 		/// </summary>
-		/// <param name="bucketName">The name of the bucket this client will connect to.</param>
-		public MembaseClient(string bucketName) :
-			this(DefaultConfig, bucketName) { }
+		/// <remarks>The configuration is taken from the /configuration/membase section.</remarks>
+		public MembaseClient(string bucketName, string bucketPassword) :
+			this(DefaultConfig, bucketName, bucketPassword) { }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class 
-		/// using the specified configuration and bucket name.
-		/// </summary>
-		/// <param name="sectionName">The name of the configuration section to load.</param>
-		/// <param name="bucketName">The name of the bucket this client will connect to.</param>
-		public MembaseClient(string sectionName, string bucketName) :
-			this((IMembaseClientConfiguration)ConfigurationManager.GetSection(sectionName), bucketName) { }
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class 
-		/// using a custom configuration provider.
+		/// Initializes a new instance of the <see cref="T:Membase.MembaseClient" /> class using a custom configuration provider.
 		/// </summary>
 		/// <param name="configuration">The custom configuration provider.</param>
 		public MembaseClient(IMembaseClientConfiguration configuration) :
-			this(configuration, null)
-		{
-			this.nsPool = (MembasePool)this.Pool;
-		}
+			this(configuration, configuration.Bucket, configuration.BucketPassword) { }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" /> class 
-		/// using a custom configuration provider and the specified bucket name.
+		/// Initializes a new instance of the <see cref="T:Membase.MembaseClient" /> class using the specified configuration 
+		/// section and the specified bucket.
+		/// </summary>
+		/// <param name="sectionName">The name of the configuration section to load.</param>
+		/// <param name="bucketName">The name of the bucket this client will connect to.</param>
+		/// <param name="bucketPassword">The password of the bucket this client will connect to.</param>
+		public MembaseClient(string sectionName, string bucketName, string bucketPassword) :
+			this((IMembaseClientConfiguration)ConfigurationManager.GetSection(sectionName), bucketName, bucketPassword) { }
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="T:Membase.MembaseClient" /> class 
+		/// using a custom configuration provider and the specified bucket name and password.
 		/// </summary>
 		/// <param name="configuration">The custom configuration provider.</param>
-		/// <param name="bucketName">The name of the bucket this client will connect to. Note: this will override the configuration's BucketName property.</param>
-		public MembaseClient(IMembaseClientConfiguration configuration, string bucketName) :
-			base(new MembasePool(configuration, IsDefaultBucket(bucketName) ? null : bucketName),
+		/// <param name="bucketName">The name of the bucket this client will connect to.</param>
+		/// <param name="bucketPassword">The password of the bucket this client will connect to.</param>
+		public MembaseClient(IMembaseClientConfiguration configuration, string bucketName, string bucketPassword) :
+			base(new MembasePool(configuration, bucketName, bucketPassword),
 					configuration.CreateKeyTransformer(),
 					configuration.CreateTranscoder(),
-					configuration.CreatePerformanceMonitor()) { }
-
-		private static bool IsDefaultBucket(string name)
+					configuration.CreatePerformanceMonitor())
 		{
-			return String.IsNullOrEmpty(name) || name == "default";
+			this.poolInstance = (MembasePool)this.Pool;
+		}
+
+		/// <summary>Obsolete. Use .ctor(bucket, password) to explicitly set the bucket password.</summary>
+		[Obsolete("Use .ctor(bucket, password) to explicitly set the bucket password.", true)]
+		public MembaseClient(string bucketName)
+		{
+			throw new InvalidOperationException("Use .ctor(bucket, password) to explicitly set the bucket password.");
+		}
+
+		/// <summary>Obsolete. Use .ctor(config, bucket, password) to explicitly set the bucket password.</summary>
+		[Obsolete("Use .ctor(config, bucket, password) to explicitly set the bucket password.", true)]
+		public MembaseClient(IMembaseClientConfiguration configuration, string bucketName)
+		{
+			throw new InvalidOperationException("Use .ctor(config, bucket, password) to explicitly set the bucket password.");
 		}
 
 		protected override bool PerformTryGet(string key, out ulong cas, out object value)

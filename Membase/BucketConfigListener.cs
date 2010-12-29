@@ -19,14 +19,16 @@ namespace Membase
 		private ManualResetEvent mre;
 		private MessageStreamListener listener;
 
-		public BucketConfigListener(Uri[] poolUrls, string bucketName, NetworkCredential credential)
+		public BucketConfigListener(Uri[] poolUrls, string bucketName, string bucketPassword)
 		{
 			this.poolUrls = poolUrls;
 			this.bucketName = String.IsNullOrEmpty(bucketName)
 								? "default"
 								: bucketName;
 
-			this.credential = credential;
+			this.credential = bucketName == "default"
+								? null
+								: new NetworkCredential(bucketName, bucketPassword);
 
 			this.Timeout = 10000;
 			this.DeadTimeout = 10000;

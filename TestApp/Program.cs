@@ -26,11 +26,21 @@ namespace DemoApp
 			nscc.Urls.Add(new Uri("http://192.168.2.160:8091/pools/default"));
 			//nscc.Urls.Add(new Uri("http://192.168.2.162:8091/pools/default"));
 			nscc.Credentials = new NetworkCredential("A", "11111111");
-			nscc.PerformanceMonitorFactory = new Membase.Configuration.DefaultPerformanceMonitorFactory();
+			nscc.Bucket = "content";
+			nscc.BucketPassword = "content";
+
+			new MembaseClient(nscc).Store(StoreMode.Set, "1", 1);
+
+			new MembaseClient(nscc, "data", "data").Store(StoreMode.Set, "2", 2);
+			new MembaseClient(nscc, "feedback", null).Store(StoreMode.Set, "2", 2);
+
+			Console.ReadLine();
+
+			//nscc.PerformanceMonitorFactory = new Membase.Configuration.DefaultPerformanceMonitorFactory();
 			//nscc.BucketPassword = "pass";
 
-			ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_A_"));
-			ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient("content"), "TesT_B_"));
+			ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc), "TesT_A_"));
+			ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient("content", "content"), "TesT_B_"));
 
 			//ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_B_"));
 			//ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_C_"));
@@ -53,13 +63,13 @@ namespace DemoApp
 			return;
 
 
-			var nc = new MembaseClient(nscc, "content");
+			var nc = new MembaseClient(nscc, "content", "content");
 
 			var stats1 = nc.Stats("slabs");
 			foreach (var kvp in stats1.GetRaw("curr_connections"))
 				Console.WriteLine("{0} -> {1}", kvp.Key, kvp.Value);
 
-			var nc2 = new MembaseClient(nscc, "content");
+			var nc2 = new MembaseClient(nscc, "content", "content");
 
 			var stats2 = nc2.Stats();
 			foreach (var kvp in stats2.GetRaw("curr_connections"))

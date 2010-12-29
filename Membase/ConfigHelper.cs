@@ -26,29 +26,28 @@ namespace Membase
 		/// <typeparam name="T"></typeparam>
 		/// <param name="uri"></param>
 		/// <returns></returns>
-		private T DeserializeUri<T>(Uri uri, bool forceAuth)
+		private T DeserializeUri<T>(Uri uri)
 		{
-			if (forceAuth)
+			var cred = this.wcwt.Credentials;
+
+			if (cred == null)
 			{
-				var cred = this.wcwt.Credentials;
-
-				if (cred == null)
-				{
-					if (log.IsDebugEnabled) log.Debug("Cannot force basic auth, the client has no credentials specified.");
-					return default(T);
-				}
-
+				if (log.IsDebugEnabled) log.Debug("No credentials are specified, skipping the Authorization header.");
+			}
+			else
+			{
 				var nc = cred.GetCredential(uri, "Basic");
 				if (nc == null)
 				{
-					if (log.IsDebugEnabled) log.DebugFormat("Cannot force basic auth, the client did not gave us a credential for this url: {0}.", uri);
-					return default(T);
+					if (log.IsDebugEnabled) log.DebugFormat("Cannot append Authorization header, the client did not gave us a credential for this url: {0}.", uri);
 				}
-
-				// this will send the basic auth header even though the server did not ask for it
-				// 1.6.4+ requires you to authenticate to get protected bucket info (but it does not give you a 401 error to force the auth)
-				this.wcwt.Encoding = Encoding.UTF8;
-				this.wcwt.Headers["Authorization"] = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(nc.UserName + ":" + nc.Password));
+				else
+				{
+					// we'll use the bucket name/password passed by the client for authentication
+					// (the default bucket's config data can be accessed anonymously)
+					this.wcwt.Encoding = Encoding.UTF8;
+					this.wcwt.Headers["Authorization"] = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(nc.UserName + ":" + nc.Password));
+				}
 			}
 
 			var info = this.wcwt.DownloadString(uri);
@@ -59,7 +58,7 @@ namespace Membase
 
 		private ClusterInfo GetClusterInfo(Uri clusterUrl)
 		{
-			var info = DeserializeUri<ClusterInfo>(clusterUrl, false);
+			var info = DeserializeUri<ClusterInfo>(clusterUrl);
 
 			if (info == null)
 				throw new ArgumentException("invalid pool url: " + clusterUrl);
@@ -82,49 +81,14 @@ namespace Membase
 			var root = new Uri(poolUri, info.buckets.uri);
 
 			// first try the default auth mechanism: auth if 401, otherwise do nothing
-			var allBuckets = this.DeserializeUri<ClusterConfig[]>(root, false);
+			var allBuckets = this.DeserializeUri<ClusterConfig[]>(root);
 			var retval = allBuckets.FirstOrDefault(b => b.name == name);
 
-			// we did not find the bucket
 			if (retval == null)
 			{
-				if (log.IsDebugEnabled) log.DebugFormat("Could not find the pool '{0}' at {1}, trying with forceAuth=true", name, poolUri);
-
-				// check if we're connecting to a 1.6.4 server
-				var node = info.nodes == null ? null : info.nodes.FirstOrDefault();
-				if (node == null)
-				{
-					if (log.IsDebugEnabled) log.Debug("No nodes are defined for the first bucket.");
-				}
-				else
-				{
-					// ignore git revisino and other garbage, only take x.y.z
-					var m = Regex.Match(node.version, @"^\d+\.\d+\.\d+");
-					if (!m.Success)
-					{
-						if (log.IsDebugEnabled) log.DebugFormat("Invalid version number: {0}", node.version);
-					}
-					else
-					{
-						var version = new Version(m.Value);
-
-						// let's try to load the config with forced authentication
-						if (version >= new Version(1, 6, 4))
-						{
-							allBuckets = this.DeserializeUri<ClusterConfig[]>(root, true);
-							retval = allBuckets.FirstOrDefault(b => b.name == name);
-						}
-						else
-							if (log.IsDebugEnabled) log.DebugFormat("This is a {0} server, skipping forceAuth.", node.version);
-					}
-				}
-
-				if (retval == null)
-				{
-					if (log.IsWarnEnabled) log.WarnFormat("Could not find the pool '{0}' at {1}", name, poolUri);
-				}
-				else if (log.IsDebugEnabled) log.DebugFormat("Found config for bucket {0}.", name);
+				if (log.IsWarnEnabled) log.WarnFormat("Could not find the pool '{0}' at {1}", name, poolUri);
 			}
+			else if (log.IsDebugEnabled) log.DebugFormat("Found config for bucket {0}.", name);
 
 			return retval;
 		}
