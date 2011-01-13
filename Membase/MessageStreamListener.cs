@@ -235,7 +235,7 @@ namespace Membase
 							// if it fails in the meanwhile, we'll get another url
 							this.ReadMessages(current.Value);
 
-							// we can only get here properly if the istener is stopped, so just quit the whole loop
+							// we can only get here properly if the listener is stopped, so just quit the whole loop
 							if (log.IsDebugEnabled) log.Debug("Processing is aborted.");
 							return;
 						}
@@ -403,7 +403,7 @@ namespace Membase
 			if (log.IsErrorEnabled)
 				log.Error("The infinite loop just finished, probably the server closed the connection without errors. (?)");
 
-			throw new InvalidOperationException("Remote host closed the streaming connection");
+			throw new IOException("Remote host closed the streaming connection");
 		}
 
 		void IDisposable.Dispose()
