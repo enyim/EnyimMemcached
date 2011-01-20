@@ -124,15 +124,10 @@ namespace Membase.Configuration
 			return null;
 		}
 
+		[Obsolete("Please use the bucket name&password for specifying credentials. This property has no use now, and will be completely removed in the next version.", true)]
 		NetworkCredential IMembaseClientConfiguration.Credentials
 		{
-			get
-			{
-				var srv = this.Servers;
-				if (String.IsNullOrEmpty(srv.UserName)) return null;
-
-				return new System.Net.NetworkCredential(srv.UserName, srv.Password);
-			}
+			get { throw new NotImplementedException(); }
 		}
 
 		string IMembaseClientConfiguration.Bucket

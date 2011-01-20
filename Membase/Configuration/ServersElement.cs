@@ -43,7 +43,7 @@ namespace Membase.Configuration
 		/// (Obsolete) Gets or sets the user name used to connect to a secured cluster
 		/// </summary>
 		[ConfigurationProperty("userName", IsRequired = false)]
-		[Obsolete("The bucket name&password will be used for authentication. This property will be removed in the next version.")]
+		[Obsolete("Please use the bucket name&password for specifying credentials. This property has no use now, and will be completely removed in the next version.", true)]
 		public string UserName
 		{
 			get { return (string)base["userName"]; }
@@ -54,7 +54,7 @@ namespace Membase.Configuration
 		/// (Obsolete) Gets or sets the password used to connect to a secured cluster
 		/// </summary>
 		[ConfigurationProperty("password", IsRequired = false)]
-		[Obsolete("The bucket name&password will be used for authentication. This property will be removed in the next version.")]
+		[Obsolete("Please use the bucket name&password for specifying credentials. This property has no use now, and will be completely removed in the next version.", true)]
 		public string Password
 		{
 			get { return (string)base["password"]; }
