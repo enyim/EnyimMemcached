@@ -1,9 +1,9 @@
 ﻿# Membase Client Version History
 
-## Version 2.11-indev
+## Version 2.11
 
- * Performance monitoring support. The included DefaultPerformanceMonitor will use Windows performance counters. See [the wiki](http://github.com/enyim/EnyimMemcached/wiki/Configure-the-Performance-Monitor) about configuring this feature.
- * Includes all the changes from Enyim.Caching 2.8-indev
+ * Includes all the changes from Enyim.Caching 2.8 (perfmon, bugfixes)
+ * Cleaned up the credentials handling: only BucketName and BucketPasswords will be used, Credentials is obsolete. This way you do not have to specify your Membase cluster admin password in config files. See the wiki for more information.
 
 ## Version 2.10
 
