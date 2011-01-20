@@ -25,14 +25,14 @@ namespace DemoApp
 
 			nscc.Urls.Add(new Uri("http://192.168.2.160:8091/pools/default"));
 			//nscc.Urls.Add(new Uri("http://192.168.2.162:8091/pools/default"));
-			nscc.Credentials = new NetworkCredential("A", "11111111");
-			nscc.Bucket = "content";
-			nscc.BucketPassword = "content";
+			//nscc.Credentials = new NetworkCredential("A", "11111111");
+			//nscc.Bucket = "content";
+			//nscc.BucketPassword = "content";
 
-			new MembaseClient(nscc).Store(StoreMode.Set, "1", 1);
+			new MembaseClient(nscc).Store(StoreMode.Set, "4q", 1);
 
-			new MembaseClient(nscc, "data", "data").Store(StoreMode.Set, "2", 2);
-			new MembaseClient(nscc, "feedback", null).Store(StoreMode.Set, "2", 2);
+			new MembaseClient(nscc, "data", "data").Store(StoreMode.Set, "q4", 2);
+			new MembaseClient(nscc, "feedback", null).Store(StoreMode.Set, "q4", 2);
 
 			Console.ReadLine();
 
