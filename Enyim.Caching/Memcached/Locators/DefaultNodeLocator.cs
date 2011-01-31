@@ -32,6 +32,16 @@ namespace Enyim.Caching.Memcached
 		/// <param name="state"></param>
 		private void callback_isAliveTimer(object state)
 		{
+			try { HandleIsAlive(); }
+			catch (ObjectDisposedException)
+			{
+				// ignore the exception
+				// TryEnter can throw this when the timer is triggered just when this instance is being Disposed
+			}
+		}
+
+		private void HandleIsAlive()
+		{
 			this.serverAccessLock.EnterUpgradeableReadLock();
 
 			try
