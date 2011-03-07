@@ -25,7 +25,7 @@ namespace Enyim.Caching.Configuration
 
 		protected override bool OnDeserializeUnrecognizedAttribute(string name, string value)
 		{
-			ConfigurationProperty property = new ConfigurationProperty(name, typeof(string), value);
+			var property = new ConfigurationProperty(name, typeof(string), value);
 			base[property] = value;
 
 			this.parameters[name] = value;

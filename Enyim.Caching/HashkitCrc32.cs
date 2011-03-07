@@ -31,7 +31,7 @@ namespace Enyim
 		{
 			if (array == null) throw new ArgumentNullException("array");
 			if (ibStart < 0 || ibStart > array.Length) throw new ArgumentOutOfRangeException("ibStart");
-			if (ibStart + cbSize > array.Length) throw new ArgumentOutOfRangeException("length");
+			if (ibStart + cbSize > array.Length) throw new ArgumentOutOfRangeException("cbSize");
 
 			if (this.shouldReset)
 			{
