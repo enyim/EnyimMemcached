@@ -11,6 +11,7 @@
     <RootNamespace>Enyim.Caching</RootNamespace>
     <AssemblyName>Enyim.Caching</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <Import Project="..\build\CommonProperties.targets" />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -30,6 +31,7 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -238,6 +240,7 @@
     </Compile>
     <Compile Include="Memcached\Transcoders\CacheItem.cs">
     </Compile>
+    <Compile Include="Memcached\Transcoders\DataContractTranscoder.cs" />
     <Compile Include="Memcached\Transcoders\DefaultTranscoder.cs">
     </Compile>
     <Compile Include="Memcached\Transcoders\ITranscoder.cs">

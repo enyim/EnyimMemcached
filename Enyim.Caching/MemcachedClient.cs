@@ -104,7 +104,10 @@ namespace Enyim.Caching
 		{
 			object tmp;
 
-			return this.TryGet(key, out tmp) ? tmp : null;
+            if (this.Transcoder.GetType() == typeof(DataContractTranscoder))
+                throw new NotImplementedException("You must define your type with Get<T> to use DataContractTranscoder.");
+
+			return this.TryGet<object>(key, out tmp) ? tmp : null;
 		}
 
 		/// <summary>
@@ -116,7 +119,7 @@ namespace Enyim.Caching
 		{
 			object tmp;
 
-			return TryGet(key, out tmp) ? (T)tmp : default(T);
+			return TryGet<T>(key, out tmp) ? (T)tmp : default(T);
 		}
 
 		/// <summary>
@@ -125,11 +128,11 @@ namespace Enyim.Caching
 		/// <param name="key">The identifier for the item to retrieve.</param>
 		/// <param name="value">The retrieved item or null if not found.</param>
 		/// <returns>The <value>true</value> if the item was successfully retrieved.</returns>
-		public bool TryGet(string key, out object value)
+		public bool TryGet<T>(string key, out object value)
 		{
 			ulong cas = 0;
 
-			return this.PerformTryGet(key, out cas, out value);
+			return this.PerformTryGet<T>(key, out cas, out value);
 		}
 
 		public CasResult<object> GetWithCas(string key)
@@ -141,24 +144,24 @@ namespace Enyim.Caching
 		{
 			CasResult<object> tmp;
 
-			return this.TryGetWithCas(key, out tmp)
+            return this.TryGetWithCas<T>(key, out tmp)
 					? new CasResult<T> { Cas = tmp.Cas, Result = (T)tmp.Result }
 					: new CasResult<T> { Cas = tmp.Cas, Result = default(T) };
 		}
 
-		public bool TryGetWithCas(string key, out CasResult<object> value)
+        public bool TryGetWithCas<T>(string key, out CasResult<object> value)
 		{
 			object tmp;
 			ulong cas;
 
-			var retval = this.PerformTryGet(key, out cas, out tmp);
+            var retval = this.PerformTryGet<T>(key, out cas, out tmp);
 
 			value = new CasResult<object> { Cas = cas, Result = tmp };
 
 			return retval;
 		}
 
-		protected virtual bool PerformTryGet(string key, out ulong cas, out object value)
+        protected virtual bool PerformTryGet<T>(string key, out ulong cas, out object value)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
@@ -169,7 +172,7 @@ namespace Enyim.Caching
 
 				if (node.Execute(command))
 				{
-					value = this.transcoder.Deserialize(command.Result);
+                    value = this.transcoder.Deserialize<T>(command.Result);
 					cas = command.CasValue;
 
 					if (this.performanceMonitor != null) this.performanceMonitor.Get(1, true);
@@ -709,16 +712,16 @@ namespace Enyim.Caching
 		/// </summary>
 		/// <param name="keys">The list of identifiers for the items to retrieve.</param>
 		/// <returns>a Dictionary holding all items indexed by their key.</returns>
-		public IDictionary<string, object> Get(IEnumerable<string> keys)
+        public IDictionary<string, object> Get(IEnumerable<string> keys)
 		{
-			return PerformMultiGet<object>(keys, (mget, kvp) => this.transcoder.Deserialize(kvp.Value));
+            return PerformMultiGet<object>(keys, (mget, kvp) => this.transcoder.Deserialize<object>(kvp.Value));
 		}
 
-		public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
+		public IDictionary<string, CasResult<object>> GetWithCas<T>(IEnumerable<string> keys)
 		{
 			return PerformMultiGet<CasResult<object>>(keys, (mget, kvp) => new CasResult<object>
 			{
-				Result = this.transcoder.Deserialize(kvp.Value),
+				Result = this.transcoder.Deserialize<T>(kvp.Value),
 				Cas = mget.Cas[kvp.Key]
 			});
 		}

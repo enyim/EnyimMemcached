@@ -112,7 +112,7 @@ namespace Enyim.Caching.Memcached
 			return new CacheItem((ushort)((ushort)code | 0x0100), new ArraySegment<byte>(data, 0, length));
 		}
 
-		object ITranscoder.Deserialize(CacheItem item)
+		object ITranscoder.Deserialize<T>(CacheItem item)
 		{
 			if (item.Data == null || item.Data.Array == null)
 				return null;
