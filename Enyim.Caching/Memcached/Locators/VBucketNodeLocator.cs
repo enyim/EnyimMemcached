@@ -43,23 +43,23 @@ namespace Enyim.Caching.Memcached
 		[ThreadStatic]
 		private static HashAlgorithm currentAlgo;
 
-		private HashAlgorithm GetAlgo()
-		{
-			// we cache the HashAlgorithm instance per thread
-			// they are reinitialized before every ComputeHash but we avoid creating then GCing them every time we need 
-			// to find something (which will happen a lot)
-			// we cannot use ThreadStatic for asp.net (requests can change threads) so the hasher will be recreated for every request
-			// (we could use an object pool but talk about overkill)
-			var ctx = HttpContext.Current;
-			if (ctx == null)
-				return currentAlgo ?? (currentAlgo = this.factory());
+		//private HashAlgorithm GetAlgo()
+		//{
+		//    // we cache the HashAlgorithm instance per thread
+		//    // they are reinitialized before every ComputeHash but we avoid creating then GCing them every time we need 
+		//    // to find something (which will happen a lot)
+		//    // we cannot use ThreadStatic for asp.net (requests can change threads) so the hasher will be recreated for every request
+		//    // (we could use an object pool but talk about overkill)
+		//    var ctx = HttpContext.Current;
+		//    if (ctx == null)
+		//        return currentAlgo ?? (currentAlgo = this.factory());
 
-			var algo = ctx.Items["**VBucket.CurrentAlgo"] as HashAlgorithm;
-			if (algo == null)
-				ctx.Items["**VBucket.CurrentAlgo"] = algo = this.factory();
+		//    var algo = ctx.Items["**VBucket.CurrentAlgo"] as HashAlgorithm;
+		//    if (algo == null)
+		//        ctx.Items["**VBucket.CurrentAlgo"] = algo = this.factory();
 
-			return algo;
-		}
+		//    return algo;
+		//}
 
 		#region [ IMemcachedNodeLocator        ]
 
@@ -82,14 +82,14 @@ namespace Enyim.Caching.Memcached
 
 		public int GetIndex(string key)
 		{
-			var ha = this.GetAlgo();
+			var ha = this.factory();
 
 			//little shortcut for some hashes; we skip the uint -> byte[] -> uint conversion
 			var iuha = ha as IUIntHashAlgorithm;
 			var keyBytes = Encoding.UTF8.GetBytes(key);
 
 			uint keyHash = (iuha == null)
-							? keyHash = BitConverter.ToUInt32(ha.ComputeHash(keyBytes), 0)
+							? BitConverter.ToUInt32(ha.ComputeHash(keyBytes), 0)
 							: iuha.ComputeHash(keyBytes);
 
 			return (int)(keyHash & this.mask);
