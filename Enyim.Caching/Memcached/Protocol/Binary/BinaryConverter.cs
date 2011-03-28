@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	internal static class BinaryConverter
+	public static class BinaryConverter
 	{
 		public static unsafe int DecodeInt16(byte* buffer, int offset)
 		{
@@ -26,6 +26,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 			return (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
 		}
+
 		public static unsafe ulong DecodeUInt64(byte[] buffer, int offset)
 		{
 			fixed (byte* ptr = buffer)

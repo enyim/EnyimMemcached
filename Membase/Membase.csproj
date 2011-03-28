@@ -54,11 +54,17 @@
     <Compile Include="Configuration\UriElement.cs" />
     <Compile Include="Configuration\UriElementCollection.cs" />
     <Compile Include="Configuration\UriValidator.cs" />
+    <Compile Include="Operations\GetAndTouchOperation.cs" />
+    <Compile Include="BasicMembaseOperationFactory.cs" />
+    <Compile Include="OperationInterfaces.cs" />
     <Compile Include="Deserialization.cs" />
+    <Compile Include="IMembaseOperationFactory.cs" />
+    <Compile Include="IMembaseServerPool.cs" />
     <Compile Include="MessageStreamListener.cs" />
     <Compile Include="MembaseClient.cs" />
     <Compile Include="MembasePool.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Operations\TouchOperation.cs" />
     <Compile Include="VBucketAwareOperationFactory.cs" />
     <Compile Include="WebClientWithTimeout.cs">
       <SubType>Component</SubType>

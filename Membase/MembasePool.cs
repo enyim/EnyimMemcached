@@ -13,7 +13,7 @@ namespace Membase
 	/// <summary>
 	/// Socket pool using the Membase server's dynamic node list
 	/// </summary>
-	internal class MembasePool : IServerPool
+	internal class MembasePool : IMembaseServerPool
 	{
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MembasePool));
 
@@ -236,7 +236,7 @@ namespace Membase
 			{
 				CurrentNodes = tmp.ToArray(),
 				Locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator(),
-				OpFactory = new Enyim.Caching.Memcached.Protocol.Binary.BinaryOperationFactory()
+				OpFactory = BasicMembaseOperationFactory.Instance
 			};
 		}
 
@@ -421,6 +421,11 @@ namespace Membase
 			get { return this.state.OpFactory; }
 		}
 
+		IMembaseOperationFactory IMembaseServerPool.OperationFactory
+		{
+			get { return this.state.OpFactory; }
+		}
+
 		IEnumerable<IMemcachedNode> IServerPool.GetWorkingNodes()
 		{
 			return this.state.Locator.GetWorkingNodes();
@@ -456,7 +461,7 @@ namespace Membase
 
 			public IMemcachedNodeLocator Locator;
 			public VBucketNodeLocator ForwardLocator;
-			public IOperationFactory OpFactory;
+			public IMembaseOperationFactory OpFactory;
 			public IMemcachedNode[] CurrentNodes;
 
 			// if this is false, it's safe to reinitialize/recreate the locator when a server goes offline

@@ -833,10 +833,10 @@ namespace Enyim.Caching
 
 		#region [ Expiration helper            ]
 
-		private const int MaxSeconds = 60 * 60 * 24 * 30;
-		private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1);
+		protected const int MaxSeconds = 60 * 60 * 24 * 30;
+		protected static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1);
 
-		private static uint GetExpiration(TimeSpan? validFor, DateTime? expiresAt)
+		protected static uint GetExpiration(TimeSpan? validFor, DateTime? expiresAt)
 		{
 			if (validFor != null && expiresAt != null)
 				throw new ArgumentException("You cannot specify both validFor and expiresAt.");

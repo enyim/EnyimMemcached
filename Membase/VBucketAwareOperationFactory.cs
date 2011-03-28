@@ -6,19 +6,35 @@ using Enyim.Caching.Memcached.Protocol.Binary;
 using Enyim.Caching.Memcached;
 using System.IO;
 using System.Threading;
+using Enyim.Caching;
 
 namespace Membase
 {
 	/// <summary>
 	/// Membase requires each item operation to have a vbucket index set in the request's "reserved" field. (This is used for replicatiom and failover.) This op factory provides customized operations handling these indexes.
 	/// </summary>
-	internal class VBucketAwareOperationFactory : IOperationFactory
+	internal class VBucketAwareOperationFactory : IMembaseOperationFactory
 	{
 		private VBucketNodeLocator locator;
 
 		public VBucketAwareOperationFactory(VBucketNodeLocator locator)
 		{
 			this.locator = locator;
+		}
+
+		internal static bool GuessResponseState(BinaryResponse response, out OperationState state)
+		{
+			switch (response.StatusCode)
+			{
+				case 0: state = OperationState.Success;
+					return true;
+				case 7: state = OperationState.InvalidVBucket;
+					break;
+				default: state = OperationState.Failure;
+					break;
+			}
+
+			return false;
 		}
 
 		IGetOperation IOperationFactory.Get(string key)
@@ -61,9 +77,17 @@ namespace Membase
 			return new FlushOperation();
 		}
 
-		#region [ Custom operations            ]
+		ITouchOperation IMembaseOperationFactory.Touch(string key, uint newExpiration)
+		{
+			return new TouchOperation(this.locator, key, newExpiration);
+		}
 
-		private const string NotMyVBucket = "I'm not responsible for this vbucket";
+		IGetAndTouchOperation IMembaseOperationFactory.GetAndTouch(string key, uint newExpiration)
+		{
+			return new GetAndTouchOperation(this.locator, key, newExpiration);
+		}
+
+		#region [ Custom operations            ]
 
 		private class VBStore : StoreOperation, IOperationWithState
 		{
@@ -91,16 +115,10 @@ namespace Membase
 			{
 				base.ProcessResponse(response);
 
-				var r = response.StatusCode == 0;
-				this.state = r ? OperationState.Success : OperationState.Failure;
+				if (!GuessResponseState(response, out this.state))
+					return false;
 
-				if (!r)
-				{
-					if (response.GetStatusMessage() == NotMyVBucket)
-						this.state = OperationState.InvalidVBucket;
-				}
-
-				return r;
+				return true;
 			}
 
 			#region [ IOperationWithState          ]
@@ -139,16 +157,10 @@ namespace Membase
 			{
 				base.ProcessResponse(response);
 
-				var r = response.StatusCode == 0;
-				this.state = r ? OperationState.Success : OperationState.Failure;
+				if (!GuessResponseState(response, out this.state))
+					return false;
 
-				if (!r)
-				{
-					if (response.GetStatusMessage() == NotMyVBucket)
-						this.state = OperationState.InvalidVBucket;
-				}
-
-				return r;
+				return true;
 			}
 
 			#region [ IOperationWithState          ]
@@ -187,16 +199,10 @@ namespace Membase
 			{
 				base.ProcessResponse(response);
 
-				var r = response.StatusCode == 0;
-				this.state = r ? OperationState.Success : OperationState.Failure;
+				if (!GuessResponseState(response, out this.state))
+					return false;
 
-				if (!r)
-				{
-					if (response.GetStatusMessage() == NotMyVBucket)
-						this.state = OperationState.InvalidVBucket;
-				}
-
-				return r;
+				return true;
 			}
 
 			#region [ IOperationWithState          ]
@@ -257,16 +263,10 @@ namespace Membase
 			{
 				base.ProcessResponse(response);
 
-				var r = response.StatusCode == 0;
-				this.state = r ? OperationState.Success : OperationState.Failure;
+				if (!GuessResponseState(response, out this.state))
+					return false;
 
-				if (!r)
-				{
-					if (response.GetStatusMessage() == NotMyVBucket)
-						this.state = OperationState.InvalidVBucket;
-				}
-
-				return r;
+				return true;
 			}
 
 			#region [ IOperationWithState          ]
@@ -306,16 +306,10 @@ namespace Membase
 			{
 				base.ProcessResponse(response);
 
-				var r = response.StatusCode == 0;
-				this.state = r ? OperationState.Success : OperationState.Failure;
+				if (!GuessResponseState(response, out this.state))
+					return false;
 
-				if (!r)
-				{
-					if (response.GetStatusMessage() == NotMyVBucket)
-						this.state = OperationState.InvalidVBucket;
-				}
-
-				return r;
+				return true;
 			}
 
 			#region [ IOperationWithState          ]

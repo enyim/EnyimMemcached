@@ -15,7 +15,7 @@ namespace Membase
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MembaseClient));
 		private static readonly IMembaseClientConfiguration DefaultConfig = (IMembaseClientConfiguration)ConfigurationManager.GetSection("membase");
 
-		private MembasePool poolInstance;
+		private IMembaseServerPool poolInstance;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:Membase.MembaseClient" /> class using the default configuration and bucket.
@@ -60,7 +60,7 @@ namespace Membase
 					configuration.CreateTranscoder(),
 					configuration.CreatePerformanceMonitor())
 		{
-			this.poolInstance = (MembasePool)this.Pool;
+			this.poolInstance = (IMembaseServerPool)this.Pool;
 		}
 
 		/// <summary>Obsolete. Use .ctor(bucket, password) to explicitly set the bucket password.</summary>
@@ -225,6 +225,101 @@ namespace Membase
 						break;
 				}
 			}
+
+			return false;
+		}
+
+		public void Touch(string key, DateTime nextExpiration)
+		{
+			PerformTouch(key, GetExpiration(null, nextExpiration));
+		}
+
+		public void Touch(string key, TimeSpan nextExpiration)
+		{
+			PerformTouch(key, GetExpiration(nextExpiration, null));
+		}
+
+		protected void PerformTouch(string key, uint nextExpiration)
+		{
+			var hashedKey = this.KeyTransformer.Transform(key);
+			var node = this.Pool.Locate(hashedKey);
+
+			if (node != null)
+			{
+				var command = this.poolInstance.OperationFactory.Touch(key, nextExpiration);
+				var retval = ExecuteWithRedirect(node, command);
+			}
+		}
+
+		public object Get(string key, DateTime newExpiration)
+		{
+			object tmp;
+
+			return this.TryGet(key, newExpiration, out tmp) ? tmp : null;
+		}
+
+		public T Get<T>(string key, DateTime newExpiration)
+		{
+			object tmp;
+
+			return TryGet(key, newExpiration, out tmp) ? (T)tmp : default(T);
+		}
+
+		public bool TryGet(string key, DateTime newExpiration, out object value)
+		{
+			ulong cas = 0;
+
+			return this.PerformTryGetAndTouch(key, MemcachedClient.GetExpiration(null, newExpiration), out cas, out value);
+		}
+
+		public CasResult<object> GetWithCas(string key, DateTime newExpiration)
+		{
+			return this.GetWithCas<object>(key, newExpiration);
+		}
+
+		public CasResult<T> GetWithCas<T>(string key, DateTime newExpiration)
+		{
+			CasResult<object> tmp;
+
+			return this.TryGetWithCas(key, newExpiration, out tmp)
+					? new CasResult<T> { Cas = tmp.Cas, Result = (T)tmp.Result }
+					: new CasResult<T> { Cas = tmp.Cas, Result = default(T) };
+		}
+
+		public bool TryGetWithCas(string key, DateTime newExpiration, out CasResult<object> value)
+		{
+			object tmp;
+			ulong cas;
+
+			var retval = this.PerformTryGetAndTouch(key, MemcachedClient.GetExpiration(null, newExpiration), out cas, out tmp);
+
+			value = new CasResult<object> { Cas = cas, Result = tmp };
+
+			return retval;
+		}
+
+		protected bool PerformTryGetAndTouch(string key, uint nextExpiration, out ulong cas, out object value)
+		{
+			var hashedKey = this.KeyTransformer.Transform(key);
+			var node = this.Pool.Locate(hashedKey);
+
+			if (node != null)
+			{
+				var command = this.poolInstance.OperationFactory.GetAndTouch(hashedKey, nextExpiration);
+
+				if (this.ExecuteWithRedirect(node, command))
+				{
+					value = this.Transcoder.Deserialize(command.Result);
+					cas = command.CasValue;
+					if (this.PerformanceMonitor != null) this.PerformanceMonitor.Get(1, true);
+
+					return true;
+				}
+			}
+
+			value = null;
+			cas = 0;
+			if (this.PerformanceMonitor != null) this.PerformanceMonitor.Get(1, false);
 
 			return false;
 		}

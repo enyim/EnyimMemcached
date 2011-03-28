@@ -10,14 +10,17 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(BinaryRequest));
 		private static int InstanceCounter;
 
-		public OpCode Operation;
-		public string Key;
-		public ulong Cas;
+		public byte Operation;
 		public readonly int CorrelationId;
 
-		public BinaryRequest(OpCode operation)
+		public string Key;
+		public ulong Cas;
+
+		public BinaryRequest(OpCode operation) : this((byte)operation) { }
+
+		public BinaryRequest(byte commandCode)
 		{
-			this.Operation = operation;
+			this.Operation = commandCode;
 			// session id
 			this.CorrelationId = Interlocked.Increment(ref InstanceCounter);
 		}
@@ -53,7 +56,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			fixed (byte* buffer = header)
 			{
 				buffer[0x00] = 0x80; // magic
-				buffer[0x01] = (byte)this.Operation;
+				buffer[0x01] = this.Operation;
 
 				// key length
 				buffer[0x02] = (byte)(keyLength >> 8);

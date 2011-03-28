@@ -29,18 +29,29 @@ namespace DemoApp
 			//nscc.Bucket = "content";
 			//nscc.BucketPassword = "content";
 
-			new MembaseClient(nscc).Store(StoreMode.Set, "4q", 1);
+			var client = new MembaseClient(nscc);
+			Console.WriteLine("Store = " + client.Store(StoreMode.Set, "4q", 1, new TimeSpan(0, 0, 4)));
 
-			new MembaseClient(nscc, "data", "data").Store(StoreMode.Set, "q4", 2);
-			new MembaseClient(nscc, "feedback", null).Store(StoreMode.Set, "q4", 2);
+			Console.WriteLine("Setting expiration to the far future.");
+			//Console.ReadLine();
+
+			client.Touch("4q", DateTime.Now.AddDays(1));
+
+			Console.WriteLine("Wait for 4 sec.");
+			Console.ReadLine();
+
+			Console.WriteLine(client.Get("4q") ?? "<null>");
+
+			//new MembaseClient(nscc, "data", "data").Store(StoreMode.Set, "q4", 2);
+			//new MembaseClient(nscc, "feedback", null).Store(StoreMode.Set, "q4", 2);
 
 			Console.ReadLine();
 
 			//nscc.PerformanceMonitorFactory = new Membase.Configuration.DefaultPerformanceMonitorFactory();
 			//nscc.BucketPassword = "pass";
 
-			ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc), "TesT_A_"));
-			ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient("content", "content"), "TesT_B_"));
+			//ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc), "TesT_A_"));
+			//ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient("content", "content"), "TesT_B_"));
 
 			//ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_B_"));
 			//ThreadPool.QueueUserWorkItem(o => StressTest(new MembaseClient(nscc, "default"), "TesT_C_"));
