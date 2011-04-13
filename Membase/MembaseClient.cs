@@ -21,7 +21,7 @@ namespace Membase
 		/// Initializes a new instance of the <see cref="T:Membase.MembaseClient" /> class using the default configuration and bucket.
 		/// </summary>
 		/// <remarks>The configuration is taken from the /configuration/membase section.</remarks>
-		public MembaseClient() : this(DefaultConfig, null, null) { }
+		public MembaseClient() : this(DefaultConfig) { }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:Membase.MembaseClient" /> class using the default configuration and the specified bucket.
