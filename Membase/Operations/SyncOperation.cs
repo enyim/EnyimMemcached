@@ -11,7 +11,7 @@ using Enyim.Caching;
 namespace Membase
 {
 	[Flags]
-	public enum SyncMode { Mutation = 0, Persistence = 1, Replication = 2 };
+	public enum SyncMode { Mutation = 1, Persistence = 2, Replication = 4 };
 
 	internal class SyncOperation : BinaryOperation, ISyncOperation
 	{
@@ -63,12 +63,12 @@ namespace Membase
 			uint retval = (uint)(replicationCount << 4);
 
 			var hasRepl = (mode & SyncMode.Replication) == SyncMode.Replication && replicationCount > 0;
-			var hasPers = (mode & SyncMode.Persistence) == SyncMode.Replication;
+			var hasPers = (mode & SyncMode.Persistence) == SyncMode.Persistence;
 			var hasMut = (mode & SyncMode.Mutation) == SyncMode.Mutation;
 
 			if (hasMut) retval |= 4;
 			if (hasPers) retval |= 8;
-			if (hasMut && hasPers) retval |= 2;
+			if (hasRepl && hasPers) retval |= 2;
 
 			return retval;
 		}
