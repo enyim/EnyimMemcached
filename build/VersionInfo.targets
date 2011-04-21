@@ -37,7 +37,7 @@
 		<AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
 	</PropertyGroup>
 
-	<Target Name="CreateAssemblyInfoFromGit" DependsOnTargets="CreateRandomFileNames" Condition="$(ShouldGenerate) == 'true'">
+	<Target Name="CreateAssemblyInfoFromGit" Condition="$(ShouldGenerate) == 'true'">
 		<MakeDir Directories="obj\$(Configuration)" ContinueOnError="true" />
 		<Exec Command="git describe --tags --match $(GitTagMatch) > $(GitDescribe)" />
 		<ReadLinesFromFile File="$(GitDescribe)">
