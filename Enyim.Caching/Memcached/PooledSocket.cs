@@ -32,8 +32,12 @@ namespace Enyim.Caching.Memcached
 							? Timeout.Infinite
 							: (int)connectionTimeout.TotalMilliseconds;
 
-			socket.ReceiveTimeout = (int)receiveTimeout.TotalMilliseconds;
-			socket.SendTimeout = (int)receiveTimeout.TotalMilliseconds;
+			var rcv = receiveTimeout == TimeSpan.MaxValue
+				? Timeout.Infinite
+				: (int)receiveTimeout.TotalMilliseconds;
+
+			socket.ReceiveTimeout = rcv;
+			socket.SendTimeout = rcv;
 
 			socket.BeginConnect(endpoint, iar =>
 			{

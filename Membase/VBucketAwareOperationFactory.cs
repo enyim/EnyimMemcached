@@ -323,6 +323,11 @@ namespace Membase
 		}
 
 		#endregion
+
+		ISyncOperation IMembaseOperationFactory.Sync(SyncMode mode, KeyValuePair<string, ulong>[] keys, int replicationCount)
+		{
+			return new SyncOperation(this.locator, keys, mode, replicationCount);
+		}
 	}
 
 	internal interface IOperationWithState

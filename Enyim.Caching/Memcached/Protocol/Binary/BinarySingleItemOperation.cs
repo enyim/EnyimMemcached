@@ -25,6 +25,16 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 			return retval & this.ProcessResponse(response);
 		}
+
+		//protected internal override IAsyncResult BeginReadResponse(PooledSocket socket)
+		//{
+		//    throw new NotImplementedException();
+		//}
+
+		//protected internal override bool EndReadResponse(IAsyncResult result)
+		//{
+		//    throw new NotImplementedException();
+		//}
 	}
 }
 

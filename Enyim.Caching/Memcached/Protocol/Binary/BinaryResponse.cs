@@ -83,9 +83,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 				this.DataType = buffer[HEADER_DATATYPE];
 				this.Opcode = buffer[HEADER_OPCODE];
-				this.StatusCode = BinaryConverter.DecodeInt16(buffer, HEADER_STATUS);
+				this.StatusCode = BinaryConverter.DecodeUInt16(buffer, HEADER_STATUS);
 
-				this.KeyLength = BinaryConverter.DecodeInt16(buffer, HEADER_KEY);
+				this.KeyLength = BinaryConverter.DecodeUInt16(buffer, HEADER_KEY);
 				this.CorrelationId = BinaryConverter.DecodeInt32(buffer, HEADER_OPAQUE);
 				this.CAS = BinaryConverter.DecodeUInt64(buffer, HEADER_CAS);
 			}

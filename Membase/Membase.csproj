@@ -63,6 +63,7 @@
     <Compile Include="MessageStreamListener.cs" />
     <Compile Include="MembaseClient.cs" />
     <Compile Include="MembasePool.cs" />
+    <Compile Include="Operations\SyncOperation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Operations\TouchOperation.cs" />
     <Compile Include="VBucketAwareOperationFactory.cs" />

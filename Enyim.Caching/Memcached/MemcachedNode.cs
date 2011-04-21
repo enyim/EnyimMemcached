@@ -456,9 +456,14 @@ namespace Enyim.Caching.Memcached
 		}
 		#endregion
 
-		protected internal virtual PooledSocket CreateSocket()
+		protected internal PooledSocket CreateSocket()
 		{
-			PooledSocket retval = new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout);
+			return this.CreateSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout);
+		}
+
+		protected internal virtual PooledSocket CreateSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
+		{
+			PooledSocket retval = new PooledSocket(endPoint, connectionTimeout, receiveTimeout);
 
 			return retval;
 		}
@@ -467,20 +472,26 @@ namespace Enyim.Caching.Memcached
 		{
 			using (var ps = this.Acquire())
 			{
-				try
-				{
-					if (ps == null) return false;
+				return this.ExecuteOperation(ps, op);
+			}
+		}
 
-					ps.Write(op.GetBuffer());
+		protected virtual bool ExecuteOperation(PooledSocket socket, IOperation op)
+		{
+			try
+			{
+				if (socket == null) return false;
+				var b = op.GetBuffer();
 
-					return op.ReadResponse(ps);
-				}
-				catch (Exception e)
-				{
-					log.Error(e);
+				socket.Write(b);
 
-					return false;
-				}
+				return op.ReadResponse(socket);
+			}
+			catch (Exception e)
+			{
+				log.Error(e);
+
+				return false;
 			}
 		}
 
@@ -506,20 +517,20 @@ namespace Enyim.Caching.Memcached
 			return this.ExecuteOperation(op);
 		}
 
-		//IAsyncResult IMemcachedNode.BeginExecute(IOperation op, AsyncCallback callback, object state)
-		//{
-		//    throw new NotImplementedException();
-		//}
-
-		//bool IMemcachedNode.EndExecute(IAsyncResult result)
-		//{
-		//    throw new NotImplementedException();
-		//}
-
 		event Action<IMemcachedNode> IMemcachedNode.Failed
 		{
 			add { this.Failed += value; }
 			remove { this.Failed -= value; }
+		}
+
+		bool IMemcachedNode.Execute(PooledSocket socket, IOperation op)
+		{
+			return this.ExecuteOperation(socket, op);
+		}
+
+		PooledSocket IMemcachedNode.CreateSocket(TimeSpan connectionTimeout, TimeSpan receiveTimeout)
+		{
+			return this.CreateSocket(this.endPoint, connectionTimeout, receiveTimeout);
 		}
 
 		#endregion

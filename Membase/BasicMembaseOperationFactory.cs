@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Membase
 {
@@ -14,6 +15,11 @@ namespace Membase
 		IGetAndTouchOperation IMembaseOperationFactory.GetAndTouch(string key, uint newExpiration)
 		{
 			return new GetAndTouchOperation(null, key, newExpiration);
+		}
+
+		ISyncOperation IMembaseOperationFactory.Sync(SyncMode mode, KeyValuePair<string, ulong>[] keys, int replicationCount)
+		{
+			throw new NotSupportedException("Sync is not supported on memcached buckets.");
 		}
 	}
 }

@@ -4,6 +4,7 @@ using System.Configuration;
 using Enyim.Caching;
 using Enyim.Caching.Memcached;
 using Membase.Configuration;
+using System.Collections.Generic;
 
 namespace Membase
 {
@@ -322,6 +323,38 @@ namespace Membase
 			if (this.PerformanceMonitor != null) this.PerformanceMonitor.Get(1, false);
 
 			return false;
+		}
+
+		public SyncResult Sync(string key, ulong cas, SyncMode mode)
+		{
+			return this.Sync(key, cas, mode, 0);
+		}
+
+		public SyncResult Sync(string key, ulong cas, SyncMode mode, int replicationCount)
+		{
+			var hashedKey = this.KeyTransformer.Transform(key);
+			var node = this.Pool.Locate(hashedKey);
+
+			if (node != null)
+				using (var ps = node.CreateSocket(TimeSpan.MaxValue, TimeSpan.MaxValue))
+				{
+					var command = this.poolInstance.OperationFactory.Sync(mode, new[] { new KeyValuePair<string, ulong>(hashedKey, cas) }, replicationCount);
+
+					if (node.Execute(ps, command))
+					{
+						var tmp = command.Result;
+						if (tmp.Length == 1)
+						{
+							var retval = tmp[0];
+							retval.Key = key;
+
+							return retval;
+						}
+					}
+				}
+
+			// TODO maybe throw an exception?
+			return null;
 		}
 	}
 }

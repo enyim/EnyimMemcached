@@ -10,5 +10,6 @@ namespace Membase
 	{
 		ITouchOperation Touch(string key, uint newExpiration);
 		IGetAndTouchOperation GetAndTouch(string key, uint newExpiration);
+		ISyncOperation Sync(SyncMode mode, KeyValuePair<string, ulong>[] keys, int replicationCount);
 	}
 }

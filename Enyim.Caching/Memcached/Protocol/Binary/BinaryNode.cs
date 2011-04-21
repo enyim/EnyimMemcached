@@ -27,10 +27,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		/// <summary>
 		/// Creates a new socket then authenticates it before putting it into the pool.
 		/// </summary>
-		/// <returns></returns>
-		protected internal override PooledSocket CreateSocket()
+		protected internal override PooledSocket CreateSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
 		{
-			var retval = base.CreateSocket();
+			var retval = base.CreateSocket(endpoint, connectionTimeout, receiveTimeout);
 
 			if (this.authenticationProvider != null && !this.Auth(retval))
 			{

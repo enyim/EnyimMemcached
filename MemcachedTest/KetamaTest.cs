@@ -3321,20 +3321,15 @@ namespace MemcachedTest
 			return true;
 		}
 
-		//IAsyncResult IMemcachedNode.BeginExecute(IOperation op, AsyncCallback callback, object state)
-		//{
-		//    throw new NotImplementedException();
-		//}
+		bool IMemcachedNode.Execute(PooledSocket socket, IOperation op)
+		{
+			return true;
+		}
 
-		//bool IMemcachedNode.EndExecute(IAsyncResult result)
-		//{
-		//    throw new NotImplementedException();
-		//}
-
-		#endregion
-
-		#region IMemcachedNode Members
-
+		PooledSocket IMemcachedNode.CreateSocket(TimeSpan connectionTimeout, TimeSpan receiveTimeout)
+		{
+			throw new NotImplementedException();
+		}
 
 		event Action<IMemcachedNode> IMemcachedNode.Failed
 		{
