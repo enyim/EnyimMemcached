@@ -74,6 +74,7 @@ namespace Membase.Configuration
 		/// Determines which port the client should use to connect to the nodes
 		/// </summary>
 		[ConfigurationProperty("port", IsRequired = false, DefaultValue = BucketPortType.Direct)]
+		[Obsolete]
 		public BucketPortType Port
 		{
 			get { return (BucketPortType)base["port"]; }

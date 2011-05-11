@@ -97,6 +97,7 @@ namespace Membase.Configuration
 		/// <summary>
 		/// Determines which port the client should use to connect to the nodes
 		/// </summary>
+		[Obsolete]
 		public BucketPortType Port { get; set; }
 
 		public int RetryCount { get; set; }
@@ -144,6 +145,7 @@ namespace Membase.Configuration
 			get { return this.Bucket; }
 		}
 
+		[Obsolete]
 		BucketPortType IMembaseClientConfiguration.Port
 		{
 			get { return this.Port; }

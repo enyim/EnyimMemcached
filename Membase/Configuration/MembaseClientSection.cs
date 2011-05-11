@@ -140,6 +140,7 @@ namespace Membase.Configuration
 			get { return this.Servers.BucketPassword; }
 		}
 
+		[Obsolete]
 		BucketPortType IMembaseClientConfiguration.Port
 		{
 			get { return this.Servers.Port; }
