@@ -60,7 +60,7 @@ namespace Enyim.Caching.Memcached
 
 			// sizeof(uint)
 			const int KeyLength = 4;
-			var hashAlgo = this.CreateHash();
+			var hashAlgo = this.factory();
 
 			int PartCount = hashAlgo.HashSize / 8 / KeyLength; // HashSize is in bits, uint is 4 bytes long
 			if (PartCount < 1) throw new ArgumentOutOfRangeException("The hash algorithm must provide at least 32 bits long hashes");
@@ -111,7 +111,7 @@ namespace Enyim.Caching.Memcached
 
 		private uint GetKeyHash(string key)
 		{
-			var hashAlgo = this.CreateHash();
+			var hashAlgo = this.factory();
 			var uintHash = hashAlgo as IUIntHashAlgorithm;
 
 			var keyData = Encoding.UTF8.GetBytes(key);
@@ -240,26 +240,6 @@ namespace Enyim.Caching.Memcached
 		    { "murmur", () => new HashkitMurmur() },
 		    { "oneatatime", () => new HashkitOneAtATime() }
 		};
-
-
-		[ThreadStatic]
-		private static HashAlgorithm currentAlgo;
-
-		private HashAlgorithm CreateHash()
-		{
-			// we cache the HashAlgorithm instance per thread
-			// they are reinitialized before every ComputeHash but we avoid creating then GCing them every time we need 
-			// to find something (which will happen a lot)
-			var ctx = HttpContext.Current;
-			if (ctx == null)
-				return currentAlgo ?? (currentAlgo = this.factory());
-
-			var algo = ctx.Items["**VBucket.CurrentAlgo"] as HashAlgorithm;
-			if (algo == null)
-				ctx.Items["**VBucket.CurrentAlgo"] = algo = this.factory();
-
-			return algo;
-		}
 
 		#endregion
 	}
