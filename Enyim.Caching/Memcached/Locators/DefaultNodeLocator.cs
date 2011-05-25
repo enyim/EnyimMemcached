@@ -16,67 +16,17 @@ namespace Enyim.Caching.Memcached
 		// holds all server keys for mapping an item key to the server consistently
 		private uint[] keys;
 		// used to lookup a server based on its key
-		private Dictionary<uint, IMemcachedNode> servers = new Dictionary<uint, IMemcachedNode>(new UIntEqualityComparer());
+		private Dictionary<uint, IMemcachedNode> servers;
+		private Dictionary<IMemcachedNode, bool> deadServers;
+		private List<IMemcachedNode> allServers;
+		private ReaderWriterLockSlim serverAccessLock;
 
-		private Timer isAliveTimer;
-		private Dictionary<IMemcachedNode, bool> deadServers = new Dictionary<IMemcachedNode, bool>();
-		private List<IMemcachedNode> allServers = new List<IMemcachedNode>();
-
-		private ReaderWriterLockSlim serverAccessLock = new ReaderWriterLockSlim();
-
-		public TimeSpan DeadTimeout { get; set; }
-
-		/// <summary>
-		/// Checks if a dead node is working again.
-		/// </summary>
-		/// <param name="state"></param>
-		private void callback_isAliveTimer(object state)
+		public DefaultNodeLocator()
 		{
-			try { HandleIsAlive(); }
-			catch (ObjectDisposedException)
-			{
-				// ignore the exception
-				// TryEnter can throw this when the timer is triggered just when this instance is being Disposed
-			}
-		}
-
-		private void HandleIsAlive()
-		{
-			this.serverAccessLock.EnterUpgradeableReadLock();
-
-			try
-			{
-				if (this.deadServers.Count == 0)
-					return;
-
-				List<IMemcachedNode> resurrectList = (from node in this.deadServers.Keys
-													  where node.Ping()
-													  select node).ToList();
-
-				if (resurrectList.Count > 0)
-				{
-					this.serverAccessLock.EnterWriteLock();
-
-					try
-					{
-						var stillDead = this.deadServers.Keys.Where(node => !node.Ping());
-						var workingServers = allServers.Except(stillDead).ToList();
-
-						this.BuildIndex(workingServers);
-					}
-					finally
-					{
-						this.serverAccessLock.ExitWriteLock();
-					}
-				}
-
-				// ask the timer to fire again after DeadTimeout time
-				this.isAliveTimer.Change((long)this.DeadTimeout.TotalMilliseconds, Timeout.Infinite);
-			}
-			finally
-			{
-				this.serverAccessLock.ExitUpgradeableReadLock();
-			}
+			this.servers = new Dictionary<uint, IMemcachedNode>(new UIntEqualityComparer());
+			this.deadServers = new Dictionary<IMemcachedNode, bool>();
+			this.allServers = new List<IMemcachedNode>();
+			this.serverAccessLock = new ReaderWriterLockSlim();
 		}
 
 		private void BuildIndex(List<IMemcachedNode> nodes)
@@ -110,9 +60,6 @@ namespace Enyim.Caching.Memcached
 			{
 				this.allServers = nodes.ToList();
 				this.BuildIndex(this.allServers);
-
-				if (this.isAliveTimer == null)
-					this.isAliveTimer = new Timer(this.callback_isAliveTimer, null, (long)this.DeadTimeout.TotalMilliseconds, Timeout.Infinite);
 			}
 			finally
 			{
@@ -241,11 +188,8 @@ namespace Enyim.Caching.Memcached
 
 				try
 				{
-					this.isAliveTimer.Change(Timeout.Infinite, Timeout.Infinite);
-					this.isAliveTimer.Dispose();
-					this.isAliveTimer = null;
-
-					// all pending operations will fail (not nice but does the job)
+					// kill all pending operations (with an exception)
+					// it's not nice, but disposeing an instance while being used is bad practice
 					this.allServers = null;
 					this.servers = null;
 					this.keys = null;
@@ -256,6 +200,8 @@ namespace Enyim.Caching.Memcached
 					this.serverAccessLock.ExitWriteLock();
 				}
 			}
+
+			this.serverAccessLock = null;
 		}
 
 		#endregion
