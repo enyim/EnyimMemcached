@@ -290,6 +290,8 @@ namespace Membase
 			// 8. GOTO 2
 			lock (this.DeadSync)
 			{
+				if (this.state == null) return;
+
 				var currentState = this.state;
 				var nodes = currentState.CurrentNodes;
 				var aliveList = new List<IMemcachedNode>(nodes.Length);

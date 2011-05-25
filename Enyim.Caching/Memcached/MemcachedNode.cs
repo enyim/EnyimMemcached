@@ -7,6 +7,8 @@ using Enyim.Caching.Configuration;
 using Enyim.Collections;
 using System.Security;
 using Enyim.Caching.Memcached.Protocol.Binary;
+using System.Runtime.Serialization;
+using System.IO;
 
 namespace Enyim.Caching.Memcached
 {
@@ -153,9 +155,6 @@ namespace Enyim.Caching.Memcached
 
 				this.isDisposed = true;
 				this.internalPoolImpl.Dispose();
-				// let's try without nulling the field, so Acquire will not fail
-				// poolimpl will handle the disposed state internally
-				//this.internalPoolImpl = null;
 			}
 		}
 
@@ -402,33 +401,27 @@ namespace Enyim.Caching.Memcached
 			/// </summary>
 			public void Dispose()
 			{
+				// this is not a graceful shutdown
+				// if someone uses a pooled item then 99% that an exception will be thrown
+				// somewhere. But since the dispose is mostly used when everyone else is finished
+				// this should not kill any kittens
 				if (!this.isDisposed)
 				{
-					// this is not a graceful shutdown
-					// if someone uses a pooled item then 99% that an exception will be thrown
-					// somewhere. But since the dispose is mostly used when everyone else is finished
-					// this should not kill any kittens
-					lock (this)
+					this.isAlive = false;
+					this.isDisposed = true;
+
+					PooledSocket ps;
+
+					while (this.freeItems.Dequeue(out ps))
 					{
-						if (!this.isDisposed)
-						{
-							this.isAlive = false;
-							this.isDisposed = true;
-
-							PooledSocket ps;
-
-							while (this.freeItems.Dequeue(out ps))
-							{
-								try { ps.Destroy(); }
-								catch { }
-							}
-
-							this.ownerNode = null;
-							this.semaphore.Close();
-							this.semaphore = null;
-							this.freeItems = null;
-						}
+						try { ps.Destroy(); }
+						catch { }
 					}
+
+					this.ownerNode = null;
+					this.semaphore.Close();
+					this.semaphore = null;
+					this.freeItems = null;
 				}
 			}
 

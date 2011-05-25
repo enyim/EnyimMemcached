@@ -22,6 +22,7 @@ namespace Enyim.Caching.Memcached
 		private System.Threading.Timer resurrectTimer;
 		private bool isTimerActive;
 		private long deadTimeoutMsec;
+		private bool isDisposed;
 
 		public DefaultServerPool(IMemcachedClientConfiguration configuration, IOperationFactory opFactory)
 		{
@@ -67,6 +68,13 @@ namespace Enyim.Caching.Memcached
 			// 8. GOTO 2
 			lock (this.DeadSync)
 			{
+				if (this.isDisposed)
+				{
+					if (log.IsWarnEnabled) log.Warn("IsAlive timer was triggered but the pool is already disposed. Ignoring.");
+
+					return;
+				}
+
 				var nodes = this.allNodes;
 				var aliveList = new List<IMemcachedNode>(nodes.Length);
 				var changed = false;
@@ -132,8 +140,15 @@ namespace Enyim.Caching.Memcached
 
 			// the timer is stopped until we encounter the first dead server
 			// when we have one, we trigger it and it will run after DeadTimeout has elapsed
-			lock (DeadSync)
+			lock (this.DeadSync)
 			{
+				if (this.isDisposed)
+				{
+					if (log.IsWarnEnabled) log.Warn("Got a node fail but the pool is already disposed. Ignoring.");
+
+					return;
+				}
+
 				// re-initialize the locator
 				// TEST
 				var newLocator = this.configuration.CreateNodeLocator();
@@ -205,30 +220,32 @@ namespace Enyim.Caching.Memcached
 			GC.SuppressFinalize(this);
 
 			lock (this.DeadSync)
-				if (this.allNodes != null)
-				{
-					// dispose the locator first, maybe it wants to access 
-					// the nodes one last time
-					var nd = this.nodeLocator as IDisposable;
-					if (nd != null)
-						try { nd.Dispose(); }
-						catch { }
+			{
+				if (this.isDisposed) return;
 
-					this.nodeLocator = null;
+				this.isDisposed = true;
 
-					for (var i = 0; i < this.allNodes.Length; i++)
-						try { this.allNodes[i].Dispose(); }
-						catch { }
+				// dispose the locator first, maybe it wants to access 
+				// the nodes one last time
+				var nd = this.nodeLocator as IDisposable;
+				if (nd != null)
+					try { nd.Dispose(); }
+					catch (Exception e) { if (log.IsErrorEnabled) log.Error(e); }
 
-					this.allNodes = null;
+				this.nodeLocator = null;
 
-					// stop the timer
-					if (this.resurrectTimer != null)
-						using (this.resurrectTimer)
-							this.resurrectTimer.Change(Timeout.Infinite, Timeout.Infinite);
+				for (var i = 0; i < this.allNodes.Length; i++)
+					try { this.allNodes[i].Dispose(); }
+					catch (Exception e) { if (log.IsErrorEnabled) log.Error(e); }
 
-					this.resurrectTimer = null;
-				}
+				// stop the timer
+				if (this.resurrectTimer != null)
+					using (this.resurrectTimer)
+						this.resurrectTimer.Change(Timeout.Infinite, Timeout.Infinite);
+
+				this.allNodes = null;
+				this.resurrectTimer = null;
+			}
 		}
 
 		#endregion
