@@ -44,6 +44,7 @@
     <Compile Include="Configuration\FactoryElement.cs" />
     <Compile Include="FastActivator.cs">
     </Compile>
+    <Compile Include="Logging\DiagnosticsLog.cs" />
     <Compile Include="Logging\LogManager.cs" />
     <Compile Include="Configuration\AuthenticationConfiguration.cs">
     </Compile>
