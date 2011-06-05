@@ -16,13 +16,13 @@ namespace Membase
 	internal class SyncOperation : BinaryOperation, ISyncOperation
 	{
 		private VBucketNodeLocator locator;
-		private KeyValuePair<string, ulong>[] keys;
+		private IList<KeyValuePair<string, ulong>> keys;
 		private uint flags;
 
-		public SyncOperation(VBucketNodeLocator locator, KeyValuePair<string, ulong>[] keys, SyncMode mode, int replicationCount)
+		public SyncOperation(VBucketNodeLocator locator, IList<KeyValuePair<string, ulong>> keys, SyncMode mode, int replicationCount)
 		{
 			if (keys == null) throw new ArgumentNullException("keys");
-			if (keys.Length > 0xffff) throw new ArgumentException("Only 0xffff items are supported");
+			if (keys.Count > 0xffff) throw new ArgumentException("Maximum 0xFFFF items are supported.");
 
 			this.flags = GetFlags(mode, replicationCount);
 
@@ -90,7 +90,7 @@ namespace Membase
 			// 0-3 flags
 			// 4-5 item count
 			BinaryConverter.EncodeUInt32(this.flags, header, 0);
-			BinaryConverter.EncodeUInt16((ushort)this.keys.Length, header, 4);
+			BinaryConverter.EncodeUInt16((ushort)this.keys.Count, header, 4);
 
 			var ms = new MemoryStream();
 			ms.Write(header, 0, header.Length);
@@ -104,7 +104,7 @@ namespace Membase
 				// 10-11: key length \ repeat
 				// 12- N: key        /
 
-				for (var i = 0; i < this.keys.Length; i++)
+				for (var i = 0; i < this.keys.Count; i++)
 				{
 					var keySpec = this.keys[i];
 					var itemKey = Encoding.UTF8.GetBytes(keySpec.Key);
@@ -137,9 +137,28 @@ namespace Membase
 			return false;
 		}
 
+		protected override bool ReadResponseAsync(PooledSocket socket, Action<bool> next)
+		{
+			var response = new BinaryResponse();
+
+			bool ioPending;
+			var retval = response.ReadAsync(socket, (readSuccess) =>
+							{
+								if (readSuccess) this.DecodeResult(response.Data);
+								next(readSuccess);
+							}, out ioPending);
+
+			if (!ioPending && retval)
+				this.Result = this.DecodeResult(response.Data);
+
+			return retval;
+		}
+
 		private unsafe SyncResult[] DecodeResult(ArraySegment<byte> result)
 		{
 			var data = result.Array;
+			if (data == null)
+				throw new InvalidOperationException("No data received");
 
 			fixed (byte* p = data)
 			{
@@ -183,7 +202,16 @@ namespace Membase
 		public SyncEvent Event { get; internal set; }
 	}
 
-	public enum SyncEvent { Unknown = 0, Persisted, Modified, Replicated, Deleted, InvalidKey, InvalidCas }
+	public enum SyncEvent
+	{
+		Unknown = 0,
+		Persisted = 1,
+		Modified = 2,
+		Replicated = 3,
+		Deleted = 4,
+		InvalidKey = 5,
+		InvalidCas = 6
+	}
 
 	public interface ISyncOperation : IOperation
 	{

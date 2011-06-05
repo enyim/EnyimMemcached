@@ -5,6 +5,8 @@ using Enyim.Caching;
 using Enyim.Caching.Memcached;
 using Membase.Configuration;
 using System.Collections.Generic;
+using System.Threading;
+using KVP_SU = System.Collections.Generic.KeyValuePair<string, ulong>;
 
 namespace Membase
 {
@@ -335,27 +337,100 @@ namespace Membase
 			var hashedKey = this.KeyTransformer.Transform(key);
 			var node = this.Pool.Locate(hashedKey);
 
-			if (node != null)
-				using (var ps = node.CreateSocket(TimeSpan.MaxValue, TimeSpan.MaxValue))
+			var tmp = this.PerformMultiSync(mode, replicationCount, new[] { new KeyValuePair<string, ulong>(key, cas) });
+			SyncResult retval;
+
+			return tmp.TryGetValue(key, out retval)
+				? retval
+				: null;
+		}
+
+		public IDictionary<string, SyncResult> Sync(SyncMode mode, IEnumerable<KeyValuePair<string, ulong>> items)
+		{
+			return this.PerformMultiSync(mode, 0, items);
+		}
+
+		protected IDictionary<string, SyncResult> PerformMultiSync(SyncMode mode, int replicationCount, IEnumerable<KeyValuePair<string, ulong>> items)
+		{
+			// transform the keys and index them by hashed => original
+			// the results will be mapped using this index
+			var hashed = new Dictionary<string, string>();
+			var hashedAndMapped = new Dictionary<IMemcachedNode, IList<KVP_SU>>();
+
+			foreach (var k in items)
+			{
+				var hashedKey = this.KeyTransformer.Transform(k.Key);
+				var node = this.Pool.Locate(hashedKey);
+
+				if (node == null) continue;
+
+				hashed[hashedKey] = k.Key;
+
+				IList<KVP_SU> list;
+				if (!hashedAndMapped.TryGetValue(node, out list))
+					hashedAndMapped[node] = list = new List<KVP_SU>(4);
+
+				list.Add(k);
+			}
+
+			var retval = new Dictionary<string, SyncResult>(hashed.Count);
+			if (hashedAndMapped.Count == 0) return retval;
+
+			using (var spin = new ReaderWriterLockSlim())
+			using (var latch = new CountdownEvent(hashedAndMapped.Count))
+			{
+				//execute each list of keys on their respective node
+				foreach (var slice in hashedAndMapped)
 				{
-					var command = this.poolInstance.OperationFactory.Sync(mode, new[] { new KeyValuePair<string, ulong>(hashedKey, cas) }, replicationCount);
+					var node = slice.Key;
+					var nodeKeys = slice.Value;
 
-					if (node.Execute(ps, command))
+					var sync = this.poolInstance.OperationFactory.Sync(mode, slice.Value, replicationCount);
+
+					#region result gathering
+					// ExecuteAsync will not call the delegate if the
+					// node was already in a failed state but will return false immediately
+					var execSuccess = node.ExecuteAsync(sync, success =>
 					{
-						var tmp = command.Result;
-						if (tmp.Length == 1)
-						{
-							var retval = tmp[0];
-							retval.Key = key;
+						if (success)
+							try
+							{
+								var result = sync.Result;
 
-							return retval;
-						}
-					}
+								if (result != null && result.Length > 0)
+								{
+									string original;
+
+									foreach (var kvp in result)
+										if (hashed.TryGetValue(kvp.Key, out original))
+										{
+											spin.EnterWriteLock();
+											try
+											{ retval[original] = kvp; }
+											finally
+											{ spin.ExitWriteLock(); }
+										}
+								}
+							}
+							catch (Exception e)
+							{
+								log.Error(e);
+							}
+
+						latch.Signal();
+					});
+					#endregion
+
+					// signal the latch when the node fails immediately (e.g. it was already dead)
+					if (!execSuccess) latch.Signal();
 				}
 
-			// TODO maybe throw an exception?
-			return null;
+				latch.Wait();
+			}
+
+			return retval;
 		}
+
 	}
 }
 

@@ -324,7 +324,7 @@ namespace Membase
 
 		#endregion
 
-		ISyncOperation IMembaseOperationFactory.Sync(SyncMode mode, KeyValuePair<string, ulong>[] keys, int replicationCount)
+		ISyncOperation IMembaseOperationFactory.Sync(SyncMode mode, IList<KeyValuePair<string, ulong>> keys, int replicationCount)
 		{
 			return new SyncOperation(this.locator, keys, mode, replicationCount);
 		}

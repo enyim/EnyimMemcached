@@ -17,7 +17,7 @@ namespace Membase
 			return new GetAndTouchOperation(null, key, newExpiration);
 		}
 
-		ISyncOperation IMembaseOperationFactory.Sync(SyncMode mode, KeyValuePair<string, ulong>[] keys, int replicationCount)
+		ISyncOperation IMembaseOperationFactory.Sync(SyncMode mode, IList<KeyValuePair<string, ulong>> keys, int replicationCount)
 		{
 			throw new NotSupportedException("Sync is not supported on memcached buckets.");
 		}
