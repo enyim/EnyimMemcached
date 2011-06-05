@@ -6,8 +6,8 @@
  * Fixed the ObjectDisposedException coming from the DefaultNodeLocator.
  * Multi-get now uses [IOCP](http://msdn.microsoft.com/en-us/library/aa365198\(v=vs.85\).aspx) instead of threads from the ThreadPool. Performance should be the comparable or better (depending on the amount of items and size).
  * New DataContractSerializer to enable caching of EntityFramework or LINQ to SQl entitites. See also [Issue #54](https://github.com/enyim/EnyimMemcached/issues/54).
- * Items should always be hashed to the same node when using the KetamaNodeLocator. ([931f31ea07953f499eac](https://github.com/enyim/EnyimMemcached/commit/931f31ea07953f499eacd2a6a55566dcb3e80384))
- * CasResult now contains the status code of Set/Add/Replace operations. ([bb0ca459e3e597897826](https://github.com/enyim/EnyimMemcached/commit/bb0ca459e3e597897826905b63f6edfab21371e6))
+ * Items should always be hashed to the same node when using the KetamaNodeLocator. ([5fb9bfefb5bf1d9b5849](https://github.com/enyim/EnyimMemcached/commit/5fb9bfefb5bf1d9b584933d9517afaa6dc8de273))
+ * CasResult now contains the status code of Set/Add/Replace operations. ([b8cb1639d600dbca6950](https://github.com/enyim/EnyimMemcached/commit/b8cb1639d600dbca695051ce7cf59132614f0cd7))
  * Expirations specified in TimeSpans are not ilmited to 30 days.
 
 ## Version 2.8
