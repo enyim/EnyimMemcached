@@ -183,27 +183,27 @@ namespace Enyim.Caching.Memcached
 
 			private MemcachedNode ownerNode;
 			private IPEndPoint endPoint;
-			private ISocketPoolConfiguration config;
+			private TimeSpan queueTimeout;
 			private Semaphore semaphore;
 
 			private object initLock = new Object();
 
 			internal InternalPoolImpl(MemcachedNode ownerNode, ISocketPoolConfiguration config)
 			{
+				if (config.MinPoolSize < 0)
+					throw new InvalidOperationException("minItems must be larger >= 0", null);
+				if (config.MaxPoolSize < config.MinPoolSize)
+					throw new InvalidOperationException("maxItems must be larger than minItems", null);
+				if (config.QueueTimeout < TimeSpan.Zero)
+					throw new InvalidOperationException("queueTimeout must be >= TimeSpan.Zero", null);
+
 				this.ownerNode = ownerNode;
 				this.isAlive = true;
 				this.endPoint = ownerNode.EndPoint;
-				this.config = config;
+				this.queueTimeout = config.QueueTimeout;
 
 				this.minItems = config.MinPoolSize;
 				this.maxItems = config.MaxPoolSize;
-
-				if (this.minItems < 0)
-					throw new InvalidOperationException("minItems must be larger than 0", null);
-				if (this.maxItems < this.minItems)
-					throw new InvalidOperationException("maxItems must be larger than minItems", null);
-				if (this.config.ConnectionTimeout < TimeSpan.Zero)
-					throw new InvalidOperationException("connectionTimeout must be >= TimeSpan.Zero", null);
 
 				this.semaphore = new Semaphore(maxItems, maxItems);
 				this.freeItems = new InterlockedStack<PooledSocket>();
@@ -274,7 +274,7 @@ namespace Enyim.Caching.Memcached
 
 				PooledSocket retval = null;
 
-				if (!this.semaphore.WaitOne(this.config.QueueTimeout))
+				if (!this.semaphore.WaitOne(this.queueTimeout))
 				{
 					if (hasDebug) log.Debug("Pool is full, timeouting. " + this.endPoint);
 
