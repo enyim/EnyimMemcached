@@ -12,8 +12,9 @@ namespace Enyim.Caching.Memcached
 		bool Ping();
 
 		bool Execute(IOperation op);
-		bool Execute(PooledSocket socket, IOperation op);
-		PooledSocket CreateSocket(TimeSpan connectionTimeout, TimeSpan receiveTimeout);
+		bool ExecuteAsync(IOperation op, Action<bool> next);
+
+	//	PooledSocket CreateSocket(TimeSpan connectionTimeout, TimeSpan receiveTimeout);
 
 		event Action<IMemcachedNode> Failed;
 

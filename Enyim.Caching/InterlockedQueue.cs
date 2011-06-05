@@ -79,6 +79,49 @@ namespace Enyim.Collections
 			}
 		}
 
+		public bool Peek(out T value)
+		{
+			Node head;
+			Node tail;
+			Node next;
+
+			while (true)
+			{
+				// read head
+				head = this.headNode;
+				tail = this.tailNode;
+				next = head.Next;
+
+				// Are head, tail, and next consistent?
+				if (Object.ReferenceEquals(this.headNode, head))
+				{
+					// is tail falling behind
+					if (Object.ReferenceEquals(head, tail))
+					{
+						// is the queue empty?
+						if (Object.ReferenceEquals(next, null))
+						{
+							value = default(T);
+
+							// queue is empty
+							return false;
+						}
+
+						Interlocked.CompareExchange<Node>(
+							ref this.tailNode,
+							next,
+							tail);
+					}
+					else // No need to deal with tail
+					{
+						// read value before CAS otherwise another deque might try to free the next node
+						value = next.Value;
+						return true;
+					}
+				}
+			}
+		}
+
 		/// <summary>
 		/// Adds an object to the end of the <see cref="T:InterlockedQueue"/>.
 		/// </summary>
@@ -121,7 +164,7 @@ namespace Enyim.Collections
 		#region [ Node                        ]
 		private class Node
 		{
-			public T Value;
+			public readonly T Value;
 			public Node Next;
 
 			public Node(T value)

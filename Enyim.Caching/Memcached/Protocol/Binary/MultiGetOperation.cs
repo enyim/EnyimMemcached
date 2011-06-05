@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -62,6 +64,84 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			noop.CreateBuffer(buffers);
 
 			return buffers;
+		}
+
+
+		private PooledSocket currentSocket;
+		private BinaryResponse asyncReader;
+		private bool? asyncLoopState;
+		private Action<bool> afterAsyncRead;
+
+		protected internal override bool ReadResponseAsync(PooledSocket socket, Action<bool> next)
+		{
+			this.result = new Dictionary<string, CacheItem>();
+			this.Cas = new Dictionary<string, ulong>();
+
+			this.currentSocket = socket;
+			this.asyncReader = new BinaryResponse();
+			this.asyncLoopState = null;
+			this.afterAsyncRead = next;
+
+			return this.DoReadAsync();
+		}
+
+		private bool DoReadAsync()
+		{
+			bool ioPending;
+
+			var reader = this.asyncReader;
+
+			while (this.asyncLoopState == null)
+			{
+				var readSuccess = reader.ReadAsync(this.currentSocket, this.EndReadAsync, out ioPending);
+
+				if (ioPending) return readSuccess;
+
+				if (!readSuccess)
+					this.asyncLoopState = false;
+				else if (reader.CorrelationId == this.noopId)
+					this.asyncLoopState = true;
+				else
+					this.StoreResult(reader);
+			}
+
+			this.afterAsyncRead((bool)this.asyncLoopState);
+
+			return true;
+		}
+
+		private void EndReadAsync(bool readSuccess)
+		{
+			if (!readSuccess)
+				this.asyncLoopState = false;
+			else if (this.asyncReader.CorrelationId == this.noopId)
+				this.asyncLoopState = true;
+			else
+				StoreResult(this.asyncReader);
+
+			this.DoReadAsync();
+		}
+
+		private void StoreResult(BinaryResponse reader)
+		{
+			string key;
+
+			// find the key to the response
+			if (!this.idToKey.TryGetValue(reader.CorrelationId, out key))
+			{
+				// we're not supposed to get here tho
+				log.WarnFormat("Found response with CorrelationId {0}, but no key is matching it.", reader.CorrelationId);
+			}
+			else
+			{
+				if (log.IsDebugEnabled) log.DebugFormat("Reading item {0}", key);
+
+				// deserialize the response
+				var flags = (ushort)BinaryConverter.DecodeInt32(reader.Extra, 0);
+
+				this.result[key] = new CacheItem(flags, reader.Data);
+				this.Cas[key] = reader.CAS;
+			}
 		}
 
 		protected internal override bool ReadResponse(PooledSocket socket)

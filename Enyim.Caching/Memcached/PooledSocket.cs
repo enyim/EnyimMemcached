@@ -1,4 +1,6 @@
+//#define DEBUG_IO
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -14,20 +16,21 @@ namespace Enyim.Caching.Memcached
 	{
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(PooledSocket));
 
-		private bool isAlive = true;
+		private bool isAlive;
 		private Socket socket;
 		private IPEndPoint endpoint;
 
 		private BufferedStream inputStream;
+		private AsyncSocketHelper helper;
 
 		public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
 		{
-			var socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+			this.isAlive = true;
 
-			// all operations are "atomic", we do not send small chunks of data
+			var socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+			// TODO test if we're better off using nagle
 			socket.NoDelay = true;
 
-			var mre = new ManualResetEvent(false);
 			var timeout = connectionTimeout == TimeSpan.MaxValue
 							? Timeout.Infinite
 							: (int)connectionTimeout.TotalMilliseconds;
@@ -39,6 +42,18 @@ namespace Enyim.Caching.Memcached
 			socket.ReceiveTimeout = rcv;
 			socket.SendTimeout = rcv;
 
+			ConnectWithTimeout(socket, endpoint, timeout);
+
+			this.socket = socket;
+			this.endpoint = endpoint;
+
+			this.inputStream = new BufferedStream(new BasicNetworkStream(socket));
+		}
+
+		private static void ConnectWithTimeout(Socket socket, IPEndPoint endpoint, int timeout)
+		{
+			var mre = new ManualResetEvent(false);
+
 			socket.BeginConnect(endpoint, iar =>
 			{
 				try { using (iar.AsyncWaitHandle) socket.EndConnect(iar); }
@@ -48,15 +63,8 @@ namespace Enyim.Caching.Memcached
 			}, null);
 
 			if (!mre.WaitOne(timeout) || !socket.Connected)
-			{
 				using (socket)
 					throw new TimeoutException("Could not connect to " + endpoint);
-			}
-
-			this.socket = socket;
-			this.endpoint = endpoint;
-
-			this.inputStream = new BufferedStream(new BasicNetworkStream(socket));
 		}
 
 		public Action<PooledSocket> CleanupCallback { get; set; }
@@ -68,10 +76,10 @@ namespace Enyim.Caching.Memcached
 
 		public void Reset()
 		{
-			//this.LockToThread();
-
 			// discard any buffered data
 			this.inputStream.Flush();
+
+			if (this.helper != null) this.helper.DiscardBuffer();
 
 			int available = this.socket.Available;
 
@@ -146,9 +154,7 @@ namespace Enyim.Caching.Memcached
 				Action<PooledSocket> cc = this.CleanupCallback;
 
 				if (cc != null)
-				{
 					cc(this);
-				}
 			}
 		}
 
@@ -239,7 +245,16 @@ namespace Enyim.Caching.Memcached
 
 			SocketError status;
 
+#if DEBUG
+			int total = 0;
+			for (int i = 0, C = buffers.Count; i < C; i++)
+				total += buffers[i].Count;
+
+			if (this.socket.Send(buffers, SocketFlags.None, out status) != total)
+				System.Diagnostics.Debugger.Break();
+#else
 			this.socket.Send(buffers, SocketFlags.None, out status);
+#endif
 
 			if (status != SocketError.Success)
 			{
@@ -249,62 +264,30 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public IAsyncResult BeginWrite(IList<ArraySegment<byte>> buffers, AsyncCallback callback, object state)
+		/// <summary>
+		/// Receives data asynchronously. Returns true if the IO is pending. Returns false if the socket already failed or the data was available in the buffer.
+		/// p.Next will only be called if the call completes asynchronously.
+		/// </summary>
+		public bool ReceiveAsync(AsyncIOArgs p)
 		{
 			this.CheckDisposed();
 
-			return this.socket.BeginSend(buffers, SocketFlags.None, callback, state);
-		}
-
-		public void EndWrite(IAsyncResult result)
-		{
-			SocketError status;
-
-			this.socket.EndSend(result, out status);
-
-			if (status != SocketError.Success)
+			if (!this.IsAlive)
 			{
-				this.isAlive = false;
+				p.Fail = true;
+				p.Result = null;
 
-				ThrowHelper.ThrowSocketWriteError(this.endpoint, status);
+				return false;
 			}
+
+			if (this.helper == null)
+				this.helper = new AsyncSocketHelper(this);
+
+			return this.helper.Read(p);
 		}
-
-		//public IAsyncResult BeginRead(byte[] buffer, int offset, int size, AsyncCallback callback, object state)
-		//{
-		//    this.inputStream.BEG
-		//    return null;
-
-		//    //return this.socket.BeginReceive(buffer, offset, size, callback, state);
-
-		//    //            this.CheckDisposed();
-
-		//    //int read = 0;
-		//    //int shouldRead = count;
-
-		//    //while (read < count)
-		//    //{
-		//    //    try
-		//    //    {
-		//    //        int currentRead = this.inputStream.Read(buffer, offset, shouldRead);
-		//    //        if (currentRead < 1)
-		//    //            continue;
-
-		//    //        read += currentRead;
-		//    //        offset += currentRead;
-		//    //        shouldRead -= currentRead;
-		//    //    }
-		//    //    catch (IOException)
-		//    //    {
-		//    //        this.isAlive = false;
-		//    //        throw;
-		//    //    }
-		//    //}
-
-		//}
-
 
 		#region [ BasicNetworkStream           ]
+
 		private class BasicNetworkStream : Stream
 		{
 			private Socket socket;
@@ -397,6 +380,173 @@ namespace Enyim.Caching.Memcached
 				throw new NotSupportedException();
 			}
 		}
+
+		#endregion
+		#region [ AsyncSocketHelper            ]
+
+		/// <summary>
+		/// Supports exactly one reader and writer, but they can do IO concurrently
+		/// </summary>
+		private class AsyncSocketHelper
+		{
+			private const int ChunkSize = 65536;
+
+			private PooledSocket socket;
+			private SlidingBuffer asyncBuffer;
+
+			private SocketAsyncEventArgs readEvent;
+#if DEBUG_IO
+			private int doingIO;
+#endif
+			private int remainingRead;
+			private int expectedToRead;
+
+			public AsyncSocketHelper(PooledSocket socket)
+			{
+				this.socket = socket;
+				this.asyncBuffer = new SlidingBuffer(ChunkSize);
+
+				this.readEvent = new SocketAsyncEventArgs();
+				this.readEvent.Completed += new EventHandler<SocketAsyncEventArgs>(AsyncReadCompleted);
+				this.readEvent.SetBuffer(new byte[ChunkSize], 0, ChunkSize);
+			}
+
+			private AsyncIOArgs pendingArgs;
+#if DEBUG_IO
+			private ManualResetEvent mre;
+#endif
+
+			/// <summary>
+			/// returns true if io is pending
+			/// </summary>
+			/// <param name="p"></param>
+			/// <returns></returns>
+			public bool Read(AsyncIOArgs p)
+			{
+				var count = p.Count;
+				if (count < 1) throw new ArgumentOutOfRangeException("count", "count must be > 0");
+#if DEBUG_IO
+				if (Interlocked.CompareExchange(ref this.doingIO, 1, 0) != 0)
+					throw new InvalidOperationException("Receive is already in progress");
+#endif
+				this.expectedToRead = p.Count;
+				this.pendingArgs = p;
+
+				p.Fail = false;
+				p.Result = null;
+
+				if (this.asyncBuffer.Available >= count)
+				{
+					PublishResult(false);
+
+					return false;
+				}
+				else
+				{
+					this.remainingRead = count - this.asyncBuffer.Available;
+#if DEBUG_IO
+					this.mre = new ManualResetEvent(false);
+#endif
+					this.BeginReceive();
+
+					return true;
+				}
+			}
+
+			public void DiscardBuffer()
+			{
+				this.asyncBuffer.UnsafeClear();
+			}
+
+			private void BeginReceive()
+			{
+#if DEBUG_IO
+				mre.Reset();
+#endif
+				while (this.remainingRead > 0)
+				{
+					if (this.socket.socket.ReceiveAsync(this.readEvent))
+					{
+#if DEBUG_IO
+						if (!mre.WaitOne(4000))
+							System.Diagnostics.Debugger.Break();
+#endif
+
+						return;
+					}
+
+					this.EndReceive();
+				}
+			}
+
+			void AsyncReadCompleted(object sender, SocketAsyncEventArgs e)
+			{
+				if (this.EndReceive())
+					this.BeginReceive();
+			}
+
+			private void AbortReadAndPublishError()
+			{
+				this.remainingRead = 0;
+				this.socket.isAlive = false;
+
+				var p = this.pendingArgs;
+#if DEBUG_IO
+				Thread.MemoryBarrier();
+
+				this.doingIO = 0;
+#endif
+
+				p.Fail = true;
+				p.Result = null;
+
+				this.pendingArgs.Next(p);
+			}
+
+			/// <summary>
+			/// returns true when io is pending
+			/// </summary>
+			/// <returns></returns>
+			private bool EndReceive()
+			{
+#if DEBUG_IO
+				mre.Set();
+#endif
+				var read = this.readEvent.BytesTransferred;
+				if (this.readEvent.SocketError != SocketError.Success
+					|| read == 0)
+					this.AbortReadAndPublishError();//new IOException("Remote end has been closed"));
+
+				this.remainingRead -= read;
+				this.asyncBuffer.Append(this.readEvent.Buffer, 0, read);
+
+				if (this.remainingRead <= 0)
+				{
+					this.PublishResult(true);
+
+					return false;
+				}
+
+				return true;
+			}
+
+			private void PublishResult(bool async)
+			{
+				var retval = this.pendingArgs;
+
+				var data = new byte[this.expectedToRead];
+				this.asyncBuffer.Read(data, 0, retval.Count);
+				pendingArgs.Result = data;
+#if DEBUG_IO
+				Thread.MemoryBarrier();
+				this.doingIO = 0;
+#endif
+
+				if (async)
+					pendingArgs.Next(pendingArgs);
+			}
+		}
+
 		#endregion
 	}
 }

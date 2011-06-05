@@ -31,6 +31,7 @@
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -42,6 +43,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\FactoryElement.cs" />
+    <Compile Include="CountdownEvent.cs" />
+    <Compile Include="InterlockedStack.cs" />
     <Compile Include="FastActivator.cs">
     </Compile>
     <Compile Include="Logging\DiagnosticsLog.cs" />
@@ -95,6 +98,7 @@
     <Compile Include="Logging\ILogFactory.cs" />
     <Compile Include="Logging\ILog.cs" />
     <Compile Include="MemcachedClient.cs" />
+    <Compile Include="Memcached\AsyncIOArgs.cs" />
     <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs">
     </Compile>
     <Compile Include="Memcached\CommandNotSupportedException.cs">
@@ -232,6 +236,7 @@
     </Compile>
     <Compile Include="Memcached\ServerStats.cs">
     </Compile>
+    <Compile Include="Memcached\SlidingBuffer.cs" />
     <Compile Include="Memcached\StatItem.cs">
     </Compile>
     <Compile Include="Memcached\StoreMode.cs">

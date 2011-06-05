@@ -714,6 +714,11 @@ namespace Enyim.Caching
 			return PerformMultiGet<object>(keys, (mget, kvp) => this.transcoder.Deserialize(kvp.Value));
 		}
 
+		public IDictionary<string, object> GetOld(IEnumerable<string> keys)
+		{
+			return PerformMultiGetOld<object>(keys, (mget, kvp) => this.transcoder.Deserialize(kvp.Value));
+		}
+
 		public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
 		{
 			return PerformMultiGet<CasResult<object>>(keys, (mget, kvp) => new CasResult<object>
@@ -723,12 +728,14 @@ namespace Enyim.Caching
 			});
 		}
 
-		public IDictionary<string, T> PerformMultiGet<T>(IEnumerable<string> keys, Func<IMultiGetOperation, KeyValuePair<string, CacheItem>, T> collector)
+		protected virtual IDictionary<string, T> PerformMultiGetOld<T>(IEnumerable<string> keys, Func<IMultiGetOperation, KeyValuePair<string, CacheItem>, T> collector)
 		{
 			// transform the keys and index them by hashed => original
 			// the mget results will be mapped using this index
-			var hashed = keys.ToDictionary(key => this.keyTransformer.Transform(key));
-			var byServer = hashed.Keys.ToLookup(key => this.pool.Locate(key));
+			var hashed = new Dictionary<string, string>();
+			foreach (var key in keys) hashed[this.keyTransformer.Transform(key)] = key;
+
+			var byServer = GroupByServer(hashed.Keys);
 
 			var retval = new Dictionary<string, T>(hashed.Count);
 			var handles = new List<WaitHandle>();
@@ -738,10 +745,7 @@ namespace Enyim.Caching
 			{
 				var node = slice.Key;
 
-				// skip the dead nodes
-				if (node == null) continue;
-
-				var nodeKeys = slice.ToArray();
+				var nodeKeys = slice.Value;
 				var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
 
 				// we'll use the delegate's BeginInvoke/EndInvoke to run the gets parallel
@@ -757,6 +761,7 @@ namespace Enyim.Caching
 						using (iar.AsyncWaitHandle)
 							if (action.EndInvoke(iar))
 							{
+								#region perfmon
 								if (this.performanceMonitor != null)
 								{
 									// full list of keys sent to the server
@@ -773,6 +778,7 @@ namespace Enyim.Caching
 									if (resultCount != expectedCount)
 										this.performanceMonitor.Get(expectedCount - resultCount, true);
 								}
+								#endregion
 
 								// deserialize the items in the dictionary
 								foreach (var kvp in mget.Result)
@@ -805,6 +811,101 @@ namespace Enyim.Caching
 			if (handles.Count > 0)
 			{
 				SafeWaitAllAndDispose(handles.ToArray());
+			}
+
+			return retval;
+		}
+
+		protected Dictionary<IMemcachedNode, IList<string>> GroupByServer(IEnumerable<string> keys)
+		{
+			var retval = new Dictionary<IMemcachedNode, IList<string>>();
+
+			foreach (var k in keys)
+			{
+				var node = this.pool.Locate(k);
+				if (node == null) continue;
+
+				IList<string> list;
+				if (!retval.TryGetValue(node, out list))
+					retval[node] = list = new List<string>(4);
+
+				list.Add(k);
+			}
+
+			return retval;
+		}
+
+		protected virtual IDictionary<string, T> PerformMultiGet<T>(IEnumerable<string> keys, Func<IMultiGetOperation, KeyValuePair<string, CacheItem>, T> collector)
+		{
+			// transform the keys and index them by hashed => original
+			// the mget results will be mapped using this index
+			var hashed = new Dictionary<string, string>();
+			foreach (var key in keys) hashed[this.keyTransformer.Transform(key)] = key;
+
+			var retval = new Dictionary<string, T>(hashed.Count);
+			if (hashed.Count == 0) return retval;
+
+			// create a server -> list<key> mapping
+			// this is faster than ToLookup()
+			var byServer = this.GroupByServer(hashed.Keys);
+
+			if (byServer.Count > 0)
+			{
+				using (var spin = new ReaderWriterLockSlim())
+				using (var latch = new CountdownEvent(byServer.Count))
+				{
+					//execute each list of keys on their respective node
+					foreach (var slice in byServer)
+					{
+						var node = slice.Key;
+						var nodeKeys = slice.Value;
+
+						var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
+
+						#region result gathering
+						// ExecuteAsync will not call the delegate if the
+						// node was already in a failed state but will return false immediately
+						var execSuccess = node.ExecuteAsync(mget, success =>
+						{
+							if (success)
+								try
+								{
+									var result = mget.Result;
+
+									if (result.Count > 0)
+									{
+										string original;
+
+										foreach (var kvp in result)
+											if (hashed.TryGetValue(kvp.Key, out original))
+											{
+												var v = collector(mget, kvp);
+
+												spin.EnterWriteLock();
+												try
+												{ retval[original] = v; }
+												finally
+												{ spin.ExitWriteLock(); }
+											}
+									}
+								}
+								catch (Exception e)
+								{
+									log.Error(e);
+								}
+
+							latch.Signal();
+						});
+						#endregion
+
+						// signal the latch when the node fails immediately (e.g. it was already dead)
+						// if the node fails during the operation the async callback will handle it
+						if (!execSuccess)
+							latch.Signal();
+					}
+
+					latch.Wait();
+				}
 			}
 
 			return retval;

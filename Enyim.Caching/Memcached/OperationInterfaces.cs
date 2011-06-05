@@ -9,6 +9,14 @@ namespace Enyim.Caching.Memcached
 	{
 		IList<ArraySegment<byte>> GetBuffer();
 		bool ReadResponse(PooledSocket socket);
+
+		/// <summary>
+		/// 'next' is called when the operation completes. The bool parameter indicates the success of the operation.
+		/// </summary>
+		/// <param name="socket"></param>
+		/// <param name="next"></param>
+		/// <returns></returns>
+		bool ReadResponseAsync(PooledSocket socket, Action<bool> next);
 	}
 
 	public interface ISingleItemOperation : IOperation

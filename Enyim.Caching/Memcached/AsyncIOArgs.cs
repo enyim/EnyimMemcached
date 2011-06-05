@@ -1,34 +1,30 @@
+﻿//#define DEBUG_IO
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.IO;
+using System.ServiceModel.Channels;
 
-namespace Enyim.Caching.Memcached.Protocol.Text
+namespace Enyim.Caching.Memcached
 {
-	public class FlushOperation : Operation, IFlushOperation
+	public class AsyncIOArgs
 	{
-		public FlushOperation() { }
+		public Action<AsyncIOArgs> Next { get; set; }
+		public int Count { get; set; }
 
-		protected internal override IList<System.ArraySegment<byte>> GetBuffer()
-		{
-			return TextSocketHelper.GetCommandBuffer("flush_all" + TextSocketHelper.CommandTerminator);
-		}
-
-		protected internal override bool ReadResponse(PooledSocket socket)
-		{
-			TextSocketHelper.ReadResponse(socket);
-
-			return true;
-		}
-
-		protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
-		{
-			throw new System.NotSupportedException();
-		}
+		public byte[] Result { get; internal set; }
+		public bool Fail { get; internal set; }
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kisk�, enyim.com
+ *    Copyright (c) 2010 Attila Kiskó, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

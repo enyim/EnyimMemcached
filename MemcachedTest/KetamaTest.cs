@@ -3321,16 +3321,6 @@ namespace MemcachedTest
 			return true;
 		}
 
-		bool IMemcachedNode.Execute(PooledSocket socket, IOperation op)
-		{
-			return true;
-		}
-
-		PooledSocket IMemcachedNode.CreateSocket(TimeSpan connectionTimeout, TimeSpan receiveTimeout)
-		{
-			throw new NotImplementedException();
-		}
-
 		event Action<IMemcachedNode> IMemcachedNode.Failed
 		{
 			add { }
@@ -3342,6 +3332,16 @@ namespace MemcachedTest
 		#region IDisposable Members
 
 		void IDisposable.Dispose()
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
+
+		#region IMemcachedNode Members
+
+
+		bool IMemcachedNode.ExecuteAsync(IOperation op, Action<bool> next)
 		{
 			throw new NotImplementedException();
 		}

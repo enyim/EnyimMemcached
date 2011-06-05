@@ -14,6 +14,11 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 		{
 			get { return StoreMode.Set; }
 		}
+
+		protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
+		{
+			throw new System.NotSupportedException();
+		}
 	}
 }
 

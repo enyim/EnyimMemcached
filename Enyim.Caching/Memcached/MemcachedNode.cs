@@ -172,7 +172,7 @@ namespace Enyim.Caching.Memcached
 			/// <summary>
 			/// A list of already connected but free to use sockets
 			/// </summary>
-			private InterlockedQueue<PooledSocket> freeItems;
+			private InterlockedStack<PooledSocket> freeItems;
 
 			private bool isDisposed;
 			private bool isAlive;
@@ -206,7 +206,7 @@ namespace Enyim.Caching.Memcached
 					throw new InvalidOperationException("connectionTimeout must be >= TimeSpan.Zero", null);
 
 				this.semaphore = new Semaphore(maxItems, maxItems);
-				this.freeItems = new InterlockedQueue<PooledSocket>();
+				this.freeItems = new InterlockedStack<PooledSocket>();
 			}
 
 			internal void InitPool()
@@ -217,7 +217,7 @@ namespace Enyim.Caching.Memcached
 					{
 						for (int i = 0; i < this.minItems; i++)
 						{
-							this.freeItems.Enqueue(this.CreateSocket());
+							this.freeItems.Push(this.CreateSocket());
 
 							// cannot connect to the server
 							if (!this.isAlive)
@@ -291,7 +291,7 @@ namespace Enyim.Caching.Memcached
 				}
 
 				// do we have free items?
-				if (this.freeItems.Dequeue(out retval))
+				if (this.freeItems.TryPop(out retval))
 				{
 					#region [ get it from the pool         ]
 
@@ -367,7 +367,7 @@ namespace Enyim.Caching.Memcached
 					if (socket.IsAlive)
 					{
 						// mark the item as free
-						this.freeItems.Enqueue(socket);
+						this.freeItems.Push(socket);
 
 						// signal the event so if someone is waiting for it can reuse this item
 						this.semaphore.Release();
@@ -412,7 +412,7 @@ namespace Enyim.Caching.Memcached
 
 					PooledSocket ps;
 
-					while (this.freeItems.Dequeue(out ps))
+					while (this.freeItems.TryPop(out ps))
 					{
 						try { ps.Destroy(); }
 						catch { }
@@ -449,40 +449,62 @@ namespace Enyim.Caching.Memcached
 		}
 		#endregion
 
-		protected internal PooledSocket CreateSocket()
+		protected internal virtual PooledSocket CreateSocket()
 		{
-			return this.CreateSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout);
+			return new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout);
 		}
 
-		protected internal virtual PooledSocket CreateSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
-		{
-			PooledSocket retval = new PooledSocket(endPoint, connectionTimeout, receiveTimeout);
+		//protected internal virtual PooledSocket CreateSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
+		//{
+		//    PooledSocket retval = new PooledSocket(endPoint, connectionTimeout, receiveTimeout);
 
-			return retval;
-		}
+		//    return retval;
+		//}
 
 		protected virtual bool ExecuteOperation(IOperation op)
 		{
-			using (var ps = this.Acquire())
-			{
-				return this.ExecuteOperation(ps, op);
-			}
+			using (var socket = this.Acquire())
+				try
+				{
+					if (socket == null) return false;
+					var b = op.GetBuffer();
+
+					socket.Write(b);
+
+					return op.ReadResponse(socket);
+				}
+				catch (IOException e)
+				{
+					log.Error(e);
+
+					return false;
+				}
 		}
 
-		protected virtual bool ExecuteOperation(PooledSocket socket, IOperation op)
+		protected virtual bool ExecuteOperationAsync(IOperation op, Action<bool> next)
 		{
+			var socket = this.Acquire();
+			if (socket == null) return false;
+
+			var b = op.GetBuffer();
+
 			try
 			{
-				if (socket == null) return false;
-				var b = op.GetBuffer();
-
 				socket.Write(b);
 
-				return op.ReadResponse(socket);
+				var rrs = op.ReadResponseAsync(socket, readSuccess =>
+				{
+					((IDisposable)socket).Dispose();
+
+					next(readSuccess);
+				});
+
+				return rrs;
 			}
-			catch (Exception e)
+			catch (IOException e)
 			{
 				log.Error(e);
+				((IDisposable)socket).Dispose();
 
 				return false;
 			}
@@ -510,20 +532,15 @@ namespace Enyim.Caching.Memcached
 			return this.ExecuteOperation(op);
 		}
 
+		bool IMemcachedNode.ExecuteAsync(IOperation op, Action<bool> next)
+		{
+			return this.ExecuteOperationAsync(op, next);
+		}
+
 		event Action<IMemcachedNode> IMemcachedNode.Failed
 		{
 			add { this.Failed += value; }
 			remove { this.Failed -= value; }
-		}
-
-		bool IMemcachedNode.Execute(PooledSocket socket, IOperation op)
-		{
-			return this.ExecuteOperation(socket, op);
-		}
-
-		PooledSocket IMemcachedNode.CreateSocket(TimeSpan connectionTimeout, TimeSpan receiveTimeout)
-		{
-			return this.CreateSocket(this.endPoint, connectionTimeout, receiveTimeout);
 		}
 
 		#endregion

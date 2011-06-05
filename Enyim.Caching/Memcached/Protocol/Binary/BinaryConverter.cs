@@ -5,6 +5,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 {
 	public static class BinaryConverter
 	{
+		public static unsafe ushort DecodeUInt16(byte[] buffer, int offset)
+		{
+			return (ushort)((buffer[offset] << 8) + buffer[offset + 1]);
+		}
+
 		public static unsafe ushort DecodeUInt16(byte* buffer, int offset)
 		{
 			return (ushort)((buffer[offset] << 8) + buffer[offset + 1]);
@@ -25,6 +30,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			buffer += offset;
 
 			return (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+		}
+
+		public static unsafe int DecodeInt32(byte[] buffer, int offset)
+		{
+			return (buffer[offset] << 24) | (buffer[offset + 1] << 16) | (buffer[offset + 2] << 8) | buffer[offset + 3];
 		}
 
 		public static unsafe ulong DecodeUInt64(byte[] buffer, int offset)

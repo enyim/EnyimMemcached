@@ -68,6 +68,11 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 		{
 			return String.Compare(TextSocketHelper.ReadResponse(socket), "STORED", StringComparison.Ordinal) == 0;
 		}
+
+		protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
+		{
+			throw new System.NotSupportedException();
+		}
 	}
 }
 
