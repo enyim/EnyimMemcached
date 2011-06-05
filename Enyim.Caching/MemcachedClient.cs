@@ -841,29 +841,25 @@ namespace Enyim.Caching
 			if (validFor != null && expiresAt != null)
 				throw new ArgumentException("You cannot specify both validFor and expiresAt.");
 
-			if (expiresAt != null)
+			// convert timespans to absolute dates
+			if (validFor != null)
 			{
-				DateTime dt = expiresAt.Value;
+				// infinity
+				if (validFor == TimeSpan.Zero || validFor == TimeSpan.MaxValue) return 0;
 
-				if (dt < UnixEpoch)
-					throw new ArgumentOutOfRangeException("expiresAt", "expiresAt must be >= 1970/1/1");
-
-				// accept MaxValue as infinite
-				if (dt == DateTime.MaxValue)
-					return 0;
-
-				uint retval = (uint)(dt.ToUniversalTime() - UnixEpoch).TotalSeconds;
-
-				return retval;
+				expiresAt = DateTime.Now.Add(validFor.Value);
 			}
 
-			TimeSpan ts = validFor.Value;
+			DateTime dt = expiresAt.Value;
 
-			// accept Zero as infinite
-			if (ts.TotalSeconds >= MaxSeconds || ts < TimeSpan.Zero)
-				throw new ArgumentOutOfRangeException("validFor", "validFor must be < 30 days && >= 0");
+			if (dt < UnixEpoch) throw new ArgumentOutOfRangeException("expiresAt", "expiresAt must be >= 1970/1/1");
 
-			return (uint)ts.TotalSeconds;
+			// accept MaxValue as infinite
+			if (dt == DateTime.MaxValue) return 0;
+
+			uint retval = (uint)(dt.ToUniversalTime() - UnixEpoch).TotalSeconds;
+
+			return retval;
 		}
 
 		#endregion
