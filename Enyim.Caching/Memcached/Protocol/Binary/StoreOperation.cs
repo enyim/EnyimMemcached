@@ -58,6 +58,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 				}
 #endif
 
+			this.StatusCode = response.StatusCode;
+
 			return true;
 		}
 

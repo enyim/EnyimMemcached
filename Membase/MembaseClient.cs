@@ -150,10 +150,11 @@ namespace Membase
 			return false;
 		}
 
-		protected override bool PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas)
+		protected override bool PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas, out int statusCode)
 		{
 			var hashedKey = this.KeyTransformer.Transform(key);
 			var node = this.Pool.Locate(hashedKey);
+			statusCode = -1;
 
 			if (node != null)
 			{
@@ -173,6 +174,7 @@ namespace Membase
 				var retval = ExecuteWithRedirect(node, command);
 
 				cas = command.CasValue;
+				statusCode = command.StatusCode;
 
 				if (this.PerformanceMonitor != null) this.PerformanceMonitor.Store(mode, 1, true);
 

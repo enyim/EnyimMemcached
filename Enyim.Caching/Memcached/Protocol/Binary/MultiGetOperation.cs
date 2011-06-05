@@ -94,6 +94,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			while (this.asyncLoopState == null)
 			{
 				var readSuccess = reader.ReadAsync(this.currentSocket, this.EndReadAsync, out ioPending);
+				this.StatusCode = reader.StatusCode;
 
 				if (ioPending) return readSuccess;
 
@@ -153,6 +154,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 			while (response.Read(socket))
 			{
+				this.StatusCode = response.StatusCode;
+
 				// found the noop, quit
 				if (response.CorrelationId == this.noopId)
 					return true;

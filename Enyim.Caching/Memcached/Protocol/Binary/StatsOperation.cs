@@ -44,6 +44,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			}
 
 			this.result = serverData;
+			this.StatusCode = response.StatusCode;
 
 			return retval;
 		}

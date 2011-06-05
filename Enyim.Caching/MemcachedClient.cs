@@ -199,8 +199,9 @@ namespace Enyim.Caching
 		public bool Store(StoreMode mode, string key, object value)
 		{
 			ulong tmp = 0;
+			int status;
 
-			return this.PerformStore(mode, key, value, 0, ref tmp);
+			return this.PerformStore(mode, key, value, 0, ref tmp, out status);
 		}
 
 		/// <summary>
@@ -214,8 +215,9 @@ namespace Enyim.Caching
 		public bool Store(StoreMode mode, string key, object value, TimeSpan validFor)
 		{
 			ulong tmp = 0;
+			int status;
 
-			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), ref tmp);
+			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), ref tmp, out status);
 		}
 
 		/// <summary>
@@ -229,8 +231,9 @@ namespace Enyim.Caching
 		public bool Store(StoreMode mode, string key, object value, DateTime expiresAt)
 		{
 			ulong tmp = 0;
+			int status;
 
-			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), ref tmp);
+			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), ref tmp, out status);
 		}
 
 		/// <summary>
@@ -290,15 +293,18 @@ namespace Enyim.Caching
 		private CasResult<bool> PerformStore(StoreMode mode, string key, object value, uint expires, ulong cas)
 		{
 			ulong tmp = cas;
-			var retval = this.PerformStore(mode, key, value, expires, ref tmp);
+			int status;
 
-			return new CasResult<bool> { Cas = tmp, Result = retval };
+			var retval = this.PerformStore(mode, key, value, expires, ref tmp, out status);
+
+			return new CasResult<bool> { Cas = tmp, Result = retval, StatusCode = status };
 		}
 
-		protected virtual bool PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas)
+		protected virtual bool PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas, out int statusCode)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
+			statusCode = -1;
 
 			if (node != null)
 			{
@@ -318,6 +324,8 @@ namespace Enyim.Caching
 				var retval = node.Execute(command);
 
 				cas = command.CasValue;
+				statusCode = command.StatusCode;
+
 				if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, true);
 
 				return retval;

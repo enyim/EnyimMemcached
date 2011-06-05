@@ -10,6 +10,8 @@ namespace Enyim.Caching.Memcached
 		IList<ArraySegment<byte>> GetBuffer();
 		bool ReadResponse(PooledSocket socket);
 
+		int StatusCode { get; }
+
 		/// <summary>
 		/// 'next' is called when the operation completes. The bool parameter indicates the success of the operation.
 		/// </summary>
@@ -78,6 +80,7 @@ namespace Enyim.Caching.Memcached
 	{
 		public T Result { get; set; }
 		public ulong Cas { get; set; }
+		public int StatusCode { get; set; }
 	}
 }
 

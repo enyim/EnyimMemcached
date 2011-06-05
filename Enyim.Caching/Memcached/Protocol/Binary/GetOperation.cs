@@ -23,7 +23,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 		protected override bool ProcessResponse(BinaryResponse response)
 		{
-			if (response.StatusCode == 0)
+			var status = response.StatusCode;
+
+			this.StatusCode = status;
+
+			if (status == 0)
 			{
 				int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
 				this.result = new CacheItem((ushort)flags, response.Data);

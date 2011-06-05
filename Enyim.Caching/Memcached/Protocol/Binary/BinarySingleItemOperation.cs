@@ -8,7 +8,6 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		protected BinarySingleItemOperation(string key) : base(key) { }
 
 		protected abstract BinaryRequest Build();
-		//protected BinaryResponse CurrentResponse { get; set; }
 
 		protected internal override IList<ArraySegment<byte>> GetBuffer()
 		{
@@ -21,7 +20,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		{
 			var response = new BinaryResponse();
 			var retval = response.Read(socket);
+
 			this.Cas = response.CAS;
+			this.StatusCode = response.StatusCode;
 
 			return retval & this.ProcessResponse(response);
 		}
@@ -30,16 +31,6 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		{
 			throw new NotImplementedException();
 		}
-
-		//protected internal override IAsyncResult BeginReadResponse(PooledSocket socket)
-		//{
-		//    throw new NotImplementedException();
-		//}
-
-		//protected internal override bool EndReadResponse(IAsyncResult result)
-		//{
-		//    throw new NotImplementedException();
-		//}
 	}
 }
 
