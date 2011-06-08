@@ -1,5 +1,13 @@
 ﻿# Membase Client Version History
 
+## Version 2.12
+
+ * Includes all the changes from Enyim.Caching 2.9
+ * Fixed [Issue #60](https://github.com/enyim/EnyimMemcached/issues#issue/60) - Bucket and BucketPassword not picked up from config
+ * Membase 1.7 support:
+    * Get&Touch allows you to extend the expiration of an item without retrieving it.
+    * Sync allows you to wait for an item to be replicated, changed, persisted, etc. _Please note: the maximum time to wait is ~2.5 sec and this limit is enforced by the Membase server (by closing the connection) so use it only for short waits._
+
 ## Version 2.11
 
  * Includes all the changes from Enyim.Caching 2.8 (perfmon, bugfixes)
