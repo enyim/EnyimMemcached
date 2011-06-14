@@ -1,8 +1,12 @@
 ﻿# Enyim Memcached Version History
 
+## Version 2.10
+
+ * Fixed [Issue #65](https://github.com/enyim/EnyimMemcached/issues#issue/65) - Getting multiple keys twice in a row fails.
+
 ## Version 2.9
 
- * Fixed [Issue #48](https://github.com/enyim/EnyimMemcached/issues#issue/37) -  Allow the socket pool use maxPoolSize number of sockets instead of (max - min).
+ * Fixed [Issue #48](https://github.com/enyim/EnyimMemcached/issues#issue/37) - Allow the socket pool use maxPoolSize number of sockets instead of (max - min).
  * Fixed the ObjectDisposedException coming from the DefaultNodeLocator.
  * Multi-get now uses [IOCP](http://msdn.microsoft.com/en-us/library/aa365198\(v=vs.85\).aspx) instead of threads from the ThreadPool. Performance should be the comparable or better (depending on the amount of items and size).
  * New DataContractSerializer to enable caching of EntityFramework or LINQ to SQl entitites. See also [Issue #54](https://github.com/enyim/EnyimMemcached/issues/54).

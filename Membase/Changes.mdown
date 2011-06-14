@@ -1,5 +1,9 @@
 ﻿# Membase Client Version History
 
+## Version 2.13
+
+ * Fixed [Issue #65](https://github.com/enyim/EnyimMemcached/issues#issue/65) - Getting multiple keys twice in a row fails.
+
 ## Version 2.12
 
  * Includes all the changes from Enyim.Caching 2.9
