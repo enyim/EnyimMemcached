@@ -94,7 +94,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			asyncEvent.Count = HeaderLength;
 			asyncEvent.Next = this.DoDecodeHeaderAsync;
 
-			this.sholdCallNext = true;
+			this.shouldCallNext = true;
 
 			if (socket.ReceiveAsync(asyncEvent))
 			{
@@ -103,7 +103,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			}
 
 			ioPending = false;
-			this.sholdCallNext = false;
+			this.shouldCallNext = false;
 
 			return asyncEvent.Fail
 					? false
@@ -113,12 +113,12 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		private PooledSocket currentSocket;
 		private int dataLength;
 		private int extraLength;
-		private bool sholdCallNext;
+		private bool shouldCallNext;
 		private Action<bool> next;
 
 		private void DoDecodeHeaderAsync(AsyncIOArgs asyncEvent)
 		{
-			this.sholdCallNext = true;
+			this.shouldCallNext = true;
 			bool tmp;
 
 			this.DoDecodeHeader(asyncEvent, out tmp);
@@ -130,7 +130,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 			if (asyncEvent.Fail)
 			{
-				if (this.sholdCallNext) this.next(false);
+				if (this.shouldCallNext) this.next(false);
 
 				return false;
 			}
@@ -140,7 +140,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 			if (this.dataLength == 0)
 			{
-				if (this.sholdCallNext) this.next(retval);
+				if (this.shouldCallNext) this.next(retval);
 			}
 			else
 			{
@@ -164,15 +164,15 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 		private void DoDecodeBodyAsync(AsyncIOArgs asyncEvent)
 		{
-			this.sholdCallNext = true;
-			DoDecodeBodyAsync(asyncEvent);
+			this.shouldCallNext = true;
+			DoDecodeBody(asyncEvent);
 		}
 
 		private void DoDecodeBody(AsyncIOArgs asyncEvent)
 		{
 			if (asyncEvent.Fail)
 			{
-				if (this.sholdCallNext) this.next(false);
+				if (this.shouldCallNext) this.next(false);
 
 				return;
 			}
@@ -180,7 +180,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			this.Extra = new ArraySegment<byte>(asyncEvent.Result, 0, this.extraLength);
 			this.Data = new ArraySegment<byte>(asyncEvent.Result, this.extraLength, this.dataLength - this.extraLength);
 
-			if (this.sholdCallNext) this.next(true);
+			if (this.shouldCallNext) this.next(true);
 		}
 
 		private unsafe void DeserializeHeader(byte[] header, out int dataLength, out int extraLength)

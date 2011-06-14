@@ -114,6 +114,7 @@ namespace Enyim.Caching.Memcached
 		{
 			Segment tmp;
 
+			this.lastSegment = null;
 			while (this.buffers.Dequeue(out tmp)) ;
 
 			this.available = 0;
