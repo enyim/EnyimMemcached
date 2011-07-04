@@ -8,6 +8,6 @@ namespace Membase
 {
 	public interface IMembaseServerPool : IServerPool
 	{
-		IMembaseOperationFactory OperationFactory { get; }
+		new IMembaseOperationFactory OperationFactory { get; }
 	}
 }

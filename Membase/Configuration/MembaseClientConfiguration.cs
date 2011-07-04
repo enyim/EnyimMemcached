@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Net;
 using Enyim.Caching.Configuration;
@@ -174,6 +175,129 @@ namespace Membase.Configuration
 		}
 
 		#endregion
+	}
+
+	internal class ReadOnlyConfig : IMembaseClientConfiguration
+	{
+		private string bucket;
+		private string bucketPassword;
+		private Uri[] urls;
+		private BucketPortType port;
+		private TimeSpan retryTimeout;
+		private int retryCount;
+		private ISocketPoolConfiguration spc;
+
+		private IMembaseClientConfiguration original;
+
+		public ReadOnlyConfig(IMembaseClientConfiguration original)
+		{
+			this.bucket = original.Bucket;
+			this.bucketPassword = original.BucketPassword;
+			this.urls = original.Urls.ToArray();
+
+			this.port = BucketPortType.Direct;
+			this.retryCount = original.RetryCount;
+			this.retryTimeout = original.RetryTimeout;
+
+			this.spc = new SPC(original.SocketPool);
+
+			this.original = original;
+		}
+
+		public void OverrideBucket(string bucketName, string bucketPassword)
+		{
+			this.bucket = bucketName;
+			this.bucketPassword = bucketPassword;
+		}
+
+		string IMembaseClientConfiguration.Bucket
+		{
+			get { return this.bucket; }
+		}
+
+		string IMembaseClientConfiguration.BucketPassword
+		{
+			get { return this.bucketPassword; }
+		}
+
+		IList<Uri> IMembaseClientConfiguration.Urls
+		{
+			get { return this.urls; }
+		}
+
+		ISocketPoolConfiguration IMembaseClientConfiguration.SocketPool
+		{
+			get { return this.spc; }
+		}
+
+		IMemcachedKeyTransformer IMembaseClientConfiguration.CreateKeyTransformer()
+		{
+			return this.original.CreateKeyTransformer();
+		}
+
+		IMemcachedNodeLocator IMembaseClientConfiguration.CreateNodeLocator()
+		{
+			return this.original.CreateNodeLocator();
+		}
+
+		ITranscoder IMembaseClientConfiguration.CreateTranscoder()
+		{
+			return this.original.CreateTranscoder();
+		}
+
+		IPerformanceMonitor IMembaseClientConfiguration.CreatePerformanceMonitor()
+		{
+			return this.original.CreatePerformanceMonitor();
+		}
+
+		NetworkCredential IMembaseClientConfiguration.Credentials
+		{
+			get { throw new NotImplementedException("this property is obsolete"); }
+		}
+
+		BucketPortType IMembaseClientConfiguration.Port
+		{
+			get { return this.port; }
+		}
+
+		TimeSpan IMembaseClientConfiguration.RetryTimeout
+		{
+			get { return this.retryTimeout; }
+		}
+
+		int IMembaseClientConfiguration.RetryCount
+		{
+			get { return this.retryCount; }
+		}
+
+		private class SPC : ISocketPoolConfiguration
+		{
+			private TimeSpan connectionTimeout;
+			private TimeSpan deadTimeout;
+			private int maxPoolSize;
+			private int minPoolSize;
+			private TimeSpan queueTimeout;
+			private TimeSpan receiveTimeout;
+
+			public SPC(ISocketPoolConfiguration original)
+			{
+				var me = (ISocketPoolConfiguration)this;
+
+				this.connectionTimeout = original.ConnectionTimeout;
+				this.deadTimeout = original.DeadTimeout;
+				this.maxPoolSize = original.MaxPoolSize;
+				this.minPoolSize = original.MinPoolSize;
+				this.queueTimeout = original.QueueTimeout;
+				this.receiveTimeout = original.ReceiveTimeout;
+			}
+
+			int ISocketPoolConfiguration.MinPoolSize { get { return this.minPoolSize; } set { } }
+			int ISocketPoolConfiguration.MaxPoolSize { get { return this.maxPoolSize; } set { } }
+			TimeSpan ISocketPoolConfiguration.ConnectionTimeout { get { return this.connectionTimeout; } set { } }
+			TimeSpan ISocketPoolConfiguration.QueueTimeout { get { return this.queueTimeout; } set { } }
+			TimeSpan ISocketPoolConfiguration.ReceiveTimeout { get { return this.receiveTimeout; } set { } }
+			TimeSpan ISocketPoolConfiguration.DeadTimeout { get { return this.deadTimeout; } set { } }
+		}
 	}
 }
 

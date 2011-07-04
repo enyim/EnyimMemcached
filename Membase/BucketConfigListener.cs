@@ -5,6 +5,7 @@ using System.Web.Script.Serialization;
 using System.Threading;
 using System.Net;
 using Enyim;
+using Membase.Configuration;
 
 namespace Membase
 {
@@ -80,6 +81,8 @@ namespace Membase
 			this.listener = null;
 		}
 
+		private static readonly JavaScriptConverter[] KnownConverters = { ClusterNode.ConverterInstance };
+
 		private void HandleMessage(string message)
 		{
 			// everything failed
@@ -92,6 +95,8 @@ namespace Membase
 
 			// deserialize the buckets
 			var jss = new JavaScriptSerializer();
+			jss.RegisterConverters(KnownConverters);
+
 			var config = jss.Deserialize<ClusterConfig>(message);
 
 			// check if the config is the same as the previous

@@ -6,6 +6,7 @@ using System.Text;
 using System.Web.Script.Serialization;
 using System.IO;
 using System.Text.RegularExpressions;
+using Membase.Configuration;
 
 namespace Membase
 {
@@ -19,17 +20,22 @@ namespace Membase
 		/// <typeparam name="T"></typeparam>
 		/// <param name="uri"></param>
 		/// <returns></returns>
-		private static T DeserializeUri<T>(WebClient client, Uri uri)
+		private static T DeserializeUri<T>(WebClient client, Uri uri, IEnumerable<JavaScriptConverter> converters)
 		{
 			var info = client.DownloadString(uri);
 			var jss = new JavaScriptSerializer();
 
+			if (converters != null)
+				jss.RegisterConverters(converters);
+
 			return jss.Deserialize<T>(info);
 		}
 
+		private static readonly JavaScriptConverter[] JSC = { ClusterNode.ConverterInstance };
+
 		private static ClusterInfo GetClusterInfo(WebClient client, Uri clusterUrl)
 		{
-			var info = DeserializeUri<ClusterInfo>(client, clusterUrl);
+			var info = DeserializeUri<ClusterInfo>(client, clusterUrl, JSC);
 
 			if (info == null)
 				throw new ArgumentException("invalid pool url: " + clusterUrl);
@@ -51,7 +57,7 @@ namespace Membase
 			var info = ConfigHelper.GetClusterInfo(client, poolUri);
 			var root = new Uri(poolUri, info.buckets.uri);
 
-			var allBuckets = ConfigHelper.DeserializeUri<ClusterConfig[]>(client, root);
+			var allBuckets = ConfigHelper.DeserializeUri<ClusterConfig[]>(client, root, JSC);
 			var retval = allBuckets.FirstOrDefault(b => b.name == name);
 
 			if (retval == null)

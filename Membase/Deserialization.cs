@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Net;
 
-namespace Membase
+namespace Membase.Configuration
 {
 #pragma warning disable 649
 	internal class ClusterInfo
@@ -89,11 +89,20 @@ namespace Membase
 
 	internal class ClusterNode
 	{
-		private string _hostname;
+		private static readonly Type[] SupportedTypes = { typeof(ClusterNode) };
 
-		public string hostname
+		internal static readonly System.Web.Script.Serialization.JavaScriptConverter ConverterInstance = new Converter();
+		internal static readonly IEqualityComparer<ClusterNode> ComparerInstance = new Comparer();
+
+		private string hostNname;
+
+		public ClusterNode()
 		{
-			get { return this._hostname; }
+		}
+
+		public string HostName
+		{
+			get { return this.hostNname; }
 			set
 			{
 				var tmp = value;
@@ -106,31 +115,32 @@ namespace Membase
 						tmp = tmp.Substring(0, index);
 				}
 
-				this._hostname = tmp;
+				this.hostNname = tmp;
 			}
 		}
 
-		public string status;
-		public ClusterNodePorts ports;
-
-		public string version;
+		public int Port { get; private set; }
+		public string Status { get; private set; }
+		public string Version { get; private set; }
+		public Dictionary<string, object> ConfigurationData { get; private set; }
 
 		public override int GetHashCode()
 		{
-			return Enyim.HashCodeCombiner.Combine(this._hostname.GetHashCode(), this.status.GetHashCode(), ports.GetHashCode());
+			return Enyim.HashCodeCombiner.Combine(
+					this.hostNname == null ? -1 : this.hostNname.GetHashCode(),
+					this.Status == null ? -1 : this.Status.GetHashCode(),
+					Port);
 		}
 
-		public static readonly IEqualityComparer<ClusterNode> ComparerInstance = new Comparer();
-
 		#region [ Comparer                     ]
+
 		private class Comparer : IEqualityComparer<ClusterNode>
 		{
 			bool IEqualityComparer<ClusterNode>.Equals(ClusterNode x, ClusterNode y)
 			{
-				return x.hostname == y.hostname
-						&& x.ports.direct == y.ports.direct
-						&& x.ports.proxy == y.ports.proxy
-						&& x.status == y.status;
+				return x.HostName == y.HostName
+						&& x.Port == y.Port
+						&& x.Status == y.Status;
 			}
 
 			int IEqualityComparer<ClusterNode>.GetHashCode(ClusterNode obj)
@@ -138,23 +148,51 @@ namespace Membase
 				return obj.GetHashCode();
 			}
 		}
+
 		#endregion
-	}
+		#region [ JSON Converter               ]
 
-	internal class ClusterNodePorts
-	{
-		public int direct;
-		public int proxy;
-
-		public override string ToString()
+		private class Converter : System.Web.Script.Serialization.JavaScriptConverter
 		{
-			return this.direct + "|" + this.proxy;
+			public override object Deserialize(IDictionary<string, object> dictionary, Type type, System.Web.Script.Serialization.JavaScriptSerializer serializer)
+			{
+				var retval = new ClusterNode();
+
+				retval.HostName = GetRequired<string>(dictionary, "hostname");
+				retval.Status = GetRequired<string>(dictionary, "status");
+				retval.Version = GetRequired<string>(dictionary, "version");
+
+				var ports = GetRequired<IDictionary<string, object>>(dictionary, "ports");
+				if (ports != null)
+					retval.Port = GetRequired<int>(ports, "direct");
+
+				retval.ConfigurationData = new Dictionary<string, object>(dictionary);
+
+				return retval;
+			}
+
+			private static TResult GetRequired<TResult>(IDictionary<string, object> dict, string key)
+			{
+				object tmp;
+
+				if (!dict.TryGetValue(key, out tmp))
+					throw new InvalidOperationException(String.Format("Key '{0}' was not found in the cluster node info.", key));
+
+				return (TResult)tmp;
+			}
+
+			public override IDictionary<string, object> Serialize(object obj, System.Web.Script.Serialization.JavaScriptSerializer serializer)
+			{
+				throw new NotImplementedException();
+			}
+
+			public override IEnumerable<Type> SupportedTypes
+			{
+				get { return ClusterNode.SupportedTypes; }
+			}
 		}
 
-		public override int GetHashCode()
-		{
-			return Enyim.HashCodeCombiner.Combine(this.direct, this.proxy);
-		}
+		#endregion
 	}
 #pragma warning restore 649
 }

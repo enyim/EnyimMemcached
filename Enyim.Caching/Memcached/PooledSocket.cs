@@ -530,7 +530,7 @@ namespace Enyim.Caching.Memcached
 				return true;
 			}
 
-			private void PublishResult(bool async)
+			private void PublishResult(bool isAsync)
 			{
 				var retval = this.pendingArgs;
 
@@ -542,7 +542,7 @@ namespace Enyim.Caching.Memcached
 				this.doingIO = 0;
 #endif
 
-				if (async)
+				if (isAsync)
 					pendingArgs.Next(pendingArgs);
 			}
 		}

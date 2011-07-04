@@ -13,7 +13,7 @@ namespace Membase
 	/// <summary>
 	/// Socket pool using the Membase server's dynamic node list
 	/// </summary>
-	internal class MembasePool : IMembaseServerPool
+	public class MembasePool : IMembaseServerPool
 	{
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MembasePool));
 
@@ -23,9 +23,6 @@ namespace Membase
 		private BucketConfigListener configListener;
 
 		private InternalState state;
-
-		private string bucketName;
-		private string bucketPassword;
 
 		private object DeadSync = new Object();
 		private System.Threading.Timer resurrectTimer;
@@ -66,20 +63,22 @@ namespace Membase
 
 		private void Initialize(IMembaseClientConfiguration configuration, string bucketName, string bucketPassword)
 		{
-			this.configuration = configuration;
+			var roc = new ReadOnlyConfig(configuration);
 
 			// make null both if we use the default bucket since we do not need to be authenticated
 			if (String.IsNullOrEmpty(bucketName) || bucketName == "default")
 			{
-				this.bucketName = null;
-				this.bucketPassword = null;
+				bucketName = null;
+				bucketPassword = null;
 			}
 			else
 			{
-				this.bucketName = bucketName;
-				this.bucketPassword = bucketPassword ?? String.Empty;
+				bucketPassword = bucketPassword ?? String.Empty;
 			}
 
+			roc.OverrideBucket(bucketName, bucketPassword);
+
+			this.configuration = roc;
 			this.deadTimeoutMsec = (long)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds;
 		}
 
@@ -89,7 +88,10 @@ namespace Membase
 			catch { }
 		}
 
-		//public VBucketNodeLocator ForwardLocator { get { return this.state.ForwardLocator; } }
+		protected IMembaseClientConfiguration Configuration
+		{
+			get { return this.configuration; }
+		}
 
 		private void InitNodes(ClusterConfig config)
 		{
@@ -116,19 +118,21 @@ namespace Membase
 				return;
 			}
 
+			var currentState = this.state;
+
 			// these should be disposed after we've been reinitialized
-			var oldNodes = this.state == null ? null : this.state.CurrentNodes;
+			var oldNodes = currentState == null ? null : currentState.CurrentNodes;
 
 			// default bucket does not require authentication
 			// membase 1.6 tells us if a bucket needs authentication,
 			// so let's try to use the config's password
 			var password = config.authType == "sasl"
-										? config.saslPassword
-										: this.bucketPassword;
+							? config.saslPassword
+							: this.configuration.BucketPassword;
 
-			var authenticator = this.bucketName == null
-						   ? null
-						   : new PlainTextAuthenticator(null, this.bucketName, password);
+			var authenticator = this.configuration.Bucket == null
+								   ? null
+								   : new PlainTextAuthenticator(null, this.configuration.Bucket, password);
 
 			try
 			{
@@ -176,43 +180,53 @@ namespace Membase
 
 			if (log.IsInfoEnabled) log.Info("Has vbucket. Server count: " + (vbsm.serverList == null ? 0 : vbsm.serverList.Length));
 
-			var epa = (from server in vbsm.serverList
-					   select ConfigurationHelper.ResolveToEndPoint(server)).ToArray();
+			// parse the ip addresses of the servers in the vbucket map
+			// make sure we have a propert vbucket map
+			ValidateVBucketMap(vbsm, vbsm.serverList.Length);
 
-			var epaLength = epa.Length;
-
-			for (var i = 0; i < vbsm.vBucketMap.Length; i++)
-			{
-				var vb = vbsm.vBucketMap[i];
-				if (vb == null || vb.Length == 0)
-					throw new InvalidOperationException("Server sent an empty vbucket definition at index " + i);
-				if (vb[0] >= epaLength || vb[0] < 0)
-					throw new InvalidOperationException(String.Format("VBucket line {0} has a master index {1} out of range of the server list ({2})", i, vb[0], epaLength));
-			}
-
+			// create vbuckets from the int[][] arrays
 			var buckets = vbsm.vBucketMap.Select(a => new VBucket(a[0], a.Skip(1).ToArray())).ToArray();
-			var bucketNodeMap = buckets.ToLookup(vb =>
-			{
-				try
-				{
-					return epa[vb.Master];
-				}
-				catch (Exception e)
-				{
-					log.Error(e);
 
-					throw;
-				}
+			var locator = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
+
+			// create a (host=>node) lookup from the node info objects, 
+			// so we can pass the extra config data to the factory method
+			// (the vbucket map only contains 'host:port' strings)
+			// this expects that all nodes listed in the vbucket map are listed in the config.nodes member as well
+			var realNodes = config.nodes.ToDictionary(node => node.HostName + ":" + node.Port);
+			var nodes = new List<IMemcachedNode>();
+
+			foreach (var hostSpec in vbsm.serverList)
+			{
+				ClusterNode node;
+
+				if (!realNodes.TryGetValue(hostSpec, out node))
+					throw new InvalidOperationException(String.Format("VBucket map contains a node {0} whihc was not found in the cluster info's node list.", hostSpec));
+
+				var ip = IPAddress.Parse(node.HostName);
+				var endpoint = new IPEndPoint(ip, node.Port);
+
+				nodes.Add(this.CreateNode(endpoint, auth, node.ConfigurationData));
 			}
-			);
-			var vbnl = new VBucketNodeLocator(vbsm.hashAlgorithm, buckets);
 
 			return new InternalState
 			{
-				CurrentNodes = epa.Select(ip => (IMemcachedNode)new BinaryNode(ip, this.configuration.SocketPool, auth)).ToArray(),
-				Locator = vbnl,
-				OpFactory = new VBucketAwareOperationFactory(vbnl)
+				CurrentNodes = nodes.ToArray(),
+				Locator = locator,
+				OpFactory = new VBucketAwareOperationFactory(locator)
 			};
+		}
+
+		private static void ValidateVBucketMap(VBucketConfig vbsm, int knownNodeCount)
+		{
+			for (var i = 0; i < vbsm.vBucketMap.Length; i++)
+			{
+				var map = vbsm.vBucketMap[i];
+				if (map == null || map.Length == 0)
+					throw new InvalidOperationException("Server sent an empty vbucket definition at index " + i);
+				if (map[0] >= knownNodeCount || map[0] < 0)
+					throw new InvalidOperationException(String.Format("VBucket line {0} has a master index {1} out of range of the server list ({2})", i, map[0], knownNodeCount));
+			}
 		}
 
 		private InternalState InitBasic(ClusterConfig config, ISaslAuthenticationProvider auth)
@@ -225,9 +239,9 @@ namespace Membase
 			var tmp = config == null
 					? Enumerable.Empty<IMemcachedNode>()
 						: (from node in config.nodes
-						   let ip = new IPEndPoint(IPAddress.Parse(node.hostname), node.ports.direct)
-						   where node.status == "healthy"
-						   select (IMemcachedNode)(new BinaryNode(ip, this.configuration.SocketPool, auth)));
+						   let ip = new IPEndPoint(IPAddress.Parse(node.HostName), node.Port)
+						   where node.Status == "healthy"
+						   select CreateNode(ip, auth, node.ConfigurationData));
 
 			return new InternalState
 			{
@@ -235,6 +249,11 @@ namespace Membase
 				Locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator(),
 				OpFactory = BasicMembaseOperationFactory.Instance
 			};
+		}
+
+		protected virtual IMemcachedNode CreateNode(IPEndPoint endpoint, ISaslAuthenticationProvider auth, Dictionary<string, object> nodeInfo)
+		{
+			return new BinaryNode(endpoint, this.configuration.SocketPool, auth);
 		}
 
 		void IDisposable.Dispose()
@@ -437,7 +456,7 @@ namespace Membase
 			if (this.poolUrls.Length == 0)
 				throw new InvalidOperationException("At least 1 pool url must be specified.");
 
-			this.configListener = new BucketConfigListener(this.poolUrls, this.bucketName, this.bucketPassword)
+			this.configListener = new BucketConfigListener(this.poolUrls, this.configuration.Bucket, this.configuration.BucketPassword)
 			{
 				Timeout = (int)this.configuration.SocketPool.ConnectionTimeout.TotalMilliseconds,
 				DeadTimeout = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds,
@@ -459,7 +478,7 @@ namespace Membase
 			public static readonly InternalState Empty = new InternalState { CurrentNodes = new IMemcachedNode[0], Locator = new NotFoundLocator() };
 
 			public IMemcachedNodeLocator Locator;
-			public VBucketNodeLocator ForwardLocator;
+			//public VBucketNodeLocator ForwardLocator;
 			public IMembaseOperationFactory OpFactory;
 			public IMemcachedNode[] CurrentNodes;
 

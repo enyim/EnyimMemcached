@@ -58,13 +58,18 @@ namespace Membase
 		/// <param name="bucketName">The name of the bucket this client will connect to.</param>
 		/// <param name="bucketPassword">The password of the bucket this client will connect to.</param>
 		public MembaseClient(IMembaseClientConfiguration configuration, string bucketName, string bucketPassword) :
-			base(new MembasePool(configuration, bucketName, bucketPassword),
+			this(new MembasePool(configuration, bucketName, bucketPassword), configuration) { }
+
+		protected MembaseClient(IMembaseServerPool pool, IMembaseClientConfiguration configuration)
+			: base(pool,
 					configuration.CreateKeyTransformer(),
 					configuration.CreateTranscoder(),
 					configuration.CreatePerformanceMonitor())
 		{
 			this.poolInstance = (IMembaseServerPool)this.Pool;
 		}
+
+		#region Obsolete code
 
 		/// <summary>Obsolete. Use .ctor(bucket, password) to explicitly set the bucket password.</summary>
 		[Obsolete("Use .ctor(bucket, password) to explicitly set the bucket password.", true)]
@@ -79,6 +84,8 @@ namespace Membase
 		{
 			throw new InvalidOperationException("Use .ctor(config, bucket, password) to explicitly set the bucket password.");
 		}
+
+		#endregion
 
 		protected override bool PerformTryGet(string key, out ulong cas, out object value)
 		{
