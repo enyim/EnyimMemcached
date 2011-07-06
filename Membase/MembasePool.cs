@@ -225,7 +225,7 @@ namespace Membase
 			var tmp = config == null
 					? Enumerable.Empty<IMemcachedNode>()
 						: (from node in config.nodes
-						   let ip = new IPEndPoint(IPAddress.Parse(node.hostname), node.ports.direct)
+						   let ip = new IPEndPoint(Dns.GetHostAddresses(node.hostname).First(), node.ports.direct)
 						   where node.status == "healthy"
 						   select (IMemcachedNode)(new BinaryNode(ip, this.configuration.SocketPool, auth)));
 
