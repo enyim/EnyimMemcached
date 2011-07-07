@@ -218,24 +218,48 @@ namespace Membase
 		private InternalState InitBasic(ClusterConfig config, ISaslAuthenticationProvider auth)
 		{
 			if (log.IsInfoEnabled) log.Info("No vbucket. Server count: " + (config.nodes == null ? 0 : config.nodes.Length));
+      List<IMemcachedNode> nodes = new List<IMemcachedNode>();
 
-			// no vbucket config, use the node list and the ports
-			//var portType = this.configuration.Port;
-
-			var tmp = config == null
-					? Enumerable.Empty<IMemcachedNode>()
-						: (from node in config.nodes
-						   let ip = new IPEndPoint(IPAddress.Parse(node.hostname), node.ports.direct)
-						   where node.status == "healthy"
-						   select (IMemcachedNode)(new BinaryNode(ip, this.configuration.SocketPool, auth)));
+      if (config != null)
+      {
+        foreach (ClusterNode v in config.nodes)
+        {
+          IPAddress address = GetAddress(v.hostname);
+          if (address != null)
+            nodes.Add(new BinaryNode(new IPEndPoint(address, v.ports.direct), configuration.SocketPool, auth));
+        }
+      }
 
 			return new InternalState
 			{
-				CurrentNodes = tmp.ToArray(),
-				Locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator(),
+				CurrentNodes = nodes.ToArray(),
+				Locator = configuration.CreateNodeLocator() ?? new KetamaNodeLocator(),
 				OpFactory = BasicMembaseOperationFactory.Instance
 			};
 		}
+
+    private static IPAddress GetAddress(string hostname)
+    {
+      IPAddress[] items = Dns.GetHostAddresses(hostname);
+      if (items.Length > 0)
+      {
+        if (log.IsInfoEnabled)
+        {
+          foreach (IPAddress item in items)
+          {
+            log.Info(string.Format("Found Address {0} found for {1}", item.ToString(), hostname));
+          }
+
+          log.Info(string.Format("Using Address {0} for {1}", items.First().ToString(), hostname));
+        }
+        return items.First();
+      }
+      else
+      {
+        log.Info(string.Format("No Address found for {0}", hostname));
+        return null;
+      }
+    }
 
 		void IDisposable.Dispose()
 		{
