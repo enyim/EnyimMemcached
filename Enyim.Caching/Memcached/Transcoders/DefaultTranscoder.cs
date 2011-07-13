@@ -10,7 +10,7 @@ namespace Enyim.Caching.Memcached
 	/// </summary>
 	public class DefaultTranscoder : ITranscoder
 	{
-		private const ushort RawDataFlag = 0xfa52;
+		public const uint RawDataFlag = 0xfa52;
 		private static readonly ArraySegment<byte> NullArray = new ArraySegment<byte>(new byte[0]);
 
 		CacheItem ITranscoder.Serialize(object value)
@@ -50,6 +50,8 @@ namespace Enyim.Caching.Memcached
 				case TypeCode.DBNull: data = this.SerializeNull(); break;
 				case TypeCode.String: data = this.SerializeString((String)value); break;
 				case TypeCode.Boolean: data = this.SerializeBoolean((Boolean)value); break;
+				case TypeCode.SByte: data = this.SerializeSByte((SByte)value); break;
+				case TypeCode.Byte: data = this.SerializeByte((Byte)value); break;
 				case TypeCode.Int16: data = this.SerializeInt16((Int16)value); break;
 				case TypeCode.Int32: data = this.SerializeInt32((Int32)value); break;
 				case TypeCode.Int64: data = this.SerializeInt64((Int64)value); break;
@@ -63,7 +65,17 @@ namespace Enyim.Caching.Memcached
 				default: data = this.SerializeObject(value); break;
 			}
 
-			return new CacheItem((ushort)((ushort)code | 0x0100), data);
+			return new CacheItem(TypeCodeToFlag(code), data);
+		}
+
+		public static uint TypeCodeToFlag(TypeCode code)
+		{
+			return (uint)((int)code | 0x0100);
+		}
+
+		public static bool IsFlagHandled(uint flag)
+		{
+			return (flag & 0x100) == 0x100;
 		}
 
 		protected virtual object Deserialize(CacheItem item)
@@ -86,7 +98,7 @@ namespace Enyim.Caching.Memcached
 				return retval;
 			}
 
-			var code = (TypeCode)(item.Flags & 0x00ff);
+			var code = (TypeCode)(item.Flags & 0xff);
 
 			var data = item.Data;
 
@@ -133,6 +145,16 @@ namespace Enyim.Caching.Memcached
 		protected virtual ArraySegment<byte> SerializeString(string value)
 		{
 			return new ArraySegment<byte>(Encoding.UTF8.GetBytes((string)value));
+		}
+
+		protected virtual ArraySegment<byte> SerializeByte(byte value)
+		{
+			return new ArraySegment<byte>(new byte[] { value });
+		}
+
+		protected virtual ArraySegment<byte> SerializeSByte(sbyte value)
+		{
+			return new ArraySegment<byte>(new byte[] { (byte)value });
 		}
 
 		protected virtual ArraySegment<byte> SerializeBoolean(bool value)
