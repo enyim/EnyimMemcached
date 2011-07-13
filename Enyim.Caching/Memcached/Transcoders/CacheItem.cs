@@ -9,14 +9,14 @@ namespace Enyim.Caching.Memcached
 	public struct CacheItem
 	{
 		private ArraySegment<byte> data;
-		private ushort flags;
+		private uint flags;
 
 		/// <summary>
 		/// Initializes a new instance of <see cref="T:CacheItem"/>.
 		/// </summary>
 		/// <param name="flags">Custom item data.</param>
 		/// <param name="data">The serialized item.</param>
-		public CacheItem(ushort flags, ArraySegment<byte> data)
+		public CacheItem(uint flags, ArraySegment<byte> data)
 		{
 			this.data = data;
 			this.flags = flags;
@@ -34,7 +34,7 @@ namespace Enyim.Caching.Memcached
 		/// <summary>
 		/// Flags set for this instance.
 		/// </summary>
-		public ushort Flags
+		public uint Flags
 		{
 			get { return this.flags; }
 			set { this.flags = value; }
