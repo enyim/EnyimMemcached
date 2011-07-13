@@ -49,17 +49,6 @@ namespace Membase.Configuration
 		/// </summary>
 		IPerformanceMonitor CreatePerformanceMonitor();
 
-		/// <summary>
-		/// Gets the credentials used to connect to the REST API of the cluster.
-		/// </summary>
-		NetworkCredential Credentials { get; }
-
-		/// <summary>
-		/// Determines which port the client should use to connect to the nodes
-		/// </summary>
-		[Obsolete]
-		BucketPortType Port { get; }
-
 		TimeSpan RetryTimeout { get; }
 		int RetryCount { get; }
 	}

@@ -10,9 +10,9 @@ namespace Enyim.Caching.Memcached
 		/// <summary>
 		/// Serializes an object for storing in the cache.
 		/// </summary>
-		/// <param name="o">The object to serialize</param>
+		/// <param name="value">The object to serialize</param>
 		/// <returns>The serialized object</returns>
-		CacheItem Serialize(Object o);
+		CacheItem Serialize(object value);
 
 		/// <summary>
 		/// Deserializes the <see cref="T:CacheItem"/> into an object.

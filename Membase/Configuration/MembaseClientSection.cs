@@ -12,7 +12,7 @@ namespace Membase.Configuration
 	/// <summary>
 	/// Configures the <see cref="T:MembaseClient"/>. This class cannot be inherited.
 	/// </summary>
-	public sealed class MembaseClientSection : ConfigurationSection, IMembaseClientConfiguration
+	public class MembaseClientSection : ConfigurationSection, IMembaseClientConfiguration
 	{
 		[ConfigurationProperty("servers", IsRequired = true)]
 		public ServersElement Servers
@@ -124,12 +124,6 @@ namespace Membase.Configuration
 			return null;
 		}
 
-		[Obsolete("Please use the bucket name&password for specifying credentials. This property has no use now, and will be completely removed in the next version.", true)]
-		NetworkCredential IMembaseClientConfiguration.Credentials
-		{
-			get { throw new NotImplementedException(); }
-		}
-
 		string IMembaseClientConfiguration.Bucket
 		{
 			get { return this.Servers.Bucket; }
@@ -138,12 +132,6 @@ namespace Membase.Configuration
 		string IMembaseClientConfiguration.BucketPassword
 		{
 			get { return this.Servers.BucketPassword; }
-		}
-
-		[Obsolete]
-		BucketPortType IMembaseClientConfiguration.Port
-		{
-			get { return this.Servers.Port; }
 		}
 
 		int IMembaseClientConfiguration.RetryCount

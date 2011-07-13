@@ -25,7 +25,6 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return retval;
 		}
 
-		public int StatusCode { get; private set; }
 		public byte[] Data { get; private set; }
 	}
 }

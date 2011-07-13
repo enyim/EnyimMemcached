@@ -23,7 +23,6 @@ namespace Membase.Configuration
 		public MembaseClientConfiguration()
 		{
 			this.Urls = new List<Uri>();
-			this.Port = BucketPortType.Direct;
 
 			this.SocketPool = new SocketPoolConfiguration();
 		}
@@ -95,25 +94,14 @@ namespace Membase.Configuration
 		/// </summary>
 		public IMembasePerformanceMonitorFactory PerformanceMonitorFactory { get; set; }
 
-		/// <summary>
-		/// Determines which port the client should use to connect to the nodes
-		/// </summary>
-		[Obsolete]
-		public BucketPortType Port { get; set; }
-
 		public int RetryCount { get; set; }
 		public TimeSpan RetryTimeout { get; set; }
 
 		#region [ interface                     ]
+
 		IList<Uri> IMembaseClientConfiguration.Urls
 		{
 			get { return this.Urls; }
-		}
-
-		[Obsolete("The bucket name&password will be used for authentication. This property will be removed in the next version.")]
-		NetworkCredential IMembaseClientConfiguration.Credentials
-		{
-			get { throw new NotImplementedException(); }
 		}
 
 		ISocketPoolConfiguration IMembaseClientConfiguration.SocketPool
@@ -146,12 +134,6 @@ namespace Membase.Configuration
 			get { return this.Bucket; }
 		}
 
-		[Obsolete]
-		BucketPortType IMembaseClientConfiguration.Port
-		{
-			get { return this.Port; }
-		}
-
 		int IMembaseClientConfiguration.RetryCount
 		{
 			get { return this.RetryCount; }
@@ -182,7 +164,6 @@ namespace Membase.Configuration
 		private string bucket;
 		private string bucketPassword;
 		private Uri[] urls;
-		private BucketPortType port;
 		private TimeSpan retryTimeout;
 		private int retryCount;
 		private ISocketPoolConfiguration spc;
@@ -195,7 +176,6 @@ namespace Membase.Configuration
 			this.bucketPassword = original.BucketPassword;
 			this.urls = original.Urls.ToArray();
 
-			this.port = BucketPortType.Direct;
 			this.retryCount = original.RetryCount;
 			this.retryTimeout = original.RetryTimeout;
 
@@ -248,16 +228,6 @@ namespace Membase.Configuration
 		IPerformanceMonitor IMembaseClientConfiguration.CreatePerformanceMonitor()
 		{
 			return this.original.CreatePerformanceMonitor();
-		}
-
-		NetworkCredential IMembaseClientConfiguration.Credentials
-		{
-			get { throw new NotImplementedException("this property is obsolete"); }
-		}
-
-		BucketPortType IMembaseClientConfiguration.Port
-		{
-			get { return this.port; }
 		}
 
 		TimeSpan IMembaseClientConfiguration.RetryTimeout
