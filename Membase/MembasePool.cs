@@ -257,7 +257,7 @@ namespace Membase
       else
       {
         log.Info(string.Format("No Address found for {0}", hostname));
-        return null;
+        throw new MemcachedClientException(string.Format("Unable to connect to {0} no sutiable addresses were found", hostname));
       }
     }
 
