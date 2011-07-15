@@ -255,12 +255,8 @@
     <Compile Include="UIntEqualityComparer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Changes.mdown">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Demo.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <None Include="Changes.mdown" />
+    <None Include="Demo.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

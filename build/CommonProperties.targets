@@ -1,29 +1,44 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<PropertyGroup>
-		<FileAlignment>512</FileAlignment>
-	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
 		<DebugSymbols>true</DebugSymbols>
 		<DebugType>full</DebugType>
 		<Optimize>false</Optimize>
-		<OutputPath>bin\Debug\</OutputPath>
 		<ErrorReport>prompt</ErrorReport>
 		<WarningLevel>4</WarningLevel>
 		<DefineConstants>TRACE;DEBUG</DefineConstants>
 		<RunCodeAnalysis>false</RunCodeAnalysis>
 	</PropertyGroup>
+
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
 		<DebugType>pdbonly</DebugType>
 		<Optimize>true</Optimize>
-		<OutputPath>..\build\output\$(MSBuildProjectName)\</OutputPath>
-		<DefineConstants>TRACE;SIGN</DefineConstants>
+		<DefineConstants>TRACE</DefineConstants>
 		<ErrorReport>prompt</ErrorReport>
 		<WarningLevel>4</WarningLevel>
 		<RunCodeAnalysis>false</RunCodeAnalysis>
 	</PropertyGroup>
-	<!-- local sign key -->
+
 	<PropertyGroup>
+		<OutputPath>bin\$(Configuration)</OutputPath>
+		<IntermediateOutputPath>obj\$(Configuration)</IntermediateOutputPath>
 		<SignAssembly>true</SignAssembly>
-		<AssemblyOriginatorKeyFile>..\localbuild.snk</AssemblyOriginatorKeyFile>
+	</PropertyGroup>
+
+	<!-- delay sign the assembly if the PrivateKeyPath property is not specified -->
+	<PropertyGroup Condition=" '$(PrivateKeyPath)' == '' And '$(PrivateKeyName)' == ''">
+		<AssemblyOriginatorKeyFile>..\public_key.snk</AssemblyOriginatorKeyFile>
+		<DelaySign>true</DelaySign>
+	</PropertyGroup>
+
+	<!-- sign the assembly using the specified key file containing both the private and public keys -->
+	<PropertyGroup Condition=" '$(PrivateKeyPath)' != '' ">
+		<AssemblyOriginatorKeyFile>$(PrivateKeyPath)</AssemblyOriginatorKeyFile>
+		<DelaySign>false</DelaySign>
+	</PropertyGroup>
+
+	<!-- sign the assembly using the specified key container containing both the private and public keys -->
+	<PropertyGroup Condition=" '$(PrivateKeyName)' != '' ">
+		<AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
+		<DelaySign>false</DelaySign>
 	</PropertyGroup>
 </Project>

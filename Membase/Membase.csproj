@@ -78,12 +78,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Demo.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Changes.mdown">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <None Include="Demo.config" />
+    <None Include="Changes.mdown" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

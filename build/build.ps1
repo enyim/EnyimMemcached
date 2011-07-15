@@ -1,101 +1,52 @@
-$config = "Release"
+<#
+	.SYNOPSIS
+		This is the entry point of the build process.
 
-function get-assembly-title
-{
-	param([string] $Path)
+	.DESCRIPTION
+		By default the build script rebuilds, signs and zips the project,
+		so you need to specify the signing key using either the KeyPath or
+		the KeyName parameters.
 
-	$file = get-item $Path
-	$content = [io.file]::ReadAllBytes($file.fullname)
-	$a = [System.Reflection.Assembly]::Load($content)
-	$d = [System.Attribute]::GetCustomAttribute($a, [System.Reflection.AssemblyTitleAttribute])
+		You can still build the project locally if you need so, but the
+		resulting assemblies will be delay signed, so you need to disable
+		verification using 'sn -Vr' (see the MSDN for more information).
 
-	return $d.Title
-}
+	.PARAMETER TaskList
+		The comma-separated list of task(s) to be run from the build script.
+		The following task name can be passed to the build script:
+		    - Clean
+		    - Build
+		    - Rebuild
 
-function transform
-{
-	param($Markdown, $TemplatePath, $FilePath, $Title)
+		If omitted the 'Default' task will be run.
 
-	return (get-content $TemplatePath) -replace '\$title', $Title -replace '\$content', $Markdown.Transform([io.file]::ReadAllText($FilePath))
-}
+	.PARAMETER KeyPath
+		Specify the full path of a .snk file which will be used to sign
+		the resulting assemblies. The file must contain both the public
+		and the private keys.
 
-# prepare
-pushd
+	.PARAMETER KeyName
+		Specify the name of the key container which will be used to sign
+		the resulting assemblies. The file must contain both the public
+		and the private keys.
 
-# tools
-$msbuild = "$Env:SYSTEMROOT\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe"
-$zip = "$Env:ProgramFiles\7-Zip\7z.exe"
+	.EXAMPLE
+		C:\PS> .\build.ps1 Rebuild
 
-if ((test-path $zip) -eq $False)
-{
-	"Could not find 7-zip, exiting."
-	return
-}
+	.EXAMPLE
+		C:\PS> .\build.ps1 -KeyPath C:\keys\enyim.snk
 
-if ((test-path "build.ps1") -eq $True) {
-	cd ..
-}
+#>
 
-$projectRoot = (get-location).path
+param(
+	[string]$TaskList = "Default",
+	[string]$KeyPath = $null,
+	[string]$KeyName = $null)
 
-$buildRoot = "$projectRoot\build\output"
+. .\parameters.ps1
 
-$projects = @( "Enyim.Caching", "Membase" )
-$includes = @{ "Enyim.Caching.Log4NetAdapter" = "log4net"; "Enyim.Caching.NLogAdapter" = "NLog" }
+$tmp = $buildParams + @{ "private_key_path" = "$KeyPath"; "private_key_name" = "$KeyName"; }
 
-# remove the output folders
-
-try {
-	if ((test-path $buildRoot) -eq $True) { 
-		remove-item $buildRoot -Recurse -Force -ErrorAction Stop
-	}
-} 
-catch {
-	write-host "Couldn't clean the build directory, exiting." -foregroundcolor red
-	return
-}
-
-md $buildRoot > $nul
-
-[System.Reflection.Assembly]::Load([io.file]::ReadAllBytes("$projectRoot\build\markdownsharp.dll")) > $nul
-$md = new-object MarkdownSharp.Markdown
-
-set-content "$buildRoot\Readme.html" -Value (transform -TemplatePath "$projectRoot\build\template.html" -FilePath "$projectRoot\README.mdown" -Title "Read Me" -Markdown $md)
-
-# build the projects
-.$msbuild /m:1 /v:m /nologo /target:Rebuild /property:"Configuration=Release;IsReleaseBuild=true" Enyim.Caching.sln
-
-$projects | % { 
-
-	$current = $_
-	$currentDest = "$buildRoot\$current"
-
-	$includes.Keys | % {
-
-		$includeDest = $currentDest + "\" + $includes[$_]
-		md $includeDest > $nul
-
-		$what = @("$buildRoot\$_\$_.*", "$buildRoot\$_\Demo.config")
-		copy $what -Destination $includeDest
-	}
-
-	set-content "$currentDest\Changes.html" -Value (transform -TemplatePath "$projectRoot\build\template.html" -FilePath "$currentDest\Changes.mdown" -Title "Change Log" -Markdown $md)
-	rm "$currentDest\Changes.mdown" > $nul
-
-	# we have to remove the tag from the version (emc2.3.4-9786545)
-	$version = get-assembly-title -Path "$currentDest\$current.dll" 
-        $zipname = $projectRoot + "\" + $current + "." + ($version -replace "^[^0-9]+", "") + ".zip"
-
-	del $zipname -ErrorAction SilentlyContinue
-
-	# 7zip roots the files relative to the current path
-	pushd
-	cd $currentDest > $nul
-
-	.$zip a -mx9 "$zipname" "." "$projectRoot\LICENSE" "$buildRoot\Readme.html"
-
-	popd
-}
-
-## all done
-popd
+import-module .\psake.psm1
+invoke-psake -buildFile .\default.ps1 -TaskList $TaskList -framework 4.0 -parameters $tmp
+remove-module psake
