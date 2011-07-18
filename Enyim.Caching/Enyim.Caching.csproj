@@ -99,8 +99,10 @@
     <Compile Include="Logging\ILog.cs" />
     <Compile Include="MemcachedClient.cs" />
     <Compile Include="Memcached\AsyncIOArgs.cs" />
+    <Compile Include="Memcached\AsyncSocketHelper.cs" />
     <Compile Include="Memcached\Authentication\PlainTextAuthenticator.cs">
     </Compile>
+    <Compile Include="Memcached\BasicNetworkStream.cs" />
     <Compile Include="Memcached\CommandNotSupportedException.cs">
     </Compile>
     <Compile Include="Memcached\DefaultServerPool.cs">
