@@ -29,6 +29,10 @@ namespace Enyim.Caching.Memcached
 #endif
 			private int remainingRead;
 			private int expectedToRead;
+			private AsyncIOArgs pendingArgs;
+
+			private int isAborted;
+			private ManualResetEvent readInProgressEvent;
 
 			public AsyncSocketHelper(PooledSocket socket)
 			{
@@ -38,12 +42,9 @@ namespace Enyim.Caching.Memcached
 				this.readEvent = new SocketAsyncEventArgs();
 				this.readEvent.Completed += new EventHandler<SocketAsyncEventArgs>(AsyncReadCompleted);
 				this.readEvent.SetBuffer(new byte[ChunkSize], 0, ChunkSize);
-			}
 
-			private AsyncIOArgs pendingArgs;
-#if DEBUG_IO
-			private ManualResetEvent mre;
-#endif
+				this.readInProgressEvent = new ManualResetEvent(false);
+			}
 
 			/// <summary>
 			/// returns true if io is pending
@@ -73,9 +74,8 @@ namespace Enyim.Caching.Memcached
 				else
 				{
 					this.remainingRead = count - this.asyncBuffer.Available;
-#if DEBUG_IO
-					this.mre = new ManualResetEvent(false);
-#endif
+					this.isAborted = 0;
+
 					this.BeginReceive();
 
 					return true;
@@ -89,17 +89,17 @@ namespace Enyim.Caching.Memcached
 
 			private void BeginReceive()
 			{
-#if DEBUG_IO
-				mre.Reset();
-#endif
 				while (this.remainingRead > 0)
 				{
+					this.readInProgressEvent.Reset();
+
 					if (this.socket.socket.ReceiveAsync(this.readEvent))
 					{
-#if DEBUG_IO
-						if (!mre.WaitOne(4000))
-							System.Diagnostics.Debugger.Break();
-#endif
+						// wait until the timeout elapses, then abort this reading process
+						// EndREceive will be triggered sooner or later but its timeout
+						// may be higher than our read timeout, so it's not reliable
+						if (!readInProgressEvent.WaitOne(this.socket.socket.ReceiveTimeout))
+							this.AbortReadAndPublishError();
 
 						return;
 					}
@@ -116,6 +116,12 @@ namespace Enyim.Caching.Memcached
 
 			private void AbortReadAndPublishError()
 			{
+				// we've been already aborted, so quit
+				// both the EndReceive and the wait on the event can abort the read
+				// but only one should of them should continue the async call chain
+				if (Interlocked.CompareExchange(ref this.isAborted, 1, 0) != 0)
+					return;
+
 				this.remainingRead = 0;
 				this.socket.isAlive = false;
 
@@ -138,13 +144,16 @@ namespace Enyim.Caching.Memcached
 			/// <returns></returns>
 			private bool EndReceive()
 			{
-#if DEBUG_IO
-				mre.Set();
-#endif
+				this.readInProgressEvent.Set();
+
 				var read = this.readEvent.BytesTransferred;
 				if (this.readEvent.SocketError != SocketError.Success
 					|| read == 0)
+				{
 					this.AbortReadAndPublishError();//new IOException("Remote end has been closed"));
+
+					return false;
+				}
 
 				this.remainingRead -= read;
 				this.asyncBuffer.Append(this.readEvent.Buffer, 0, read);
@@ -175,7 +184,6 @@ namespace Enyim.Caching.Memcached
 					pendingArgs.Next(pendingArgs);
 			}
 		}
-
 	}
 }
 
