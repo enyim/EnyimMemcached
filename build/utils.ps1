@@ -10,6 +10,18 @@ function global:get-assembly-title
 	return $d.Title
 }
 
+function global:get-assembly-version
+{
+	param([string] $Path)
+
+	$file = get-item $Path
+	$content = [io.file]::ReadAllBytes($file.fullname)
+	$a = [System.Reflection.Assembly]::Load($content)
+	$name = $a.GetName()
+
+	return $name.Version
+}
+
 $Markdown = $null
 
 function global:transform-markdown

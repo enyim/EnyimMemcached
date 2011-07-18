@@ -17,6 +17,7 @@
 		    - Clean
 		    - Build
 		    - Rebuild
+		    - Nuget
 
 		If omitted the 'Default' task will be run.
 
@@ -43,7 +44,7 @@ param(
 	[string]$KeyPath = $null,
 	[string]$KeyName = $null)
 
-. .\parameters.ps1
+. .\properties.ps1
 
 $tmp = $buildParams + @{ "private_key_path" = "$KeyPath"; "private_key_name" = "$KeyName"; }
 

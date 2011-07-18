@@ -256,7 +256,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Changes.mdown" />
+    <None Include="Config.transform" />
     <None Include="Demo.config" />
+    <None Include="Enyim.Caching.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

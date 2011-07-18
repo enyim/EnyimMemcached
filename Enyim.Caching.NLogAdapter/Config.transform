@@ -3,13 +3,10 @@
 	<configSections>
 		<sectionGroup name="enyim.com">
 			<section name="log" type="Enyim.Caching.Configuration.LoggerSection, Enyim.Caching" />
-			<!-- ... -->
 		</sectionGroup>
 	</configSections>
 
 	<enyim.com>
 		<log factory="Enyim.Caching.NLogFactory, Enyim.Caching.NLogAdapter" />
-		<!-- ... -->
 	</enyim.com>
-
 </configuration>

@@ -1,0 +1,19 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+	<metadata>
+		<id>Membase</id>
+		<version>$version$</version>
+		<authors>Attila Kiskó</authors>
+		<owners>Attila Kiskó</owners>
+		<licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+		<projectUrl>https://github.com/enyim/EnyimMemcached</projectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>Membase client library for .NET based languages.</description>
+		<tags>membase enyim cache caching nosql</tags>
+	</metadata>
+	<files>
+		<file src="bin\Release\Enyim.Caching.*" target="lib\net35" />
+		<file src="bin\Release\Membase.*" target="lib\net35" />
+		<file src="config.transform" target="content\app.config.transform" />
+	</files>
+</package>
