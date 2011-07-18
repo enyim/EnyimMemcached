@@ -213,7 +213,8 @@ namespace Membase
 			{
 				CurrentNodes = nodes.ToArray(),
 				Locator = locator,
-				OpFactory = new VBucketAwareOperationFactory(locator)
+				OpFactory = new VBucketAwareOperationFactory(locator),
+				IsVbucket = true
 			};
 		}
 
@@ -260,10 +261,10 @@ namespace Membase
 		{
 			GC.SuppressFinalize(this);
 
-			if (this.state != null)
+			if (this.state != null && this.state != InternalState.Empty)
 				lock (this.DeadSync)
 				{
-					if (this.state != null)
+					if (this.state != null && this.state != InternalState.Empty)
 					{
 						var currentNodes = this.state.CurrentNodes;
 						this.state = null;
@@ -287,7 +288,7 @@ namespace Membase
 
 		private void rezCallback(object o)
 		{
-			if (this.state == null) return;
+			if (this.state == null || this.state == InternalState.Empty) return;
 
 			var isDebug = log.IsDebugEnabled;
 
@@ -309,7 +310,7 @@ namespace Membase
 			// 8. GOTO 2
 			lock (this.DeadSync)
 			{
-				if (this.state == null) return;
+				if (this.state == null || this.state == InternalState.Empty) return;
 
 				var currentState = this.state;
 				var nodes = currentState.CurrentNodes;
@@ -377,6 +378,10 @@ namespace Membase
 			{
 				var currentState = this.state;
 
+				// the pool has been already reinitialized by the time the node
+				// reported its failure, thus it has no connection to the current state
+				if (currentState == null || currentState == InternalState.Empty) return;
+
 				// we don't know who to reconfigure the pool when vbucket is
 				// enabled, so operations targeting the dead servers will fail.
 				// when we have a normal config we just reconfigure the locator,
@@ -386,22 +391,27 @@ namespace Membase
 					if (isDebug) log.Debug("We have a standard config, so we'll recreate the node locator.");
 
 					ReinitializeLocator(currentState);
+
+					// the timer is stopped until we encounter the first dead server
+					// when we have one, we trigger it and it will run after DeadTimeout has elapsed
+					if (!this.isTimerActive)
+					{
+						if (isDebug) log.Debug("Starting the recovery timer.");
+
+						if (this.resurrectTimer == null)
+							this.resurrectTimer = new Timer(this.rezCallback, null, this.deadTimeoutMsec, Timeout.Infinite);
+						else
+							this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
+
+						this.isTimerActive = true;
+
+						if (isDebug) log.Debug("Timer started.");
+					}
 				}
-
-				// the timer is stopped until we encounter the first dead server
-				// when we have one, we trigger it and it will run after DeadTimeout has elapsed
-				if (!this.isTimerActive)
+				else
 				{
-					if (isDebug) log.Debug("Starting the recovery timer.");
-
-					if (this.resurrectTimer == null)
-						this.resurrectTimer = new Timer(this.rezCallback, null, this.deadTimeoutMsec, Timeout.Infinite);
-					else
-						this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
-
-					this.isTimerActive = true;
-
-					if (isDebug) log.Debug("Timer started.");
+					if (log.IsDebugEnabled)
+						log.Debug("We have a vbucket enabled bucket, skipping the timer.");
 				}
 			}
 
