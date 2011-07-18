@@ -234,22 +234,49 @@ namespace Membase
 		{
 			if (log.IsInfoEnabled) log.Info("No vbucket. Server count: " + (config.nodes == null ? 0 : config.nodes.Length));
 
-			// no vbucket config, use the node list and the ports
-			//var portType = this.configuration.Port;
-
-			var tmp = config == null
-					? Enumerable.Empty<IMemcachedNode>()
-						: (from node in config.nodes
-						   let ip = new IPEndPoint(IPAddress.Parse(node.HostName), node.Port)
-						   where node.Status == "healthy"
-						   select CreateNode(ip, auth, node.ConfigurationData));
+			// the cluster can return host names in the server list, so
+			// we ha ve to make sure they are converted to IP addresses
+			var nodes = config == null
+						? Enumerable.Empty<IMemcachedNode>()
+							: (from node in config.nodes
+							   let ip = new IPEndPoint(GetFirstAddress(node.HostName), node.Port)
+							   where node.Status == "healthy"
+							   select CreateNode(ip, auth, node.ConfigurationData));
 
 			return new InternalState
 			{
-				CurrentNodes = tmp.ToArray(),
-				Locator = this.configuration.CreateNodeLocator() ?? new KetamaNodeLocator(),
+				CurrentNodes = nodes.ToArray(),
+				Locator = configuration.CreateNodeLocator() ?? new KetamaNodeLocator(),
 				OpFactory = BasicMembaseOperationFactory.Instance
 			};
+		}
+
+		private static IPAddress GetFirstAddress(string hostname)
+		{
+			var items = Dns.GetHostAddresses(hostname);
+
+			// if either the dns is not set up properly
+			// or the host is mapped only to an IPv6 address
+			// but the client has no IPv6 stack
+			// then GetHostAddresses will not return anything
+			if (items.Length > 0)
+			{
+				if (log.IsDebugEnabled)
+					foreach (IPAddress item in items)
+						log.DebugFormat("Found address {0} for {1}", item, hostname);
+
+				var retval = items[0];
+
+				if (log.IsDebugEnabled)
+					log.DebugFormat("Using address {0} for {1}", retval, hostname);
+
+				return retval;
+			}
+
+			if (log.IsErrorEnabled)
+				log.Error("Could not resolve " + hostname);
+
+			throw new MemcachedClientException("Could not resolve " + hostname);
 		}
 
 		protected virtual IMemcachedNode CreateNode(IPEndPoint endpoint, ISaslAuthenticationProvider auth, Dictionary<string, object> nodeInfo)
