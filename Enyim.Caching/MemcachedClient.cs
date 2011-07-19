@@ -619,7 +619,7 @@ namespace Enyim.Caching
 
 			if (node != null)
 			{
-				var command = this.pool.OperationFactory.Concat(mode, hashedKey, 0, data);
+				var command = this.pool.OperationFactory.Concat(mode, hashedKey, cas, data);
 				var retval = node.Execute(command);
 
 				cas = command.CasValue;

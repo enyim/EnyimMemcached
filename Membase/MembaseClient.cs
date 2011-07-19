@@ -143,7 +143,7 @@ namespace Membase
 
 			if (node != null)
 			{
-				var command = this.Pool.OperationFactory.Concat(mode, hashedKey, 0, data);
+				var command = this.Pool.OperationFactory.Concat(mode, hashedKey, cas, data);
 				var retval = this.ExecuteWithRedirect(node, command);
 
 				cas = command.CasValue;

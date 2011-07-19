@@ -84,6 +84,58 @@ namespace MemcachedTest
 				Assert.AreEqual(r5.Result, "baz", "Invalid data returned; excpected 'baz'.");
 			}
 		}
+
+		[TestCase]
+		public void AppendCASTest()
+		{
+			using (MemcachedClient client = GetClient())
+			{
+				// store the item
+				var r1 = client.Cas(StoreMode.Set, "CasAppend", "foo");
+
+				Assert.IsTrue(r1.Result, "Initial set failed.");
+				Assert.AreNotEqual(r1.Cas, 0, "No cas value was returned.");
+
+				var r2 = client.Append("CasAppend", r1.Cas, new System.ArraySegment<byte>(new byte[] { (byte)'l' }));
+
+				Assert.IsTrue(r2.Result, "Append should have succeeded.");
+
+				// get back the item and check the cas value (it should match the cas from the set)
+				var r3 = client.GetWithCas<string>("CasAppend");
+
+				Assert.AreEqual(r3.Result, "fool", "Invalid data returned; expected 'fool'.");
+				Assert.AreEqual(r2.Cas, r3.Cas, "Cas values r2:r3 do not match.");
+
+				var r4 = client.Append("CasAppend", r1.Cas, new System.ArraySegment<byte>(new byte[] { (byte)'l' }));
+				Assert.IsFalse(r4.Result, "Append with invalid CAS should have failed.");
+			}
+		}
+
+		[TestCase]
+		public void PrependCASTest()
+		{
+			using (MemcachedClient client = GetClient())
+			{
+				// store the item
+				var r1 = client.Cas(StoreMode.Set, "CasPrepend", "ool");
+
+				Assert.IsTrue(r1.Result, "Initial set failed.");
+				Assert.AreNotEqual(r1.Cas, 0, "No cas value was returned.");
+
+				var r2 = client.Prepend("CasPrepend", r1.Cas, new System.ArraySegment<byte>(new byte[] { (byte)'f' }));
+
+				Assert.IsTrue(r2.Result, "Prepend should have succeeded.");
+
+				// get back the item and check the cas value (it should match the cas from the set)
+				var r3 = client.GetWithCas<string>("CasPrepend");
+
+				Assert.AreEqual(r3.Result, "fool", "Invalid data returned; expected 'fool'.");
+				Assert.AreEqual(r2.Cas, r3.Cas, "Cas values r2:r3 do not match.");
+
+				var r4 = client.Prepend("CasPrepend", r1.Cas, new System.ArraySegment<byte>(new byte[] { (byte)'l' }));
+				Assert.IsFalse(r4.Result, "Prepend with invalid CAS should have failed.");
+			}
+		}
 	}
 }
 
