@@ -99,7 +99,7 @@ namespace Enyim.Caching.Memcached
 						// EndREceive will be triggered sooner or later but its timeout
 						// may be higher than our read timeout, so it's not reliable
 						if (!readInProgressEvent.WaitOne(this.socket.socket.ReceiveTimeout))
-							this.AbortReadAndPublishError();
+							this.AbortReadAndTryPublishError(false);
 
 						return;
 					}
@@ -114,8 +114,11 @@ namespace Enyim.Caching.Memcached
 					this.BeginReceive();
 			}
 
-			private void AbortReadAndPublishError()
+			private void AbortReadAndTryPublishError(bool markAsDead)
 			{
+				if (markAsDead)
+					this.socket.isAlive = false;
+
 				// we've been already aborted, so quit
 				// both the EndReceive and the wait on the event can abort the read
 				// but only one should of them should continue the async call chain
@@ -123,8 +126,6 @@ namespace Enyim.Caching.Memcached
 					return;
 
 				this.remainingRead = 0;
-				this.socket.isAlive = false;
-
 				var p = this.pendingArgs;
 #if DEBUG_IO
 				Thread.MemoryBarrier();
@@ -150,7 +151,7 @@ namespace Enyim.Caching.Memcached
 				if (this.readEvent.SocketError != SocketError.Success
 					|| read == 0)
 				{
-					this.AbortReadAndPublishError();//new IOException("Remote end has been closed"));
+					this.AbortReadAndTryPublishError(true);//new IOException("Remote end has been closed"));
 
 					return false;
 				}
