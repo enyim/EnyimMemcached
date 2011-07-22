@@ -103,8 +103,8 @@ namespace Enyim.Caching
 		public object Get(string key)
 		{
 			object tmp;
-
-			return this.TryGet(key, out tmp) ? tmp : null;
+		    ulong cas;
+			return this.PerformTryGet(key, out cas, out tmp) ? tmp : null;
 		}
 
 		/// <summary>
@@ -115,8 +115,8 @@ namespace Enyim.Caching
 		public T Get<T>(string key)
 		{
 			object tmp;
-
-			return TryGet(key, out tmp) ? (T)tmp : default(T);
+            ulong cas;
+			return PerformTryGet(key, out cas, out tmp) ? (T)tmp : default(T);
 		}
 
 		/// <summary>
@@ -127,9 +127,17 @@ namespace Enyim.Caching
 		/// <returns>The <value>true</value> if the item was successfully retrieved.</returns>
 		public bool TryGet(string key, out object value)
 		{
-			ulong cas = 0;
-
-			return this.PerformTryGet(key, out cas, out value);
+		    try
+            {
+                ulong cas;
+                return this.PerformTryGet(key, out cas, out value);
+            }
+            catch(Exception e)
+            {
+                log.Error("TryGet", e);
+                value = null;
+                return false;
+            }
 		}
 
 		public CasResult<object> GetWithCas(string key)
@@ -151,11 +159,18 @@ namespace Enyim.Caching
 			object tmp;
 			ulong cas;
 
-			var retval = this.PerformTryGet(key, out cas, out tmp);
-
-			value = new CasResult<object> { Cas = cas, Result = tmp };
-
-			return retval;
+            try
+            {
+                var retval = this.PerformTryGet(key, out cas, out tmp);
+                value = new CasResult<object> {Cas = cas, Result = tmp};
+                return retval;
+            }
+            catch (Exception e)
+            {
+                log.Error("TryGet", e);
+                value = default(CasResult<object>);
+                return false;
+            }
 		}
 
 		protected virtual bool PerformTryGet(string key, out ulong cas, out object value)
