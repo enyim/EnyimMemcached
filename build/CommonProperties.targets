@@ -41,4 +41,10 @@
 		<AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
 		<DelaySign>false</DelaySign>
 	</PropertyGroup>
+
+	<!-- if private signature is supplied, use it regarless other settings -->
+	<PropertyGroup Condition="Exists('..\private.snk')">
+		<AssemblyOriginatorKeyFile>..\private.snk</AssemblyOriginatorKeyFile>
+		<DelaySign>false</DelaySign>
+	</PropertyGroup>
 </Project>
