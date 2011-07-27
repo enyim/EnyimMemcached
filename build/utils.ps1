@@ -36,22 +36,35 @@ function global:transform-markdown
 	return (get-content $TemplatePath) -replace '\$title', $Title -replace '\$content', $Markdown.Transform([io.file]::ReadAllText($FilePath))
 }
 
-function global:get7zip
+# tries to find the specified .exe in PF and PF(x86)
+function global:guessExe
 {
+	param($RelativePath)
+
 	$pfx86 = "${Env:ProgramFiles(x86)}"
 	$pf = $env:ProgramFiles
 
-	$tmp = join-path $pf "7-Zip\7z.exe"
+	$tmp = join-path $pf $RelativePath
 	if (test-path $tmp) { return $tmp }
 
-	$tmp = join-path $pfx86 "7-Zip\7z.exe"
+	$tmp = join-path $pfx86 $RelativePath
 	if (test-path $tmp) { return $tmp }
 
 	# if this is an x86 host on x64 we'll get the x86 PF folder both time so try to get the x64 dir
-	$tmp = join-path ($pf -replace ' \(x86\)$', "") "7-Zip\7z.exe"
+	$tmp = join-path ($pf -replace ' \(x86\)$', "") $RelativePath
 	if (test-path $tmp) { return $tmp }
 
-	throw "7-Zip is not installed."
+	throw "$RelativePath cannot be found on the system."
+}
+
+function global:get7zip
+{
+	return (global:guessExe -RelativePath "7-Zip\7z.exe")
+}
+
+function global:getilmerge
+{
+	return (global:guessExe -RelativePath "microsoft\ilmerge\ilmerge.exe")
 }
 
 # $zip = "$Env:ProgramFiles\7-Zip\7z.exe"

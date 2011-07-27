@@ -64,16 +64,15 @@ Task _Clean -depends _CheckConfig {
 Task _Build -depends _CheckConfig {
 
 	Write-Host "Building the solution." -ForegroundColor Green
-		"got it: $script:private_key_path"
 
-	Exec { msbuild "$source_root\$solution_name" /t:Build /p:"Configuration=Release;PrivateKeyName=$private_key_name;PrivateKeyPath=$script:private_key_path" }
+	Exec { msbuild "$source_root\$solution_name" /t:Build /p:"Configuration=Release;PrivateKeyName=$private_key_name;PrivateKeyPath=$script:private_key_path;IlMergePath=$ilmerge" }
 }
 
 #################### Nuget ####################
 
 Task _Nuget -depends _Build -PreAction { create-output-dir } {
 
-	$packages | % { 
+	$packages | % {
 
 		$package = $_
 
@@ -101,11 +100,19 @@ Task _Zip -PreAction {
 
 	$zip = get7zip
 
-	set-content "$temp_root\Readme.html" `
-		-Value (transform-markdown `
-			-TemplatePath "$build_root\template.html" `
-			-FilePath "$source_root\README.mdown" `
-			-Title "Read Me")
+	if (test-path "$source_root\README.mdown") {
+		set-content "$temp_root\Readme.html" `
+			-Value (transform-markdown `
+				-TemplatePath "$build_root\template.html" `
+				-FilePath "$source_root\README.mdown" `
+				-Title "Read Me")
+	} elseif (test-path "$source_root\README.md") {
+		set-content "$temp_root\Readme.html" `
+			-Value (transform-markdown `
+				-TemplatePath "$build_root\template.html" `
+				-FilePath "$source_root\README.md" `
+				-Title "Read Me")
+	}
 
 	$projects | % { 
 
@@ -116,7 +123,7 @@ Task _Zip -PreAction {
 
 		mkdir $proj_dest | out-null
 		copy "$source_root\$proj\bin\Release\*.*" $proj_dest
-		copy "$source_root\$proj\*.config" $proj_dest
+		copy "$source_root\$proj\*.config" -exclude packages.config $proj_dest
 
 		set-content "$proj_dest\Changes.html" `
 			-Value (transform-markdown `
@@ -127,16 +134,19 @@ Task _Zip -PreAction {
 		if ($extras -ne $null) {
 			$extras.Keys | % {
 
-				# temp\project_name\extra_project
 				$extra_dest = $proj_dest + "\" + $extras[$_]
+				$extra_root = resolve-path "$source_root\$_"
+				$extra_name = split-path -leaf $extra_root
+
+				# temp\project_name\extra_project
 				md $extra_dest | out-null
 
-				copy @("$source_root\$_\bin\release\$_.*", "$source_root\$_\Demo.config") -Destination $extra_dest
+				copy @("$extra_root\bin\release\$extra_name.*", "$source_root\$_\Demo.config") -Destination $extra_dest
 			}
 		}
 
 		# we have to remove the tag from the version (emc2.3.4-9786545)
-		$version = get-assembly-title -Path "$proj_dest\$proj.dll" 
+		$version = get-assembly-title -Path "$proj_dest\$proj.dll"
 		$zipname = $output_root + "\" + $proj + "." + ($version -replace "^[^0-9]+", "") + ".zip"
 
 		del $zipname -ErrorAction SilentlyContinue | out-null

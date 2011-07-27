@@ -42,7 +42,7 @@
 		<ReadLinesFromFile File="$(GitVersionCache)" ContinueOnError="true">
 			<Output TaskParameter="Lines" PropertyName="_LastGitVersion"/>
 		</ReadLinesFromFile>
-		<CreateProperty Condition=" '$(_CurrentGitVersion)' == '' " Value="none0.0-yet">
+		<CreateProperty Condition=" '$(_CurrentGitVersion)' == '' " Value="none1.0-yet">
 			<Output PropertyName="_CurrentGitVersion" TaskParameter="Value"/>
 		</CreateProperty>
 	</Target>
