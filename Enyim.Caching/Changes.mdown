@@ -1,5 +1,10 @@
 ﻿# Enyim Memcached Version History
 
+## 2.11
+
+ * Fixed the CAS handling of Append and Prepend
+ * Multigets now honor the receive timeout
+
 ## Version 2.10
 
  * Fixed [Issue #65](https://github.com/enyim/EnyimMemcached/issues#issue/65) - Getting multiple keys twice in a row fails.

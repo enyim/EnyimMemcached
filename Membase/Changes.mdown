@@ -1,5 +1,12 @@
 ﻿# Membase Client Version History
 
+## Version 2.14
+
+ * Fixed [Issue #69](https://github.com/enyim/EnyimMemcached/issues#issue/69) - Handle hist names in the cluster config
+ * Fixed [Issue #71](https://github.com/enyim/EnyimMemcached/issues#issue/71) - Increasing number of vbucket errors
+ * Fixed the CAS handling of Append and Prepend
+ * Multigets now honor the receive timeout
+
 ## Version 2.13
 
  * Fixed [Issue #65](https://github.com/enyim/EnyimMemcached/issues#issue/65) - Getting multiple keys twice in a row fails.
