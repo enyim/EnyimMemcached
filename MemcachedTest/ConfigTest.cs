@@ -15,6 +15,12 @@ namespace MemcachedTest
 	[TestFixture]
 	public class ConfigTest
 	{
+		[TestFixtureSetUp]
+		public void Setup()
+		{
+			log4net.Config.XmlConfigurator.Configure();
+		}
+
 		[TestCase]
 		public void NewProvidersConfigurationTest()
 		{
@@ -164,6 +170,22 @@ namespace MemcachedTest
 			var config = ConfigurationManager.GetSection("test/memcachedPerfMonWithFactory") as IMemcachedClientConfiguration;
 
 			Assert.IsInstanceOf<TestPerfMon>(config.CreatePerformanceMonitor());
+		}
+
+		[TestCase]
+		public void TestThrottlingFailurePolicy()
+		{
+			var config = ConfigurationManager.GetSection("test/throttlingFailurePolicy") as IMemcachedClientConfiguration;
+
+			var policyFactory = config.SocketPool.FailurePolicyFactory;
+
+			Assert.IsNotNull(policyFactory);
+			Assert.IsInstanceOf<ThrottlingFailurePolicyFactory>(policyFactory);
+
+			var tfp = (ThrottlingFailurePolicyFactory)policyFactory;
+
+			Assert.IsTrue(tfp.FailureThreshold == 10, "failureThreshold must be 10");
+			Assert.IsTrue(tfp.ResetAfter == 100, "resetAfter must be 100 msec");
 		}
 	}
 

@@ -1,26 +1,39 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace Enyim.Caching.Memcached
 {
 	/// <summary>
-	/// Provides custom server pool implementations
+	/// Fails a node immediately when an error occures. This is the default policy.
 	/// </summary>
-	public interface IServerPool : IDisposable
+	public sealed class FailImmediatelyPolicy : INodeFailurePolicy
 	{
-		IMemcachedNode Locate(string key);
-		IOperationFactory OperationFactory { get; }
-		IEnumerable<IMemcachedNode> GetWorkingNodes();
+		bool INodeFailurePolicy.ShouldFail()
+		{
+			return true;
+		}
+	}
 
-		void Start();
-		event Action<IMemcachedNode> NodeFailed;
+	/// <summary>
+	/// Creates instances of <see cref="T:FailImmediatelyPolicy"/>.
+	/// </summary>
+	public class FailImmediatelyPolicyFactory : INodeFailurePolicyFactory
+	{
+		private static readonly INodeFailurePolicy PolicyInstance = new FailImmediatelyPolicy();
+
+		INodeFailurePolicy INodeFailurePolicyFactory.Create(IMemcachedNode node)
+		{
+			return PolicyInstance;
+		}
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kisk�, enyim.com
+ *    Copyright (c) 2011 Attila Kiskó, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

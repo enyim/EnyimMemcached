@@ -1,4 +1,5 @@
 using System;
+using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Configuration
 {
@@ -66,6 +67,8 @@ namespace Enyim.Caching.Configuration
 			get;
 			set;
 		}
+
+		INodeFailurePolicyFactory FailurePolicyFactory { get; set; }
 	}
 }
 

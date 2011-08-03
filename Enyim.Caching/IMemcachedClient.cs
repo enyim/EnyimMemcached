@@ -54,5 +54,7 @@ namespace Enyim.Caching
 
 		ServerStats Stats();
 		ServerStats Stats(string type);
+
+		event Action<IMemcachedNode> NodeFailed;
 	}
 }

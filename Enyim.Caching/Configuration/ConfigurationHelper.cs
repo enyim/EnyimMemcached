@@ -7,6 +7,40 @@ namespace Enyim.Caching.Configuration
 {
 	public static class ConfigurationHelper
 	{
+		internal static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out int value, bool required)
+		{
+			string tmp;
+			if (TryGetAndRemove(dict, name, out tmp, required)
+				&& Int32.TryParse(tmp, out value))
+			{
+				return true;
+			}
+
+			if (required)
+				throw new System.Configuration.ConfigurationErrorsException("Missing or invalid parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
+
+			value = 0;
+
+			return false;
+		}
+
+		internal static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out TimeSpan value, bool required)
+		{
+			string tmp;
+			if (TryGetAndRemove(dict, name, out tmp, required)
+				&& TimeSpan.TryParse(tmp, out value))
+			{
+				return true;
+			}
+
+			if (required)
+				throw new System.Configuration.ConfigurationErrorsException("Missing or invalid parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
+
+			value = TimeSpan.Zero;
+
+			return false;
+		}
+
 		internal static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out string value, bool required)
 		{
 			if (dict.TryGetValue(name, out value))

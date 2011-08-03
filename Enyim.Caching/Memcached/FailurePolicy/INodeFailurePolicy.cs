@@ -1,26 +1,25 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace Enyim.Caching.Memcached
 {
-	/// <summary>
-	/// Provides custom server pool implementations
-	/// </summary>
-	public interface IServerPool : IDisposable
+	public interface INodeFailurePolicy
 	{
-		IMemcachedNode Locate(string key);
-		IOperationFactory OperationFactory { get; }
-		IEnumerable<IMemcachedNode> GetWorkingNodes();
+		bool ShouldFail();
+	}
 
-		void Start();
-		event Action<IMemcachedNode> NodeFailed;
+	public interface INodeFailurePolicyFactory
+	{
+		INodeFailurePolicy Create(IMemcachedNode node);
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kisk�, enyim.com
+ *    Copyright (c) 2011 Attila Kiskó, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

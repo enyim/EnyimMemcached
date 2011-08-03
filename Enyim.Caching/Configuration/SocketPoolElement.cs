@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Configuration;
+using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Configuration
 {
@@ -87,6 +88,13 @@ namespace Enyim.Caching.Configuration
 				throw new ConfigurationErrorsException("maxPoolSize must be larger than minPoolSize.");
 		}
 
+		[ConfigurationProperty("failurePolicyFactory", IsRequired = false)]
+		public ProviderElement<INodeFailurePolicyFactory> FailurePolicyFactory
+		{
+			get { return (ProviderElement<INodeFailurePolicyFactory>)base["failurePolicyFactory"]; }
+			set { base["failurePolicyFactory"] = value; }
+		}
+
 		#region [ ISocketPoolConfiguration     ]
 
 		int ISocketPoolConfiguration.MinPoolSize
@@ -111,6 +119,24 @@ namespace Enyim.Caching.Configuration
 		{
 			get { return this.DeadTimeout; }
 			set { this.DeadTimeout = value; }
+		}
+
+		TimeSpan ISocketPoolConfiguration.QueueTimeout
+		{
+			get { return this.QueueTimeout; }
+			set { this.QueueTimeout = value; }
+		}
+
+		TimeSpan ISocketPoolConfiguration.ReceiveTimeout
+		{
+			get { return this.ReceiveTimeout; }
+			set { this.ReceiveTimeout = value; }
+		}
+
+		INodeFailurePolicyFactory ISocketPoolConfiguration.FailurePolicyFactory
+		{
+			get { return this.FailurePolicyFactory.CreateInstance() ?? new FailImmediatelyPolicyFactory(); }
+			set { }
 		}
 
 		#endregion

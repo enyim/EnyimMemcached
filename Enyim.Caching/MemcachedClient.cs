@@ -60,7 +60,8 @@ namespace Enyim.Caching
 			this.performanceMonitor = configuration.CreatePerformanceMonitor();
 
 			this.pool = configuration.CreatePool();
-			this.pool.Start();
+			this.pool.NodeFailed += (n) => { var f = this.NodeFailed; if (f != null) f(n); };
+			this.StartPool();
 		}
 
 		public MemcachedClient(IServerPool pool, IMemcachedKeyTransformer keyTransformer, ITranscoder transcoder)
@@ -77,14 +78,16 @@ namespace Enyim.Caching
 			this.transcoder = transcoder;
 
 			this.pool = pool;
+			this.StartPool();
+		}
+
+		private void StartPool()
+		{
+			this.pool.NodeFailed += (n) => { var f = this.NodeFailed; if (f != null) f(n); };
 			this.pool.Start();
 		}
 
-		~MemcachedClient()
-		{
-			try { ((IDisposable)this).Dispose(); }
-			catch { }
-		}
+		public event Action<IMemcachedNode> NodeFailed;
 
 		private static IMemcachedClientConfiguration GetSection(string sectionName)
 		{
@@ -973,6 +976,12 @@ namespace Enyim.Caching
 
 		#endregion
 		#region [ IDisposable                  ]
+
+		~MemcachedClient()
+		{
+			try { ((IDisposable)this).Dispose(); }
+			catch { }
+		}
 
 		void IDisposable.Dispose()
 		{

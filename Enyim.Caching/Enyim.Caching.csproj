@@ -43,6 +43,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\FactoryElement.cs" />
+    <Compile Include="Memcached\FailurePolicy\FailImmediatelyPolicy.cs" />
+    <Compile Include="Memcached\FailurePolicy\ThrottlingFailurePolicy.cs" />
+    <Compile Include="Memcached\FailurePolicy\INodeFailurePolicy.cs" />
     <Compile Include="CountdownEvent.cs" />
     <Compile Include="InterlockedStack.cs" />
     <Compile Include="FastActivator.cs">

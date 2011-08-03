@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Configuration
 {
@@ -13,6 +14,7 @@ namespace Enyim.Caching.Configuration
 		private TimeSpan receiveTimeout = new TimeSpan(0, 0, 10);
 		private TimeSpan deadTimeout = new TimeSpan(0, 0, 10);
 		private TimeSpan queueTimeout = new TimeSpan(0, 0, 0, 0, 100);
+		private INodeFailurePolicyFactory policyFactory = new FailImmediatelyPolicyFactory();
 
 		int ISocketPoolConfiguration.MinPoolSize
 		{
@@ -91,6 +93,18 @@ namespace Enyim.Caching.Configuration
 					throw new ArgumentOutOfRangeException("value", "value must be positive");
 
 				this.deadTimeout = value;
+			}
+		}
+
+		INodeFailurePolicyFactory ISocketPoolConfiguration.FailurePolicyFactory
+		{
+			get { return this.policyFactory; }
+			set
+			{
+				if (value == null)
+					throw new ArgumentNullException("value");
+
+				this.policyFactory = value;
 			}
 		}
 	}

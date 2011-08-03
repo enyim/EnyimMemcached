@@ -28,6 +28,7 @@ namespace Membase
 		private System.Threading.Timer resurrectTimer;
 		private bool isTimerActive;
 		private long deadTimeoutMsec;
+		private event Action<IMemcachedNode> nodeFailed;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:Membase.MembasePool" />.
@@ -409,6 +410,10 @@ namespace Membase
 				// reported its failure, thus it has no connection to the current state
 				if (currentState == null || currentState == InternalState.Empty) return;
 
+				var fail = this.nodeFailed;
+				if (fail != null)
+					fail(node);
+
 				// we don't know who to reconfigure the pool when vbucket is
 				// enabled, so operations targeting the dead servers will fail.
 				// when we have a normal config we just reconfigure the locator,
@@ -505,6 +510,12 @@ namespace Membase
 
 			// start blocks until the first NodeListChanged event is triggered
 			this.configListener.Start();
+		}
+
+		event Action<IMemcachedNode> IServerPool.NodeFailed
+		{
+			add { this.nodeFailed += value; }
+			remove { this.nodeFailed -= value; }
 		}
 
 		#endregion

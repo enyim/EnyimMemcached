@@ -37,6 +37,7 @@
   <ItemGroup>
     <Compile Include="BinaryMemcachedClientTest.cs" />
     <Compile Include="ConfigTest.cs" />
+    <Compile Include="FailurePolicyTest.cs" />
     <Compile Include="MembaseClientTest.cs" />
     <Compile Include="MembaseMemcachedBucketTest.cs" />
     <Compile Include="KetamaTest.cs" />
@@ -60,8 +61,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="b4.config" />
-    <None Include="103.config" />
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>

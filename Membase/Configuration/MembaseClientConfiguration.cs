@@ -248,17 +248,17 @@ namespace Membase.Configuration
 			private int minPoolSize;
 			private TimeSpan queueTimeout;
 			private TimeSpan receiveTimeout;
+			private INodeFailurePolicyFactory fpf;
 
 			public SPC(ISocketPoolConfiguration original)
 			{
-				var me = (ISocketPoolConfiguration)this;
-
 				this.connectionTimeout = original.ConnectionTimeout;
 				this.deadTimeout = original.DeadTimeout;
 				this.maxPoolSize = original.MaxPoolSize;
 				this.minPoolSize = original.MinPoolSize;
 				this.queueTimeout = original.QueueTimeout;
 				this.receiveTimeout = original.ReceiveTimeout;
+				this.fpf = original.FailurePolicyFactory;
 			}
 
 			int ISocketPoolConfiguration.MinPoolSize { get { return this.minPoolSize; } set { } }
@@ -267,6 +267,7 @@ namespace Membase.Configuration
 			TimeSpan ISocketPoolConfiguration.QueueTimeout { get { return this.queueTimeout; } set { } }
 			TimeSpan ISocketPoolConfiguration.ReceiveTimeout { get { return this.receiveTimeout; } set { } }
 			TimeSpan ISocketPoolConfiguration.DeadTimeout { get { return this.deadTimeout; } set { } }
+			INodeFailurePolicyFactory ISocketPoolConfiguration.FailurePolicyFactory { get { return this.fpf; } set { } }
 		}
 	}
 }

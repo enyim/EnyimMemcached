@@ -40,6 +40,12 @@ namespace Enyim.Caching.Memcached
 		}
 
 		public event Action<IMemcachedNode> Failed;
+		private INodeFailurePolicy failurePolicy;
+
+		protected INodeFailurePolicy FailurePolicy
+		{
+			get { return this.failurePolicy ?? (this.failurePolicy = this.config.FailurePolicyFactory.Create(this)); }
+		}
 
 		/// <summary>
 		/// Gets the <see cref="T:IPEndPoint"/> of this instance
@@ -338,15 +344,24 @@ namespace Enyim.Caching.Memcached
 
 			private void MarkAsDead()
 			{
-				if (log.IsWarnEnabled) log.WarnFormat("Marking node {0} as dead", this.endPoint);
+				if (log.IsDebugEnabled) log.DebugFormat("Mark as dead was requested for {0}", this.endPoint);
 
-				this.isAlive = false;
-				this.markedAsDeadUtc = DateTime.UtcNow;
+				var shouldFail = ownerNode.FailurePolicy.ShouldFail();
 
-				var f = this.ownerNode.Failed;
+				if (log.IsDebugEnabled) log.Debug("FailurePolicy.ShouldFail(): " + shouldFail);
 
-				if (f != null)
-					f(this.ownerNode);
+				if (shouldFail)
+				{
+					if (log.IsWarnEnabled) log.WarnFormat("Marking node {0} as dead", this.endPoint);
+
+					this.isAlive = false;
+					this.markedAsDeadUtc = DateTime.UtcNow;
+
+					var f = this.ownerNode.Failed;
+
+					if (f != null)
+						f(this.ownerNode);
+				}
 			}
 
 			/// <summary>

@@ -23,6 +23,7 @@ namespace Enyim.Caching.Memcached
 		private bool isTimerActive;
 		private long deadTimeoutMsec;
 		private bool isDisposed;
+		private event Action<IMemcachedNode> nodeFailed;
 
 		public DefaultServerPool(IMemcachedClientConfiguration configuration, IOperationFactory opFactory)
 		{
@@ -149,12 +150,15 @@ namespace Enyim.Caching.Memcached
 					return;
 				}
 
+				// bubble up the fail event to the client
+				var fail = this.nodeFailed;
+				if (fail != null)
+					fail(node);
+
 				// re-initialize the locator
-				// TEST
 				var newLocator = this.configuration.CreateNodeLocator();
 				newLocator.Initialize(allNodes.Where(n => n.IsAlive).ToArray());
 				Interlocked.Exchange(ref this.nodeLocator, newLocator);
-				// TEST
 
 				// the timer is stopped until we encounter the first dead server
 				// when we have one, we trigger it and it will run after DeadTimeout has elapsed
@@ -210,6 +214,12 @@ namespace Enyim.Caching.Memcached
 			locator.Initialize(allNodes);
 
 			this.nodeLocator = locator;
+		}
+
+		event Action<IMemcachedNode> IServerPool.NodeFailed
+		{
+			add { this.nodeFailed += value; }
+			remove { this.nodeFailed -= value; }
 		}
 
 		#endregion
