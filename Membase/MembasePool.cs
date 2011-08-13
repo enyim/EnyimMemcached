@@ -423,27 +423,22 @@ namespace Membase
 					if (isDebug) log.Debug("We have a standard config, so we'll recreate the node locator.");
 
 					ReinitializeLocator(currentState);
-
-					// the timer is stopped until we encounter the first dead server
-					// when we have one, we trigger it and it will run after DeadTimeout has elapsed
-					if (!this.isTimerActive)
-					{
-						if (isDebug) log.Debug("Starting the recovery timer.");
-
-						if (this.resurrectTimer == null)
-							this.resurrectTimer = new Timer(this.rezCallback, null, this.deadTimeoutMsec, Timeout.Infinite);
-						else
-							this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
-
-						this.isTimerActive = true;
-
-						if (isDebug) log.Debug("Timer started.");
-					}
 				}
-				else
+
+				// the timer is stopped until we encounter the first dead server
+				// when we have one, we trigger it and it will run after DeadTimeout has elapsed
+				if (!this.isTimerActive)
 				{
-					if (log.IsDebugEnabled)
-						log.Debug("We have a vbucket enabled bucket, skipping the timer.");
+					if (isDebug) log.Debug("Starting the recovery timer.");
+
+					if (this.resurrectTimer == null)
+						this.resurrectTimer = new Timer(this.rezCallback, null, this.deadTimeoutMsec, Timeout.Infinite);
+					else
+						this.resurrectTimer.Change(this.deadTimeoutMsec, Timeout.Infinite);
+
+					this.isTimerActive = true;
+
+					if (isDebug) log.Debug("Timer started.");
 				}
 			}
 
