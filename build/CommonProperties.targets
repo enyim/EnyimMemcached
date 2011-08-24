@@ -30,6 +30,12 @@
 		<DelaySign>true</DelaySign>
 	</PropertyGroup>
 
+	<!-- if private signature is supplied -->
+	<PropertyGroup Condition=" Exists('..\private.snk') ">
+		<AssemblyOriginatorKeyFile>..\private.snk</AssemblyOriginatorKeyFile>
+		<DelaySign>false</DelaySign>
+	</PropertyGroup>
+
 	<!-- sign the assembly using the specified key file containing both the private and public keys -->
 	<PropertyGroup Condition=" '$(PrivateKeyPath)' != '' ">
 		<AssemblyOriginatorKeyFile>$(PrivateKeyPath)</AssemblyOriginatorKeyFile>
@@ -39,12 +45,6 @@
 	<!-- sign the assembly using the specified key container containing both the private and public keys -->
 	<PropertyGroup Condition=" '$(PrivateKeyName)' != '' ">
 		<AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
-		<DelaySign>false</DelaySign>
-	</PropertyGroup>
-
-	<!-- if private signature is supplied, use it regarless other settings -->
-	<PropertyGroup Condition="Exists('..\private.snk')">
-		<AssemblyOriginatorKeyFile>..\private.snk</AssemblyOriginatorKeyFile>
 		<DelaySign>false</DelaySign>
 	</PropertyGroup>
 </Project>
