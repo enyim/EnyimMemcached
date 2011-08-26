@@ -332,6 +332,13 @@ namespace Enyim.Caching.Memcached
 				catch (Exception e)
 				{
 					log.Error("Failed to create socket. " + this.endPoint, e);
+
+					// eventhough this item failed the failure policy may keep the pool alive
+					// so we need to make sure to release the semaphore, so new connections can be
+					// acquired or created (otherwise dead conenctions would "fill up" the pool
+					// while the FP pretends that the pool is healthy)
+					semaphore.Release();
+
 					this.MarkAsDead();
 
 					return null;
@@ -394,6 +401,10 @@ namespace Enyim.Caching.Memcached
 
 						// mark ourselves as not working for a while
 						this.MarkAsDead();
+
+						// make sure to signal the Acquire so it can create a new conenction
+						// if the failure policy keeps the pool alive
+						this.semaphore.Release();
 					}
 				}
 				else
