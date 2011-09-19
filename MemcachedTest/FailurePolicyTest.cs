@@ -58,6 +58,8 @@ namespace MemcachedTest
 			config.SocketPool.FailurePolicyFactory = new ThrottlingFailurePolicyFactory(4, TimeSpan.FromMilliseconds(2000));
 			config.SocketPool.ConnectionTimeout = TimeSpan.FromMilliseconds(10);
 			config.SocketPool.ReceiveTimeout = TimeSpan.FromMilliseconds(10);
+			config.SocketPool.MinPoolSize = 1;
+			config.SocketPool.MaxPoolSize = 1;
 
 			var client = new MemcachedClient(config);
 			var canFail = false;
