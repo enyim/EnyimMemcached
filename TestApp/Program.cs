@@ -177,10 +177,10 @@ namespace DemoApp
 				sw.Stop();
 				Console.WriteLine(sw.ElapsedMilliseconds);
 
-				sw = Stopwatch.StartNew();
-				for (var j = 0; j < MAX; j++) tc.GetOld(keys);
-				sw.Stop();
-				Console.WriteLine(sw.ElapsedMilliseconds);
+				//sw = Stopwatch.StartNew();
+				//for (var j = 0; j < MAX; j++) tc.GetOld(keys);
+				//sw.Stop();
+				//Console.WriteLine(sw.ElapsedMilliseconds);
 
 				//sw = Stopwatch.StartNew();
 				//for (var j = 0; j < MAX; j++)
