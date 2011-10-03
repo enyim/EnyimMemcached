@@ -49,10 +49,10 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		{
 			buffer += offset;
 
-			int part1 = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
-			int part2 = (buffer[4] << 24) | (buffer[5] << 16) | (buffer[6] << 8) | buffer[7];
+			var part1 = (uint)((buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3]);
+			var part2 = (uint)((buffer[4] << 24) | (buffer[5] << 16) | (buffer[6] << 8) | buffer[7]);
 
-			return (ulong)(((long)part2) | (part1 << 32));
+			return ((ulong)part1 << 32) | part2;
 		}
 
 		public static unsafe void EncodeUInt16(uint value, byte[] buffer, int offset)

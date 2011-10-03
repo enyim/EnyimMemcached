@@ -378,6 +378,18 @@ namespace MemcachedTest
 				Assert.IsNull(client.Get("gfsd"), "FlushAll() failed.");
 			}
 		}
+
+		[TestCase]
+		public void IncrementLongTest()
+		{
+			var initialValue = 56UL * (ulong)System.Math.Pow(10, 11) + 1234;
+
+			using (MemcachedClient client = GetClient())
+			{
+				Assert.AreEqual(initialValue, client.Increment("VALUE", initialValue, 2UL), "Non-existing value should be set to default");
+				Assert.AreEqual(initialValue + 24, client.Increment("VALUE", 10UL, 24UL));
+			}
+		}
 	}
 }
 
