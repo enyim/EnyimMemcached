@@ -204,7 +204,7 @@ namespace Membase
 				if (!realNodes.TryGetValue(hostSpec, out node))
 					throw new InvalidOperationException(String.Format("VBucket map contains a node {0} whihc was not found in the cluster info's node list.", hostSpec));
 
-				var ip = IPAddress.Parse(node.HostName);
+				var ip = GetFirstAddress(node.HostName);
 				var endpoint = new IPEndPoint(ip, node.Port);
 
 				nodes.Add(this.CreateNode(endpoint, auth, node.ConfigurationData));
