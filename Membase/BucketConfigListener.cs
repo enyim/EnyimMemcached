@@ -27,7 +27,7 @@ namespace Membase
 								? "default"
 								: bucketName;
 
-			this.credential = bucketName == "default"
+			this.credential = bucketName == "default" || String.IsNullOrEmpty(bucketPassword)
 								? null
 								: new NetworkCredential(bucketName, bucketPassword);
 
@@ -210,7 +210,7 @@ namespace Membase
 					// create a new listener for the pool urls
 					retval = new MessageStreamListener(poolUrls, (client, root) => ResolveBucketUri(client, root, name));
 
-					retval.Timeout = this.Timeout;
+					retval.ConnectionTimeout = this.Timeout;
 					retval.DeadTimeout = this.DeadTimeout;
 					retval.Credentials = this.credential;
 					retval.RetryCount = this.RetryCount;

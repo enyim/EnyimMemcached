@@ -17,7 +17,9 @@ namespace Membase
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MessageStreamListener));
 
 		private Uri[] urls;
-		private int stopCounter = 0;
+		private ManualResetEvent stopEvent;
+		private ManualResetEvent sleepEvent;
+		private WaitHandle[] sleepHandles;
 
 		// false means that the url was not responding or failed while reading
 		private Dictionary<Uri, bool> statusPool;
@@ -26,6 +28,7 @@ namespace Membase
 
 		private int urlIndex = 0;
 		private WebClientWithTimeout client;
+
 		private WebRequest request;
 		private WebResponse response;
 
@@ -34,10 +37,10 @@ namespace Membase
 		private Func<WebClientWithTimeout, Uri, Uri> uriConverter;
 
 		/// <summary>
-		/// 
+		/// Creates a new instance of MessageStreamListener
 		/// </summary>
 		/// <param name="urls"></param>
-		/// <param name="converter">you use this to redirect the original url into somewhere else. called only once by urls before the MessageStreamListener starts processing it</param>
+		/// <param name="converter">You use this to redirect the original url into somewhere else. Called only once for each url before the MessageStreamListener starts processing it.</param>
 		public MessageStreamListener(Uri[] urls, Func<WebClientWithTimeout, Uri, Uri> converter)
 		{
 			if (urls == null) throw new ArgumentNullException("urls");
@@ -46,6 +49,10 @@ namespace Membase
 			this.urls = urls;
 			this.DeadTimeout = 2000;
 			this.uriConverter = converter;
+
+			this.stopEvent = new ManualResetEvent(false);
+			this.sleepEvent = new ManualResetEvent(false);
+			this.sleepHandles = new[] { stopEvent, sleepEvent };
 
 			// this holds the resolved urls, key is coming from the 'urls' array
 			this.realUrls = this.urls.Distinct().ToDictionary(u => u, u => (Uri)null);
@@ -88,7 +95,7 @@ namespace Membase
 		/// <summary>
 		/// Connection timeout in milliseconds for connecting the urls.
 		/// </summary>
-		public int Timeout { get; set; }
+		public int ConnectionTimeout { get; set; }
 
 		/// <summary>
 		/// The time in milliseconds the listener should wait when retrying after the whole server list goes down.
@@ -103,7 +110,7 @@ namespace Membase
 				// make it infinite so it will not stop abort the socket thinking that the server have died
 				ReadWriteTimeout = System.Threading.Timeout.Infinite,
 				// this is just the connect timeout
-				Timeout = this.Timeout,
+				Timeout = this.ConnectionTimeout,
 				PreAuthenticate = true
 			};
 		}
@@ -127,8 +134,8 @@ namespace Membase
 		{
 			if (log.IsDebugEnabled) log.Debug("Stopping the listener.");
 
-			Interlocked.Exchange(ref this.stopCounter, 1);
-			this.CleanupRequests();
+			this.stopEvent.Set();
+			this.AbortRequests();
 
 			this.IsStarted = false;
 
@@ -152,7 +159,7 @@ namespace Membase
 		{
 			if (log.IsDebugEnabled) log.Debug("Started working.");
 
-			while (this.stopCounter == 0)
+			while (!this.stopEvent.WaitOne(0))
 			{
 				if (this.client == null)
 					this.client = this.CreateClient();
@@ -165,7 +172,7 @@ namespace Membase
 				this.ProcessPool();
 
 				// pool fail
-				if (this.stopCounter == 0)
+				if (!this.stopEvent.WaitOne(0))
 				{
 					if (log.IsWarnEnabled) log.Warn("All nodes are dead, sleeping for a while.");
 
@@ -174,7 +181,7 @@ namespace Membase
 					this.SleepUntil(this.DeadTimeout);
 
 					// recreate the client after failure
-					this.CleanupRequests();
+					this.AbortRequests();
 					if (this.client != null)
 					{
 						this.client.Dispose();
@@ -191,22 +198,14 @@ namespace Membase
 		/// <returns></returns>
 		private bool SleepUntil(int milliseconds)
 		{
-			DateTime now = DateTime.UtcNow;
-
-			while (this.stopCounter == 0
-					&& (DateTime.UtcNow - now).TotalMilliseconds < milliseconds)
-			{
-				Thread.Sleep(100);
-			}
-
-			return this.stopCounter == 0;
+			return (WaitHandle.WaitAny(sleepHandles, milliseconds) != 0);
 		}
 
 		private int currentRetryCount;
 
 		private void ProcessPool()
 		{
-			while (this.stopCounter == 0)
+			while (!this.stopEvent.WaitOne(0))
 			{
 				if (log.IsDebugEnabled) log.Debug("Looking for the first working node.");
 
@@ -214,7 +213,6 @@ namespace Membase
 				// value is the resolved url (used for receiving messages)
 				var current = GetNextPoolUri();
 
-				// the break here will go into the outer while, and reinitialize the lookup table and the indexer
 				if (current.Key == null)
 				{
 					if (log.IsWarnEnabled) log.Warn("Could not found a working node.");
@@ -227,13 +225,13 @@ namespace Membase
 					if (log.IsDebugEnabled) log.Debug("Start receiving messages.");
 					this.currentRetryCount = 0;
 
-					while (this.stopCounter == 0)
+					while (!this.stopEvent.WaitOne(0))
 					{
 						try
 						{
 							// start working on the current url
 							// if it fails in the meanwhile, we'll get another url
-							this.ReadMessages(current.Value);
+							this.ReadMessages(current.Key, current.Value);
 
 							// we can only get here properly if the listener is stopped, so just quit the whole loop
 							if (log.IsDebugEnabled) log.Debug("Processing is aborted.");
@@ -314,7 +312,7 @@ namespace Membase
 			return new KeyValuePair<Uri, Uri>();
 		}
 
-		private void CleanupRequests()
+		private void AbortRequests()
 		{
 			if (this.request != null)
 			{
@@ -345,9 +343,33 @@ namespace Membase
 			this.hasMessage = true;
 		}
 
-		private void ReadMessages(Uri uri)
+		private void Heartbeat(object state)
 		{
-			if (this.stopCounter > 0) return;
+			if (log.IsDebugEnabled)
+				log.DebugFormat("HB: Pinging current node '{0}' to check if it's still alive.", state);
+
+			using (var wc = new WebClientWithTimeout())
+			{
+				try
+				{
+					wc.Timeout = this.ConnectionTimeout;
+					wc.ReadWriteTimeout = this.ConnectionTimeout;
+					wc.DownloadString((Uri)state);
+
+					log.DebugFormat("HB: Node '{0}' is OK");
+				}
+				catch (Exception e)
+				{
+					log.ErrorFormat("HB: Node '{0}' is not available.\n{1}", state, e);
+
+					this.AbortRequests();
+				}
+			}
+		}
+
+		private void ReadMessages(Uri heartBeatUrl, Uri configUrl)
+		{
+			if (this.stopEvent.WaitOne(0)) return;
 
 #if DEBUG_RETRY
 			ThreadPool.QueueUserWorkItem(o =>
@@ -358,10 +380,9 @@ namespace Membase
 
 			if (this.currentRetryCount > 0) throw new IOException();
 #endif
+			this.AbortRequests();
 
-			this.CleanupRequests();
-
-			this.request = this.client.GetWebRequest(uri, uri.GetHashCode().ToString());
+			this.request = this.client.GetWebRequest(configUrl, configUrl.GetHashCode().ToString());
 			this.response = this.request.GetResponse();
 
 			// the url is supposed to send data indefinitely
@@ -369,35 +390,44 @@ namespace Membase
 			// (somehow stream.Dispose() hangs, so we'll not use the 'using' construct)
 			var stream = this.response.GetResponseStream();
 			var reader = new StreamReader(stream, Encoding.UTF8, false);
+			// TODO make the 10 seconds configurable (it if makes sense)
+			var timeoutTimer = new Timer(this.Heartbeat, heartBeatUrl, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
 
-			string line;
-			var emptyCounter = 0;
-			var messageBuilder = new StringBuilder();
-
-			while ((line = reader.ReadLine()) != null)
+			try
 			{
-				if (this.stopCounter > 0) return;
+				string line;
+				var emptyCounter = 0;
+				var messageBuilder = new StringBuilder();
 
-				// we're successfully reading the stream, so reset the retry counter
-				this.currentRetryCount = 0;
-
-				if (line.Length == 0)
+				while ((line = reader.ReadLine()) != null)
 				{
-					emptyCounter++;
+					if (this.stopEvent.WaitOne(0)) return;
 
-					// messages are separated by 3 empty lines
-					if (emptyCounter == 3)
+					// we're successfully reading the stream, so reset the retry counter
+					this.currentRetryCount = 0;
+
+					if (line.Length == 0)
 					{
-						this.Trigger(messageBuilder.ToString());
-						messageBuilder.Length = 0;
+						emptyCounter++;
+
+						// messages are separated by 3 empty lines
+						if (emptyCounter == 3)
+						{
+							this.Trigger(messageBuilder.ToString());
+							messageBuilder.Length = 0;
+							emptyCounter = 0;
+						}
+					}
+					else
+					{
 						emptyCounter = 0;
+						messageBuilder.Append(line);
 					}
 				}
-				else
-				{
-					emptyCounter = 0;
-					messageBuilder.Append(line);
-				}
+			}
+			finally
+			{
+				timeoutTimer.Dispose();
 			}
 
 			if (log.IsErrorEnabled)
@@ -415,7 +445,7 @@ namespace Membase
 		{
 			AppDomain.CurrentDomain.DomainUnload -= CurrentDomain_DomainUnload;
 
-			this.CleanupRequests();
+			this.AbortRequests();
 
 			if (this.client != null)
 			{
