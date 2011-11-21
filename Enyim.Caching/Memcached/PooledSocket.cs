@@ -41,6 +41,7 @@ namespace Enyim.Caching.Memcached
 
 			socket.ReceiveTimeout = rcv;
 			socket.SendTimeout = rcv;
+			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
 
 			ConnectWithTimeout(socket, endpoint, timeout);
 
