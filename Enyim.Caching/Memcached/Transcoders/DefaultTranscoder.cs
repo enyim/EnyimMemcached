@@ -62,7 +62,10 @@ namespace Enyim.Caching.Memcached
 				case TypeCode.DateTime: data = this.SerializeDateTime((DateTime)value); break;
 				case TypeCode.Double: data = this.SerializeDouble((Double)value); break;
 				case TypeCode.Single: data = this.SerializeSingle((Single)value); break;
-				default: data = this.SerializeObject(value); break;
+				default:
+					code = TypeCode.Object;
+					data = this.SerializeObject(value);
+					break;
 			}
 
 			return new CacheItem(TypeCodeToFlag(code), data);
@@ -130,6 +133,11 @@ namespace Enyim.Caching.Memcached
 				case TypeCode.DateTime: return this.DeserializeDateTime(data);
 				case TypeCode.Double: return this.DeserializeDouble(data);
 				case TypeCode.Single: return this.DeserializeSingle(data);
+
+				// backward compatibility
+				// earlier versions serialized decimals with TypeCode.Decimal
+				// even though they were saved by BinaryFormatter
+				case TypeCode.Decimal:
 				case TypeCode.Object: return this.DeserializeObject(data);
 				default: throw new InvalidOperationException("Unknown TypeCode was returned: " + code);
 			}
