@@ -31,6 +31,7 @@ namespace Membase
 
 		private WebRequest request;
 		private WebResponse response;
+		private Heartbeat heartbeat;
 
 		private bool hasMessage;
 		private string lastMessage;
@@ -326,8 +327,15 @@ namespace Membase
 				catch { }
 			}
 
+			if (this.heartbeat != null)
+			{
+				try { ((IDisposable)this.heartbeat).Dispose(); }
+				catch { }
+			}
+
 			this.request = null;
 			this.response = null;
+			this.heartbeat = null;
 		}
 
 		private void Trigger(string message)
@@ -341,30 +349,6 @@ namespace Membase
 
 			this.lastMessage = message;
 			this.hasMessage = true;
-		}
-
-		private void Heartbeat(object state)
-		{
-			if (log.IsDebugEnabled)
-				log.DebugFormat("HB: Pinging current node '{0}' to check if it's still alive.", state);
-
-			using (var wc = new WebClientWithTimeout())
-			{
-				try
-				{
-					wc.Timeout = this.ConnectionTimeout;
-					wc.ReadWriteTimeout = this.ConnectionTimeout;
-					wc.DownloadString((Uri)state);
-
-					log.DebugFormat("HB: Node '{0}' is OK");
-				}
-				catch (Exception e)
-				{
-					log.ErrorFormat("HB: Node '{0}' is not available.\n{1}", state, e);
-
-					this.AbortRequests();
-				}
-			}
 		}
 
 		private void ReadMessages(Uri heartBeatUrl, Uri configUrl)
@@ -390,10 +374,9 @@ namespace Membase
 			// (somehow stream.Dispose() hangs, so we'll not use the 'using' construct)
 			var stream = this.response.GetResponseStream();
 			var reader = new StreamReader(stream, Encoding.UTF8, false);
-			// TODO make the 10 seconds configurable (it if makes sense)
-			var timeoutTimer = new Timer(this.Heartbeat, heartBeatUrl, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
 
-			try
+			// TODO make the 10 seconds configurable (it if makes sense)
+			using (this.heartbeat = new Heartbeat(heartBeatUrl, this.ConnectionTimeout, 10 * 1000, this.AbortRequests))
 			{
 				string line;
 				var emptyCounter = 0;
@@ -425,10 +408,6 @@ namespace Membase
 					}
 				}
 			}
-			finally
-			{
-				timeoutTimer.Dispose();
-			}
 
 			if (log.IsErrorEnabled)
 				log.Error("The infinite loop just finished, probably the server closed the connection without errors. (?)");
@@ -455,6 +434,105 @@ namespace Membase
 				this.client = null;
 			}
 		}
+
+		#region [ Heartbeat                    ]
+
+		private class Heartbeat : IDisposable
+		{
+			private Timer timer;
+			private Uri uri;
+
+			private int shouldAbort;
+			private int interval;
+			private int timeout;
+
+			private WebRequest request;
+			private WebResponse response;
+			private Action abortAction;
+
+			public Heartbeat(Uri uri, int timeout, int interval, Action abortAction)
+			{
+				this.uri = uri;
+				this.interval = interval;
+				this.timeout = timeout;
+				this.abortAction = abortAction;
+
+				this.timer = new Timer(this.Worker, null, interval, Timeout.Infinite);
+			}
+
+			void IDisposable.Dispose()
+			{
+				if (this.shouldAbort > 0) return;
+
+				Interlocked.Exchange(ref this.shouldAbort, 2);
+
+				this.timer.Change(Timeout.Infinite, Timeout.Infinite);
+
+				if (this.request != null)
+				{
+					try { this.request.Abort(); }
+					catch { }
+
+					this.request = null;
+				}
+
+				if (this.response != null)
+				{
+					this.response.Close();
+					this.response = null;
+				}
+
+				this.timer.Dispose();
+				this.timer = null;
+			}
+
+			private void Worker(object state)
+			{
+				if (log.IsDebugEnabled) log.DebugFormat("HB: Pinging current node '{0}' to check if it's still alive.", state);
+
+				if (this.shouldAbort > 0)
+				{
+					if (log.IsDebugEnabled) log.DebugFormat("HB: Already aborted, returning.", state);
+
+					return;
+				}
+
+				var req = WebRequest.Create(this.uri) as HttpWebRequest;
+
+				req.Timeout = this.timeout;
+				req.ReadWriteTimeout = this.timeout;
+				req.Pipelined = false;
+				req.Method = "GET";
+				req.KeepAlive = false;
+
+				this.request = req;
+
+				try
+				{
+					this.response = request.GetResponse();
+
+					using (var stream = response.GetResponseStream())
+					using (var sr = new StreamReader(stream))
+					{
+						sr.ReadToEnd();
+
+						log.DebugFormat("HB: Node '{0}' is OK");
+					}
+
+					if (this.shouldAbort == 0)
+						this.timer.Change(timeout, Timeout.Infinite);
+				}
+				catch (Exception e)
+				{
+					log.ErrorFormat("HB: Node '{0}' is not available.\n{1}", state, e);
+
+					if (this.shouldAbort == 0)
+						this.abortAction();
+				}
+			}
+		}
+
+		#endregion
 	}
 }
 
