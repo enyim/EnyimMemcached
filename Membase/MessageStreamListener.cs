@@ -27,7 +27,7 @@ namespace Membase
 		private Dictionary<Uri, Uri> realUrls;
 
 		private int urlIndex = 0;
-		private WebClientWithTimeout client;
+		private WebClientWithTimeout requestFactory;
 
 		private WebRequest request;
 		private WebResponse response;
@@ -103,7 +103,7 @@ namespace Membase
 		/// </summary>
 		public int DeadTimeout { get; set; }
 
-		protected WebClientWithTimeout CreateClient()
+		protected WebClientWithTimeout CreateRequestFactory()
 		{
 			return new WebClientWithTimeout
 			{
@@ -162,8 +162,8 @@ namespace Membase
 
 			while (!this.stopEvent.WaitOne(0))
 			{
-				if (this.client == null)
-					this.client = this.CreateClient();
+				if (this.requestFactory == null)
+					this.requestFactory = this.CreateRequestFactory();
 
 				// false means that the url was not responding or failed while reading
 				this.statusPool = this.urls.ToDictionary(u => u, u => true);
@@ -183,10 +183,10 @@ namespace Membase
 
 					// recreate the client after failure
 					this.AbortRequests();
-					if (this.client != null)
+					if (this.requestFactory != null)
 					{
-						this.client.Dispose();
-						this.client = null;
+						this.requestFactory.Dispose();
+						this.requestFactory = null;
 					}
 				}
 			}
@@ -288,7 +288,7 @@ namespace Membase
 					try
 					{
 						// resolve the url
-						var resolved = realUrls[key] ?? this.uriConverter(this.client, key);
+						var resolved = realUrls[key] ?? this.uriConverter(this.requestFactory, key);
 
 						if (resolved != null)
 						{
@@ -366,7 +366,7 @@ namespace Membase
 #endif
 			this.AbortRequests();
 
-			this.request = this.client.GetWebRequest(configUrl, configUrl.GetHashCode().ToString());
+			this.request = this.requestFactory.GetWebRequest(configUrl, configUrl.GetHashCode().ToString());
 			this.response = this.request.GetResponse();
 
 			// the url is supposed to send data indefinitely
@@ -426,12 +426,12 @@ namespace Membase
 
 			this.AbortRequests();
 
-			if (this.client != null)
+			if (this.requestFactory != null)
 			{
-				using (this.client)
-					this.client.CancelAsync();
+				using (this.requestFactory)
+					this.requestFactory.CancelAsync();
 
-				this.client = null;
+				this.requestFactory = null;
 			}
 		}
 
