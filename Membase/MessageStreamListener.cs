@@ -91,7 +91,7 @@ namespace Membase
 		/// <summary>
 		/// The credentials used to connect to the urls.
 		/// </summary>
-		public ICredentials Credentials { get; set; }
+		public NetworkCredential Credentials { get; set; }
 
 		/// <summary>
 		/// Connection timeout in milliseconds for connecting the urls.
@@ -376,7 +376,7 @@ namespace Membase
 			var reader = new StreamReader(stream, Encoding.UTF8, false);
 
 			// TODO make the 10 seconds configurable (it if makes sense)
-			using (this.heartbeat = new Heartbeat(heartBeatUrl, this.ConnectionTimeout, 10 * 1000, this.AbortRequests))
+			using (this.heartbeat = new Heartbeat(heartBeatUrl, this.ConnectionTimeout, 10 * 1000, this.AbortRequests, this.Credentials))
 			{
 				string line;
 				var emptyCounter = 0;
@@ -449,13 +449,15 @@ namespace Membase
 			private WebRequest request;
 			private WebResponse response;
 			private Action abortAction;
+			private NetworkCredential credentials;
 
-			public Heartbeat(Uri uri, int timeout, int interval, Action abortAction)
+			public Heartbeat(Uri uri, int timeout, int interval, Action abortAction, NetworkCredential credentials)
 			{
 				this.uri = uri;
 				this.interval = interval;
 				this.timeout = timeout;
 				this.abortAction = abortAction;
+				this.credentials = credentials;
 
 				this.timer = new Timer(this.Worker, null, interval, Timeout.Infinite);
 			}
@@ -488,16 +490,19 @@ namespace Membase
 
 			private void Worker(object state)
 			{
-				if (log.IsDebugEnabled) log.DebugFormat("HB: Pinging current node '{0}' to check if it's still alive.", state);
+				if (log.IsDebugEnabled) log.DebugFormat("HB: Pinging current node '{0}' to check if it's still alive.", this.uri);
 
 				if (this.shouldAbort > 0)
 				{
-					if (log.IsDebugEnabled) log.DebugFormat("HB: Already aborted, returning.", state);
+					if (log.IsDebugEnabled) log.DebugFormat("HB: Already aborted {0}, returning.", this.uri);
 
 					return;
 				}
 
 				var req = WebRequest.Create(this.uri) as HttpWebRequest;
+
+				if (this.credentials != null)
+					req.Credentials = this.credentials;
 
 				req.Timeout = this.timeout;
 				req.ReadWriteTimeout = this.timeout;
@@ -509,6 +514,8 @@ namespace Membase
 
 				try
 				{
+					log.DebugFormat("HB: Trying '{0}'", this.uri);
+
 					this.response = request.GetResponse();
 
 					using (var stream = response.GetResponseStream())
@@ -516,15 +523,15 @@ namespace Membase
 					{
 						sr.ReadToEnd();
 
-						log.DebugFormat("HB: Node '{0}' is OK");
+						log.DebugFormat("HB: Node '{0}' is OK", this.uri);
 					}
 
 					if (this.shouldAbort == 0)
-						this.timer.Change(timeout, Timeout.Infinite);
+						this.timer.Change(this.interval, Timeout.Infinite);
 				}
 				catch (Exception e)
 				{
-					log.ErrorFormat("HB: Node '{0}' is not available.\n{1}", state, e);
+					log.ErrorFormat("HB: Node '{0}' is not available.\n{1}", this.uri, e);
 
 					if (this.shouldAbort == 0)
 						this.abortAction();
