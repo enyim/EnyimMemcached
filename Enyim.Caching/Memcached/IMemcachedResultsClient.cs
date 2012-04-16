@@ -12,6 +12,7 @@ namespace Enyim.Caching.Memcached
 	public interface IMemcachedResultsClient
 	{
 		IGetOperationResult ExecuteGet(string key);
+		IGetOperationResult<T> ExecuteGet<T>(string key);
 
 		IGetOperationResult ExecuteTryGet(string key, out object value);
 		

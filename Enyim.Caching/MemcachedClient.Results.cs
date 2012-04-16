@@ -5,6 +5,7 @@ using System.Text;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached.Results.Extensions;
+using Enyim.Caching.Memcached.Results.Factories;
 
 namespace Enyim.Caching
 {
@@ -143,6 +144,38 @@ namespace Enyim.Caching
 			ulong cas = 0;
 
 			return this.PerformTryGet(key, out cas, out value);
+		}
+
+		/// <summary>
+		/// Retrieves the specified item from the cache.
+		/// </summary>
+		/// <param name="key">The identifier for the item to retrieve.</param>
+		/// <returns>The retrieved item, or <value>default(T)</value> if the key was not found.</returns>
+		public IGetOperationResult<T> ExecuteGet<T>(string key)
+		{
+			object tmp;
+			var result = new DefaultGetOperationResultFactory<T>().Create();
+
+			var tryGetResult = ExecuteTryGet(key, out tmp);
+			if (tryGetResult.Success)
+			{
+				if (tryGetResult.Value is T)
+				{
+					//HACK: this isn't optimal
+					tryGetResult.Copy(result);
+
+					result.Value = (T)tmp;
+					result.Cas = tryGetResult.Cas;
+				}
+				else
+				{
+					result.Value = default(T);
+					result.Fail("Type mismatch", new InvalidCastException());
+				}
+				return result;
+			}
+			result.Fail("Get failed. See InnerException or StatusCode for details");
+			return result;
 		}
 
 		#endregion
