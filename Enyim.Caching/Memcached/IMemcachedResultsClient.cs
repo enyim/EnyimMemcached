@@ -13,6 +13,7 @@ namespace Enyim.Caching.Memcached
 	{
 		IGetOperationResult ExecuteGet(string key);
 		IGetOperationResult<T> ExecuteGet<T>(string key);
+		IDictionary<string, IGetOperationResult> ExecuteGet(IEnumerable<string> keys);
 
 		IGetOperationResult ExecuteTryGet(string key, out object value);
 		

@@ -59,6 +59,23 @@ namespace Enyim.Caching.Tests
 			Assert.That(getResult.Value, Is.EqualTo(value), "Actual value was not expected value: " + getResult.Value);
 		}
 
+		[Test]
+		public void When_Getting_Multiple_Keys_Result_Is_Successful()
+		{
+			var keys = GetUniqueKeys().Distinct();
+			foreach (var key in keys)
+			{
+				Store(key: key, value: "Value for" + key);
+			}
+
+			var dict = _Client.ExecuteGet(keys);
+			Assert.That(dict.Keys.Count, Is.EqualTo(keys.Count()), "Keys count did not match results count");
+
+			foreach (var key in dict.Keys)
+			{
+				Assert.That(dict[key].Success, Is.True, "Get failed for key: " + key);
+			}
+		}
 	}
 }
 

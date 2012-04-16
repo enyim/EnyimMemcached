@@ -31,6 +31,18 @@ namespace Enyim.Caching.Tests
 				"unit_test_" + DateTime.Now.Ticks;
 		}
 
+		protected IEnumerable<string> GetUniqueKeys(string prefix = null, int max = 5)
+		{
+
+			var keys = new List<string>(max);
+			for (int i = 0; i < max; i++)
+			{
+				keys.Add(GetUniqueKey(prefix));
+			}
+
+			return keys;
+		}
+
 		protected string GetRandomString()
 		{
 			var rand = new Random((int)DateTime.Now.Ticks).Next();

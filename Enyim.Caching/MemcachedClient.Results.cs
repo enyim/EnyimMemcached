@@ -178,6 +178,23 @@ namespace Enyim.Caching
 			return result;
 		}
 
+		/// <summary>
+		/// Retrieves multiple items from the cache.
+		/// </summary>
+		/// <param name="keys">The list of identifiers for the items to retrieve.</param>
+		/// <returns>a Dictionary holding all items indexed by their key.</returns>
+		public IDictionary<string, IGetOperationResult> ExecuteGet(IEnumerable<string> keys)
+		{
+			return PerformMultiGet<IGetOperationResult>(keys, (mget, kvp) =>
+			{
+				var result = GetOperationResultFactory.Create();
+				result.Value = this.transcoder.Deserialize(kvp.Value);
+				result.Cas = mget.Cas[kvp.Key];
+				result.Success = true;
+				return result;
+			});
+		}
+
 		#endregion
 
 		#region [ Mutate				]
