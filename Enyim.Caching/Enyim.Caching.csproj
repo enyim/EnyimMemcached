@@ -120,8 +120,10 @@
     </Compile>
     <Compile Include="Memcached\IMemcachedNodeLocator.cs">
     </Compile>
+    <Compile Include="Memcached\IMemcachedResultsClient.cs" />
     <Compile Include="Memcached\IOperationFactory.cs">
     </Compile>
+    <Compile Include="MemcachedClient.Results.cs" />
     <Compile Include="Memcached\PerformanceMonitor\DefaultPerformanceMonitorFactory.cs" />
     <Compile Include="Memcached\PerformanceMonitor\IPerformanceMonitor.cs" />
     <Compile Include="Memcached\PerformanceMonitor\PerformanceCounterInstaller.cs">
@@ -239,6 +241,14 @@
     </Compile>
     <Compile Include="Memcached\Protocol\Text\TextSocketHelper.cs">
     </Compile>
+    <Compile Include="Memcached\Results\Extensions\OperationResultExtensions.cs" />
+    <Compile Include="Memcached\Results\Factories\DefaultStoreOperationResultFactory.cs" />
+    <Compile Include="Memcached\Results\Factories\IStoreOperationResultFactory.cs" />
+    <Compile Include="Memcached\Results\ICasOperationResult.cs" />
+    <Compile Include="Memcached\Results\IOperationResult.cs" />
+    <Compile Include="Memcached\Results\IStoreOperationResult.cs" />
+    <Compile Include="Memcached\Results\OperationResultBase.cs" />
+    <Compile Include="Memcached\Results\StoreOperationResult.cs" />
     <Compile Include="Memcached\ServerStats.cs">
     </Compile>
     <Compile Include="Memcached\SlidingBuffer.cs" />

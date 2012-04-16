@@ -7,13 +7,16 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Net;
 using System.Diagnostics;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Factories;
+using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching
 {
 	/// <summary>
 	/// Memcached client.
 	/// </summary>
-	public class MemcachedClient : IMemcachedClient
+	public partial class MemcachedClient : IMemcachedClient, IMemcachedResultsClient
 	{
 		/// <summary>
 		/// Represents a value which indicates that an item should never expire.
@@ -26,6 +29,8 @@ namespace Enyim.Caching
 		private IMemcachedKeyTransformer keyTransformer;
 		private ITranscoder transcoder;
 		private IPerformanceMonitor performanceMonitor;
+
+		public IStoreOperationResultFactory StoreOperationResultFactory { get; set; }
 
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the default configuration section (enyim/memcached).
@@ -62,6 +67,8 @@ namespace Enyim.Caching
 			this.pool = configuration.CreatePool();
 			this.pool.NodeFailed += (n) => { var f = this.NodeFailed; if (f != null) f(n); };
 			this.StartPool();
+
+			StoreOperationResultFactory = new DefaultStoreOperationResultFactory();
 		}
 
 		public MemcachedClient(IServerPool pool, IMemcachedKeyTransformer keyTransformer, ITranscoder transcoder)
@@ -204,7 +211,7 @@ namespace Enyim.Caching
 			ulong tmp = 0;
 			int status;
 
-			return this.PerformStore(mode, key, value, 0, ref tmp, out status);
+			return this.PerformStore(mode, key, value, 0, ref tmp, out status).Success;
 		}
 
 		/// <summary>
@@ -220,7 +227,7 @@ namespace Enyim.Caching
 			ulong tmp = 0;
 			int status;
 
-			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), ref tmp, out status);
+			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), ref tmp, out status).Success;
 		}
 
 		/// <summary>
@@ -236,7 +243,7 @@ namespace Enyim.Caching
 			ulong tmp = 0;
 			int status;
 
-			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), ref tmp, out status);
+			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), ref tmp, out status).Success;
 		}
 
 		/// <summary>
@@ -300,13 +307,15 @@ namespace Enyim.Caching
 
 			var retval = this.PerformStore(mode, key, value, expires, ref tmp, out status);
 
-			return new CasResult<bool> { Cas = tmp, Result = retval, StatusCode = status };
+			return new CasResult<bool> { Cas = tmp, Result = retval.Success, StatusCode = status };
 		}
 
-		protected virtual bool PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas, out int statusCode)
+		protected virtual IStoreOperationResult PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas, out int statusCode)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
+			var result = StoreOperationResultFactory.Create();
+
 			statusCode = -1;
 
 			if (node != null)
@@ -320,23 +329,31 @@ namespace Enyim.Caching
 
 					if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, false);
 
-					return false;
+					result.Fail("PerformStore failed", e);
+					return result;
 				}
 
 				var command = this.pool.OperationFactory.Store(mode, hashedKey, item, expires, cas);
 				var retval = node.Execute(command);
 
-				cas = command.CasValue;
-				statusCode = command.StatusCode;
+				result.Cas = cas = command.CasValue;
+				result.StatusCode = statusCode = command.StatusCode;
 
-				if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, true);
+				if (retval)
+				{
+					if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, true);
+					result.Pass();
+					return result;
+				}
 
-				return retval;
+				result.Fail("Store operation failed, see InnerResult or StatusCode for details");
+				return result;
 			}
 
 			if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, false);
 
-			return false;
+			result.Fail("Unable to locate node");
+			return result;
 		}
 
 		#endregion
