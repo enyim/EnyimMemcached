@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching
 {
@@ -202,6 +203,42 @@ namespace Enyim.Caching
 		}
 
 		
+		#endregion
+
+		#region [ Remove		]
+
+		/// <summary>
+		/// Removes the specified item from the cache.
+		/// </summary>
+		/// <param name="key">The identifier for the item to delete.</param>
+		/// <returns>true if the item was successfully removed from the cache; false otherwise.</returns>
+		public IRemoveOperationResult ExecuteRemove(string key)
+		{
+			var hashedKey = this.keyTransformer.Transform(key);
+			var node = this.pool.Locate(hashedKey);
+			var result = RemoveOperationResultFactory.Create();
+
+			if (node != null)
+			{
+				var command = this.pool.OperationFactory.Delete(hashedKey, 0);
+				var success = node.Execute(command);
+
+				if (success)
+				{
+					result.Pass();
+				}
+				else
+				{
+					result.Fail("Failed to remove item, see InnerResult or StatusCode for details");
+				}
+
+				return result;
+			}
+
+			result.Fail("Unable to locate node");
+			return result;
+		}
+
 		#endregion
 	}
 }

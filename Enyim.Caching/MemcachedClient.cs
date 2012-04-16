@@ -34,6 +34,7 @@ namespace Enyim.Caching
 		public IGetOperationResultFactory GetOperationResultFactory { get; set; }
 		public IMutateOperationResultFactory MutateOperationResultFactory { get; set; }
 		public IConcatOperationResultFactory ConcatOperationResultFactory { get; set; }
+		public IRemoveOperationResultFactory RemoveOperationResultFactory { get; set; }
 
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the default configuration section (enyim/memcached).
@@ -75,6 +76,7 @@ namespace Enyim.Caching
 			GetOperationResultFactory = new DefaultGetOperationResultFactory();
 			MutateOperationResultFactory = new DefaultMutateOperationResultFactory();
 			ConcatOperationResultFactory = new DefaultConcatOperationResultFactory();
+			RemoveOperationResultFactory = new DefaultRemoveOperationResultFactory();
 		}
 
 		public MemcachedClient(IServerPool pool, IMemcachedKeyTransformer keyTransformer, ITranscoder transcoder)

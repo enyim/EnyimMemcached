@@ -46,6 +46,7 @@
     <Compile Include="MemcachedClientConcatTests.cs" />
     <Compile Include="MemcachedClientGetTests.cs" />
     <Compile Include="MemcachedClientMutateTests.cs" />
+    <Compile Include="MemcachedClientRemoveTests.cs" />
     <Compile Include="MemcachedClientStoreTests.cs" />
     <Compile Include="MemcachedClientTestsBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

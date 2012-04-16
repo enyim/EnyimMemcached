@@ -29,7 +29,9 @@ namespace Enyim.Caching.Memcached
 
 		IConcatOperationResult ExecuteAppend(string key, ArraySegment<byte> data);
 		
-		IConcatOperationResult ExecutePrepend(string key, ArraySegment<byte> data);		
+		IConcatOperationResult ExecutePrepend(string key, ArraySegment<byte> data);
+
+		IRemoveOperationResult ExecuteRemove(string key);
 	}
 }
 
