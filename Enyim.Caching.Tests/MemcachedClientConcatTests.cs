@@ -76,7 +76,76 @@ namespace Enyim.Caching.Tests
 			GetAssertFail(getResult);
 
 		}
-	
+
+		[Test]
+		public void When_Appending_To_Existing_Value_Result_Is_Successful_With_Valid_Cas()
+		{
+			var key = GetUniqueKey("concat");
+			var value = GetRandomString();
+
+			var storeResult = Store(key: key);
+			StoreAssertPass(storeResult);
+
+			var toAppend = "The End";
+			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(toAppend));
+			var concatResult = _Client.ExecuteAppend(key, storeResult.Cas, data);
+			ConcatAssertPass(concatResult);
+
+			var getResult = _Client.ExecuteGet(key);
+			GetAssertPass(getResult, value + toAppend);
+
+		}
+
+		[Test]
+		public void When_Appending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
+		{
+			var key = GetUniqueKey("concat");
+			var value = GetRandomString();
+
+			var storeResult = Store(key: key);
+			StoreAssertPass(storeResult);
+
+			var toAppend = "The End";
+			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(toAppend));
+			var concatResult = _Client.ExecuteAppend(key, storeResult.Cas - 1, data);
+			ConcatAssertFail(concatResult);
+		}
+
+		[Test]
+		public void When_Prepending_To_Existing_Value_Result_Is_Successful_With_Valid_Cas()
+		{
+			var key = GetUniqueKey("concat");
+			var value = GetRandomString();
+
+			var storeResult = Store(key: key);
+			StoreAssertPass(storeResult);
+
+			var tpPrepend = "The Beginning";
+			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(tpPrepend));
+			var concatResult = _Client.ExecuteAppend(key, storeResult.Cas, data);
+			ConcatAssertPass(concatResult);
+
+			var getResult = _Client.ExecuteGet(key);
+			GetAssertPass(getResult, value + tpPrepend);
+
+		}
+
+		[Test]
+		public void When_Prepending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
+		{
+			var key = GetUniqueKey("concat");
+			var value = GetRandomString();
+
+			var storeResult = Store(key: key);
+			StoreAssertPass(storeResult);
+
+			var tpPrepend = "The Beginning";
+			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(tpPrepend));
+			var concatResult = _Client.ExecuteAppend(key, storeResult.Cas - 1, data);
+			ConcatAssertFail(concatResult);
+
+		}
+
 	}
 }
 

@@ -33,8 +33,10 @@ namespace Enyim.Caching.Memcached
 		IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor);
 
 		IConcatOperationResult ExecuteAppend(string key, ArraySegment<byte> data);
+		IConcatOperationResult ExecuteAppend(string key, ulong cas, ArraySegment<byte> data);
 		
 		IConcatOperationResult ExecutePrepend(string key, ArraySegment<byte> data);
+		IConcatOperationResult ExecutePrepend(string key, ulong cas, ArraySegment<byte> data);
 
 		IRemoveOperationResult ExecuteRemove(string key);
 	}
