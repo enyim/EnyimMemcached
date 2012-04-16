@@ -2,22 +2,35 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Enyim.Caching.Memcached.Results;
+using NUnit.Framework;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Tests
 {
-	/// <summary>
-	/// Interface for API methods that return detailed operation results
-	/// </summary>
-	public interface IMemcachedResultsClient
+	[TestFixture]
+	public class MemcachedClientGetTests : MemcachedClientTestsBase
 	{
-		IGetOperationResult ExecuteGet(string key);
 
-		IGetOperationResult ExecuteTryGet(string key, out object value);
-		
-		IStoreOperationResult ExecuteStore(StoreMode mode, string key, object value);
-		IStoreOperationResult ExecuteStore(StoreMode mode, string key, object value, DateTime expiresAt);
-		IStoreOperationResult ExecuteStore(StoreMode mode, string key, object value, TimeSpan validFor);
+		[Test]
+		public void When_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
+		{
+			var key = GetUniqueKey("get");
+			var value = GetRandomString();
+			var storeResult = Store(key: key, value: value);
+			StoreAssertPass(storeResult);
+
+			var getResult = _Client.ExecuteGet(key);
+			GetAssertPass(getResult, value);
+		}
+
+		[Test]
+		public void When_Getting_Item_For_Invalid_Key_HasValue_Is_False_And_Result_Is_Not_Successful()
+		{
+			var key = GetUniqueKey("get");
+
+			var getResult = _Client.ExecuteGet(key);
+			GetAssertFail(getResult);
+		}
+	
 	}
 }
 

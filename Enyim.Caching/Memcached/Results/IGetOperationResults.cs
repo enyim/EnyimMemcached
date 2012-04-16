@@ -2,22 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Enyim.Caching.Memcached.Results;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Results
 {
-	/// <summary>
-	/// Interface for API methods that return detailed operation results
-	/// </summary>
-	public interface IMemcachedResultsClient
+	public interface IGetOperationResult : INullableOperationResult<object>, ICasOperationResult
 	{
-		IGetOperationResult ExecuteGet(string key);
-
-		IGetOperationResult ExecuteTryGet(string key, out object value);
-		
-		IStoreOperationResult ExecuteStore(StoreMode mode, string key, object value);
-		IStoreOperationResult ExecuteStore(StoreMode mode, string key, object value, DateTime expiresAt);
-		IStoreOperationResult ExecuteStore(StoreMode mode, string key, object value, TimeSpan validFor);
 	}
 }
 

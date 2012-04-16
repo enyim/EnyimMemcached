@@ -65,7 +65,22 @@ namespace Enyim.Caching.Tests
 			Assert.That(result.StatusCode, Is.GreaterThan(0), "StatusCode not greater than 0");
 		}
 
-		
+		protected void GetAssertPass(IGetOperationResult result, object expectedValue)
+		{
+			Assert.That(result.Success, Is.True, "Success was false");
+			Assert.That(result.Cas, Is.GreaterThan(0), "Cas value was 0");
+			Assert.That(result.StatusCode, Is.EqualTo(0).Or.Null, "StatusCode was neither 0 nor null");
+			Assert.That(result.Value, Is.EqualTo(expectedValue), "Actual value was not expected value: " + result.Value);
+		}
+
+		protected void GetAssertFail(IGetOperationResult result)
+		{
+			Assert.That(result.Success, Is.False, "Success was true");
+			Assert.That(result.Cas, Is.EqualTo(0), "Cas value was not 0");
+			Assert.That(result.StatusCode, Is.Null.Or.GreaterThan(0), "StatusCode not greater than 0");
+			Assert.That(result.HasValue, Is.False, "HasValue was true");
+			Assert.That(result.Value, Is.Null, "Value was not null");
+		}
 
 	}
 }

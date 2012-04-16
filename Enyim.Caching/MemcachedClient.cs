@@ -31,6 +31,8 @@ namespace Enyim.Caching
 		private IPerformanceMonitor performanceMonitor;
 
 		public IStoreOperationResultFactory StoreOperationResultFactory { get; set; }
+		public IGetOperationResultFactory GetOperationResultFactory { get; set; }
+
 
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the default configuration section (enyim/memcached).
@@ -69,6 +71,8 @@ namespace Enyim.Caching
 			this.StartPool();
 
 			StoreOperationResultFactory = new DefaultStoreOperationResultFactory();
+			GetOperationResultFactory = new DefaultGetOperationResultFactory();
+
 		}
 
 		public MemcachedClient(IServerPool pool, IMemcachedKeyTransformer keyTransformer, ITranscoder transcoder)
@@ -139,7 +143,7 @@ namespace Enyim.Caching
 		{
 			ulong cas = 0;
 
-			return this.PerformTryGet(key, out cas, out value);
+			return this.PerformTryGet(key, out cas, out value).Success;
 		}
 
 		public CasResult<object> GetWithCas(string key)
@@ -165,13 +169,14 @@ namespace Enyim.Caching
 
 			value = new CasResult<object> { Cas = cas, Result = tmp };
 
-			return retval;
+			return retval.Success;
 		}
 
-		protected virtual bool PerformTryGet(string key, out ulong cas, out object value)
+		protected virtual IGetOperationResult PerformTryGet(string key, out ulong cas, out object value)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
+			var result = GetOperationResultFactory.Create();
 
 			if (node != null)
 			{
@@ -179,21 +184,32 @@ namespace Enyim.Caching
 
 				if (node.Execute(command))
 				{
-					value = this.transcoder.Deserialize(command.Result);
-					cas = command.CasValue;
+					result.Value = value = this.transcoder.Deserialize(command.Result);
+					result.Cas = cas = command.CasValue;
 
 					if (this.performanceMonitor != null) this.performanceMonitor.Get(1, true);
 
-					return true;
+					result.Pass();
+					return result;
+				}
+				else
+				{
+					result.Value = value = null;
+					result.Cas = cas = 0;
+					result.HasValue = false;
+					result.Fail("Get operation failed. See InnerResult or StatusCode for details");
+					return result;
 				}
 			}
 
-			value = null;
-			cas = 0;
+			result.Value = value = null;
+			result.Cas = cas = 0;
+			result.HasValue = false;
 
 			if (this.performanceMonitor != null) this.performanceMonitor.Get(1, false);
 
-			return false;
+			result.Fail("Unable to locate node");
+			return result;
 		}
 
 		#region [ Store                        ]

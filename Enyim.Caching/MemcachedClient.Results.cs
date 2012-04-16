@@ -61,6 +61,35 @@ namespace Enyim.Caching
 
 		
 		#endregion
+
+		#region [ Get                        ]
+
+		/// <summary>
+		/// Retrieves the specified item from the cache.
+		/// </summary>
+		/// <param name="key">The identifier for the item to retrieve.</param>
+		/// <returns>The retrieved item, or <value>null</value> if the key was not found.</returns>
+		public IGetOperationResult ExecuteGet(string key)
+		{
+			object tmp;
+
+			return this.ExecuteTryGet(key, out tmp);
+		}
+
+		/// <summary>
+		/// Tries to get an item from the cache.
+		/// </summary>
+		/// <param name="key">The identifier for the item to retrieve.</param>
+		/// <param name="value">The retrieved item or null if not found.</param>
+		/// <returns>The <value>true</value> if the item was successfully retrieved.</returns>
+		public IGetOperationResult ExecuteTryGet(string key, out object value)
+		{
+			ulong cas = 0;
+
+			return this.PerformTryGet(key, out cas, out value);
+		}
+
+		#endregion
 	}
 }
 

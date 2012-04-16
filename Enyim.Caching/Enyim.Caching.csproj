@@ -242,9 +242,14 @@
     <Compile Include="Memcached\Protocol\Text\TextSocketHelper.cs">
     </Compile>
     <Compile Include="Memcached\Results\Extensions\OperationResultExtensions.cs" />
+    <Compile Include="Memcached\Results\Factories\DefaultGetOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\Factories\DefaultStoreOperationResultFactory.cs" />
+    <Compile Include="Memcached\Results\Factories\IGetOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\Factories\IStoreOperationResultFactory.cs" />
+    <Compile Include="Memcached\Results\GetOperationResult.cs" />
     <Compile Include="Memcached\Results\ICasOperationResult.cs" />
+    <Compile Include="Memcached\Results\IGetOperationResults.cs" />
+    <Compile Include="Memcached\Results\INullableOperationResult`1.cs" />
     <Compile Include="Memcached\Results\IOperationResult.cs" />
     <Compile Include="Memcached\Results\IStoreOperationResult.cs" />
     <Compile Include="Memcached\Results\OperationResultBase.cs" />
