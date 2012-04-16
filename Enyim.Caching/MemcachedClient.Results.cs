@@ -190,6 +190,50 @@ namespace Enyim.Caching
 		}
 
 		/// <summary>
+		/// Increments the value of the specified key by the given amount, but only if the item's version matches the CAS value provided. The operation is atomic and happens on the server.
+		/// </summary>
+		/// <param name="key">The key used to reference the item.</param>
+		/// <param name="defaultValue">The value which will be stored by the server if the specified item was not found.</param>
+		/// <param name="delta">The amount by which the client wants to increase the item.</param>
+		/// <param name="cas">The cas value which must match the item's version.</param>
+		/// <returns>The new value of the item or defaultValue if the key was not found.</returns>
+		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
+		public IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta, ulong cas)
+		{
+			return this.CasMutate(MutationMode.Increment, key, defaultValue, delta, 0, cas);
+		}
+
+		/// <summary>
+		/// Increments the value of the specified key by the given amount, but only if the item's version matches the CAS value provided. The operation is atomic and happens on the server.
+		/// </summary>
+		/// <param name="key">The key used to reference the item.</param>
+		/// <param name="defaultValue">The value which will be stored by the server if the specified item was not found.</param>
+		/// <param name="delta">The amount by which the client wants to increase the item.</param>
+		/// <param name="validFor">The interval after the item is invalidated in the cache.</param>
+		/// <param name="cas">The cas value which must match the item's version.</param>
+		/// <returns>The new value of the item or defaultValue if the key was not found.</returns>
+		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
+		public IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor, ulong cas)
+		{
+			return this.CasMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null), cas);
+		}
+
+		/// <summary>
+		/// Increments the value of the specified key by the given amount, but only if the item's version matches the CAS value provided. The operation is atomic and happens on the server.
+		/// </summary>
+		/// <param name="key">The key used to reference the item.</param>
+		/// <param name="defaultValue">The value which will be stored by the server if the specified item was not found.</param>
+		/// <param name="delta">The amount by which the client wants to increase the item.</param>
+		/// <param name="expiresAt">The time when the item is invalidated in the cache.</param>
+		/// <param name="cas">The cas value which must match the item's version.</param>
+		/// <returns>The new value of the item or defaultValue if the key was not found.</returns>
+		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
+		public IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt, ulong cas)
+		{
+			return this.CasMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt), cas);
+		}
+
+		/// <summary>
 		/// Decrements the value of the specified key by the given amount. The operation is atomic and happens on the server.
 		/// </summary>
 		/// <param name="key">The key used to reference the item.</param>
@@ -228,6 +272,50 @@ namespace Enyim.Caching
 		public IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt)
 		{
 			return this.PerformMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt));
+		}
+
+		/// <summary>
+		/// Decrements the value of the specified key by the given amount, but only if the item's version matches the CAS value provided. The operation is atomic and happens on the server.
+		/// </summary>
+		/// <param name="key">The key used to reference the item.</param>
+		/// <param name="defaultValue">The value which will be stored by the server if the specified item was not found.</param>
+		/// <param name="delta">The amount by which the client wants to decrease the item.</param>
+		/// <param name="cas">The cas value which must match the item's version.</param>
+		/// <returns>The new value of the item or defaultValue if the key was not found.</returns>
+		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
+		public IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta, ulong cas)
+		{
+			return this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, 0, cas);
+		}
+
+		/// <summary>
+		/// Decrements the value of the specified key by the given amount, but only if the item's version matches the CAS value provided. The operation is atomic and happens on the server.
+		/// </summary>
+		/// <param name="key">The key used to reference the item.</param>
+		/// <param name="defaultValue">The value which will be stored by the server if the specified item was not found.</param>
+		/// <param name="delta">The amount by which the client wants to decrease the item.</param>
+		/// <param name="validFor">The interval after the item is invalidated in the cache.</param>
+		/// <param name="cas">The cas value which must match the item's version.</param>
+		/// <returns>The new value of the item or defaultValue if the key was not found.</returns>
+		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
+		public IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor, ulong cas)
+		{
+			return this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null), cas);
+		}
+
+		/// <summary>
+		/// Decrements the value of the specified key by the given amount, but only if the item's version matches the CAS value provided. The operation is atomic and happens on the server.
+		/// </summary>
+		/// <param name="key">The key used to reference the item.</param>
+		/// <param name="defaultValue">The value which will be stored by the server if the specified item was not found.</param>
+		/// <param name="delta">The amount by which the client wants to decrease the item.</param>
+		/// <param name="expiresAt">The time when the item is invalidated in the cache.</param>
+		/// <param name="cas">The cas value which must match the item's version.</param>
+		/// <returns>The new value of the item or defaultValue if the key was not found.</returns>
+		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
+		public IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt, ulong cas)
+		{
+			return this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt), cas);
 		}
 		#endregion
 

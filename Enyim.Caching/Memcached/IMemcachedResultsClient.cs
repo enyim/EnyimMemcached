@@ -27,10 +27,18 @@ namespace Enyim.Caching.Memcached
 		IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta);
 		IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt);
 		IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor);
+
+		IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta, ulong cas);
+		IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt, ulong cas);
+		IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor, ulong cas);
 		
 		IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta);
 		IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt);
 		IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor);
+
+		IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta, ulong cas);
+		IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt, ulong cas);
+		IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor, ulong cas);
 
 		IConcatOperationResult ExecuteAppend(string key, ArraySegment<byte> data);
 		IConcatOperationResult ExecuteAppend(string key, ulong cas, ArraySegment<byte> data);
