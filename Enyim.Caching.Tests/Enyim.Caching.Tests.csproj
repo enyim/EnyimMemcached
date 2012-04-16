@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MemcachedClientConcatTests.cs" />
     <Compile Include="MemcachedClientGetTests.cs" />
     <Compile Include="MemcachedClientMutateTests.cs" />
     <Compile Include="MemcachedClientStoreTests.cs" />

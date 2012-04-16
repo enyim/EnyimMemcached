@@ -91,7 +91,7 @@ namespace Enyim.Caching
 
 		#endregion
 
-		#region [ Mutate
+		#region [ Mutate				]
 		/// <summary>
 		/// Increments the value of the specified key by the given amount. The operation is atomic and happens on the server.
 		/// </summary>
@@ -173,6 +173,35 @@ namespace Enyim.Caching
 		{
 			return this.PerformMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt));
 		}
+		#endregion
+
+		#region [ Concatenate		]
+
+		/// <summary>
+		/// Appends the data to the end of the specified item's data on the server.
+		/// </summary>
+		/// <param name="key">The key used to reference the item.</param>
+		/// <param name="data">The data to be appended to the item.</param>
+		/// <returns>true if the data was successfully stored; false otherwise.</returns>
+		public IConcatOperationResult ExecuteAppend(string key, ArraySegment<byte> data)
+		{
+			ulong cas = 0;
+
+			return this.PerformConcatenate(ConcatenationMode.Append, key, ref cas, data);
+		}
+
+		/// <summary>
+		/// Inserts the data before the specified item's data on the server.
+		/// </summary>
+		/// <returns>true if the data was successfully stored; false otherwise.</returns>
+		public IConcatOperationResult ExecutePrepend(string key, ArraySegment<byte> data)
+		{
+			ulong cas = 0;
+
+			return this.PerformConcatenate(ConcatenationMode.Prepend, key, ref cas, data);
+		}
+
+		
 		#endregion
 	}
 }

@@ -33,6 +33,7 @@ namespace Enyim.Caching
 		public IStoreOperationResultFactory StoreOperationResultFactory { get; set; }
 		public IGetOperationResultFactory GetOperationResultFactory { get; set; }
 		public IMutateOperationResultFactory MutateOperationResultFactory { get; set; }
+		public IConcatOperationResultFactory ConcatOperationResultFactory { get; set; }
 
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the default configuration section (enyim/memcached).
@@ -73,7 +74,7 @@ namespace Enyim.Caching
 			StoreOperationResultFactory = new DefaultStoreOperationResultFactory();
 			GetOperationResultFactory = new DefaultGetOperationResultFactory();
 			MutateOperationResultFactory = new DefaultMutateOperationResultFactory();
-
+			ConcatOperationResultFactory = new DefaultConcatOperationResultFactory();
 		}
 
 		public MemcachedClient(IServerPool pool, IMemcachedKeyTransformer keyTransformer, ITranscoder transcoder)
@@ -617,7 +618,7 @@ namespace Enyim.Caching
 		{
 			ulong cas = 0;
 
-			return this.PerformConcatenate(ConcatenationMode.Append, key, ref cas, data);
+			return this.PerformConcatenate(ConcatenationMode.Append, key, ref cas, data).Success;
 		}
 
 		/// <summary>
@@ -628,7 +629,7 @@ namespace Enyim.Caching
 		{
 			ulong cas = 0;
 
-			return this.PerformConcatenate(ConcatenationMode.Prepend, key, ref cas, data);
+			return this.PerformConcatenate(ConcatenationMode.Prepend, key, ref cas, data).Success;
 		}
 
 		/// <summary>
@@ -643,7 +644,7 @@ namespace Enyim.Caching
 			ulong tmp = cas;
 			var success = PerformConcatenate(ConcatenationMode.Append, key, ref tmp, data);
 
-			return new CasResult<bool> { Cas = tmp, Result = success };
+			return new CasResult<bool> { Cas = tmp, Result = success.Success };
 		}
 
 		/// <summary>
@@ -658,28 +659,39 @@ namespace Enyim.Caching
 			ulong tmp = cas;
 			var success = PerformConcatenate(ConcatenationMode.Prepend, key, ref tmp, data);
 
-			return new CasResult<bool> { Cas = tmp, Result = success };
+			return new CasResult<bool> { Cas = tmp, Result = success.Success };
 		}
 
-		protected virtual bool PerformConcatenate(ConcatenationMode mode, string key, ref ulong cas, ArraySegment<byte> data)
+		protected virtual IConcatOperationResult PerformConcatenate(ConcatenationMode mode, string key, ref ulong cas, ArraySegment<byte> data)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
+			var result = ConcatOperationResultFactory.Create();
 
 			if (node != null)
 			{
 				var command = this.pool.OperationFactory.Concat(mode, hashedKey, cas, data);
 				var retval = node.Execute(command);
 
-				cas = command.CasValue;
-				if (this.performanceMonitor != null) this.performanceMonitor.Concatenate(mode, 1, true);
+				if (retval)
+				{
+					result.Cas = cas = command.CasValue;
+					result.StatusCode = command.StatusCode;
+					if (this.performanceMonitor != null) this.performanceMonitor.Concatenate(mode, 1, true);
+					result.Pass();
+				}
+				else
+				{
+					result.Fail("Concat operation failed, see InnerResult or StatusCode for details");
+				}
 
-				return retval;
+				return result;
 			}
 
 			if (this.performanceMonitor != null) this.performanceMonitor.Concatenate(mode, 1, false);
 
-			return false;
+			result.Fail("Unable to locate node");
+			return result;
 		}
 
 		#endregion

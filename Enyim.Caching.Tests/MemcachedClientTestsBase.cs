@@ -96,6 +96,20 @@ namespace Enyim.Caching.Tests
 			Assert.That(result.Cas, Is.EqualTo(0), "Cas 0");
 			Assert.That(result.StatusCode, Is.Null.Or.Not.EqualTo(0), "StatusCode was 0");
 		}
+
+		protected void ConcatAssertPass(IConcatOperationResult result)
+		{
+			Assert.That(result.Success, Is.True, "Success was false");
+			Assert.That(result.Cas, Is.GreaterThan(0), "Cas value was 0");
+			Assert.That(result.StatusCode, Is.EqualTo(0), "StatusCode was not 0");
+		}
+
+		protected void ConcatAssertFail(IConcatOperationResult result)
+		{
+			Assert.That(result.Success, Is.False, "Success was true");
+			Assert.That(result.Cas, Is.EqualTo(0), "Cas value was not 0");
+			Assert.That(result.StatusCode, Is.Null.Or.GreaterThan(0), "StatusCode not greater than 0");
+		}		
 	}
 }
 
