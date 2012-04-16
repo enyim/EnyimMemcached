@@ -272,24 +272,13 @@ namespace Enyim.Caching
 		/// <param name="mode">Defines how the item is stored in the cache.</param>
 		/// <param name="key">The key used to reference the item.</param>
 		/// <param name="value">The object to be inserted into the cache.</param>
-		/// <remarks>The item does not expire unless it is removed due memory pressure. The text protocol does not support this operation, you need to Store then GetWithCas.</remarks>
-		/// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
-		public CasResult<bool> Cas(StoreMode mode, string key, object value)
-		{
-			return this.PerformStore(mode, key, value, 0, 0);
-		}
-
-		/// <summary>
-		/// Inserts an item into the cache with a cache key to reference its location and returns its version.
-		/// </summary>
-		/// <param name="mode">Defines how the item is stored in the cache.</param>
-		/// <param name="key">The key used to reference the item.</param>
-		/// <param name="value">The object to be inserted into the cache.</param>
 		/// <remarks>The item does not expire unless it is removed due memory pressure.</remarks>
 		/// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
 		public CasResult<bool> Cas(StoreMode mode, string key, object value, ulong cas)
 		{
-			return this.PerformStore(mode, key, value, 0, cas);
+			var result = this.PerformStore(mode, key, value, 0, cas);
+			return new CasResult<bool> { Cas = result.Cas, Result = result.Success, StatusCode = result.StatusCode.Value };
+
 		}
 
 		/// <summary>
@@ -303,7 +292,8 @@ namespace Enyim.Caching
 		/// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
 		public CasResult<bool> Cas(StoreMode mode, string key, object value, TimeSpan validFor, ulong cas)
 		{
-			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), cas);
+			var result = this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), cas);
+			return new CasResult<bool> { Cas = result.Cas, Result = result.Success, StatusCode = result.StatusCode.Value };
 		}
 
 		/// <summary>
@@ -317,17 +307,37 @@ namespace Enyim.Caching
 		/// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
 		public CasResult<bool> Cas(StoreMode mode, string key, object value, DateTime expiresAt, ulong cas)
 		{
-			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), cas);
+			var result = this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), cas);
+			return new CasResult<bool> { Cas = result.Cas, Result = result.Success, StatusCode = result.StatusCode.Value };
 		}
 
-		private CasResult<bool> PerformStore(StoreMode mode, string key, object value, uint expires, ulong cas)
+		/// <summary>
+		/// Inserts an item into the cache with a cache key to reference its location and returns its version.
+		/// </summary>
+		/// <param name="mode">Defines how the item is stored in the cache.</param>
+		/// <param name="key">The key used to reference the item.</param>
+		/// <param name="value">The object to be inserted into the cache.</param>
+		/// <remarks>The item does not expire unless it is removed due memory pressure. The text protocol does not support this operation, you need to Store then GetWithCas.</remarks>
+		/// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
+		public CasResult<bool> Cas(StoreMode mode, string key, object value)
+		{
+			var result = this.PerformStore(mode, key, value, 0, 0);
+			return new CasResult<bool> { Cas = result.Cas, Result = result.Success, StatusCode = result.StatusCode.Value };
+		}
+
+		private IStoreOperationResult PerformStore(StoreMode mode, string key, object value, uint expires, ulong cas)
 		{
 			ulong tmp = cas;
 			int status;
 
 			var retval = this.PerformStore(mode, key, value, expires, ref tmp, out status);
+			retval.StatusCode = status;
 
-			return new CasResult<bool> { Cas = tmp, Result = retval.Success, StatusCode = status };
+			if (retval.Success)
+			{
+				retval.Cas = tmp;
+			}
+			return retval;
 		}
 
 		protected virtual IStoreOperationResult PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas, out int statusCode)

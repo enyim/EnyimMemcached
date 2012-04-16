@@ -10,7 +10,7 @@ namespace Enyim.Caching
 {
 	public partial class MemcachedClient : IMemcachedClient, IMemcachedResultsClient
 	{
-		#region [ Store                        ]
+		#region [ Store                        ]		
 
 		/// <summary>
 		/// Inserts an item into the cache with a cache key to reference its location.
@@ -58,11 +58,66 @@ namespace Enyim.Caching
 			int status;
 
 			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), ref tmp, out status);
-		}
-
+		}			
 		
 		#endregion
 
+		#region [ Cas						]
+		/// <summary>
+		/// Inserts an item into the cache with a cache key to reference its location and returns its version.
+		/// </summary>
+		/// <param name="mode">Defines how the item is stored in the cache.</param>
+		/// <param name="key">The key used to reference the item.</param>
+		/// <param name="value">The object to be inserted into the cache.</param>
+		/// <remarks>The item does not expire unless it is removed due memory pressure. The text protocol does not support this operation, you need to Store then GetWithCas.</remarks>
+		/// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
+		public IStoreOperationResult ExecuteCas(StoreMode mode, string key, object value)
+		{
+			return this.PerformStore(mode, key, value, 0, 0);			
+		}
+
+		/// <summary>
+		/// Inserts an item into the cache with a cache key to reference its location and returns its version.
+		/// </summary>
+		/// <param name="mode">Defines how the item is stored in the cache.</param>
+		/// <param name="key">The key used to reference the item.</param>
+		/// <param name="value">The object to be inserted into the cache.</param>
+		/// <remarks>The item does not expire unless it is removed due memory pressure.</remarks>
+		/// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
+		public IStoreOperationResult ExecuteCas(StoreMode mode, string key, object value, ulong cas)
+		{
+			return this.PerformStore(mode, key, value, 0, cas);
+		}
+
+		/// <summary>
+		/// Inserts an item into the cache with a cache key to reference its location and returns its version.
+		/// </summary>
+		/// <param name="mode">Defines how the item is stored in the cache.</param>
+		/// <param name="key">The key used to reference the item.</param>
+		/// <param name="value">The object to be inserted into the cache.</param>
+		/// <param name="validFor">The interval after the item is invalidated in the cache.</param>
+		/// <param name="cas">The cas value which must match the item's version.</param>
+		/// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
+		public IStoreOperationResult ExecuteCas(StoreMode mode, string key, object value, TimeSpan validFor, ulong cas)
+		{
+			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), cas);
+		}
+
+		/// <summary>
+		/// Inserts an item into the cache with a cache key to reference its location and returns its version.
+		/// </summary>
+		/// <param name="mode">Defines how the item is stored in the cache.</param>
+		/// <param name="key">The key used to reference the item.</param>
+		/// <param name="value">The object to be inserted into the cache.</param>
+		/// <param name="expiresAt">The time when the item is invalidated in the cache.</param>
+		/// <param name="cas">The cas value which must match the item's version.</param>
+		/// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
+		public IStoreOperationResult ExecuteCas(StoreMode mode, string key, object value, DateTime expiresAt, ulong cas)
+		{
+			return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), cas);
+		}
+		#endregion
+		
 		#region [ Get                        ]
 
 		/// <summary>
