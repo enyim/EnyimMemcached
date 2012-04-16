@@ -32,7 +32,7 @@ namespace Enyim.Caching
 
 		public IStoreOperationResultFactory StoreOperationResultFactory { get; set; }
 		public IGetOperationResultFactory GetOperationResultFactory { get; set; }
-
+		public IMutateOperationResultFactory MutateOperationResultFactory { get; set; }
 
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the default configuration section (enyim/memcached).
@@ -72,6 +72,7 @@ namespace Enyim.Caching
 
 			StoreOperationResultFactory = new DefaultStoreOperationResultFactory();
 			GetOperationResultFactory = new DefaultGetOperationResultFactory();
+			MutateOperationResultFactory = new DefaultMutateOperationResultFactory();
 
 		}
 
@@ -387,7 +388,7 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public ulong Increment(string key, ulong defaultValue, ulong delta)
 		{
-			return this.PerformMutate(MutationMode.Increment, key, defaultValue, delta, 0);
+			return this.PerformMutate(MutationMode.Increment, key, defaultValue, delta, 0).Value;
 		}
 
 		/// <summary>
@@ -401,7 +402,7 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public ulong Increment(string key, ulong defaultValue, ulong delta, TimeSpan validFor)
 		{
-			return this.PerformMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null));
+			return this.PerformMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null)).Value;
 		}
 
 		/// <summary>
@@ -415,7 +416,7 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public ulong Increment(string key, ulong defaultValue, ulong delta, DateTime expiresAt)
 		{
-			return this.PerformMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt));
+			return this.PerformMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt)).Value;
 		}
 
 		/// <summary>
@@ -474,7 +475,7 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public ulong Decrement(string key, ulong defaultValue, ulong delta)
 		{
-			return this.PerformMutate(MutationMode.Decrement, key, defaultValue, delta, 0);
+			return this.PerformMutate(MutationMode.Decrement, key, defaultValue, delta, 0).Value;
 		}
 
 		/// <summary>
@@ -488,7 +489,7 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public ulong Decrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor)
 		{
-			return this.PerformMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null));
+			return this.PerformMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null)).Value;
 		}
 
 		/// <summary>
@@ -502,7 +503,7 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public ulong Decrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt)
 		{
-			return this.PerformMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt));
+			return this.PerformMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt)).Value;
 		}
 
 		/// <summary>
@@ -516,7 +517,7 @@ namespace Enyim.Caching
 		/// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
 		public CasResult<ulong> Decrement(string key, ulong defaultValue, ulong delta, ulong cas)
 		{
-			return this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, 0, cas);
+			return this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, 0, cas) ;
 		}
 
 		/// <summary>
@@ -551,7 +552,7 @@ namespace Enyim.Caching
 
 		#endregion
 
-		private ulong PerformMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+		private IMutateOperationResult PerformMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
 		{
 			ulong tmp = 0;
 
@@ -563,31 +564,43 @@ namespace Enyim.Caching
 			var tmp = cas;
 			var retval = PerformMutate(mode, key, defaultValue, delta, expires, ref tmp);
 
-			return new CasResult<ulong> { Cas = tmp, Result = retval };
+			return new CasResult<ulong> { Cas = tmp, Result = retval.Value };
 		}
 
-		protected virtual ulong PerformMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ref ulong cas)
+		protected virtual IMutateOperationResult PerformMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ref ulong cas)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
+			var result = MutateOperationResultFactory.Create();
 
 			if (node != null)
 			{
 				var command = this.pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires, cas);
 				var success = node.Execute(command);
 
-				cas = command.CasValue;
-
-				if (this.performanceMonitor != null) this.performanceMonitor.Mutate(mode, 1, success);
+				result.Cas = cas = command.CasValue;
+				result.StatusCode = command.StatusCode;
 
 				if (success)
-					return command.Result;
+				{
+					if (this.performanceMonitor != null) this.performanceMonitor.Mutate(mode, 1, success);
+					result.Value = command.Result;
+					result.Pass();
+					return result;
+				}
+				else
+				{
+					if (this.performanceMonitor != null) this.performanceMonitor.Mutate(mode, 1, false);
+					result.Fail("Mutate operation failed, see InnerResult or StatusCode for more details");
+				}
+
 			}
 
 			if (this.performanceMonitor != null) this.performanceMonitor.Mutate(mode, 1, false);
 
 			// TODO not sure about the return value when the command fails
-			return defaultValue;
+			result.Fail("Unable to locate node");
+			return result;
 		}
 
 

@@ -243,15 +243,19 @@
     </Compile>
     <Compile Include="Memcached\Results\Extensions\OperationResultExtensions.cs" />
     <Compile Include="Memcached\Results\Factories\DefaultGetOperationResultFactory.cs" />
+    <Compile Include="Memcached\Results\Factories\DefaultMutateOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\Factories\DefaultStoreOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\Factories\IGetOperationResultFactory.cs" />
+    <Compile Include="Memcached\Results\Factories\IMutateOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\Factories\IStoreOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\GetOperationResult.cs" />
     <Compile Include="Memcached\Results\ICasOperationResult.cs" />
     <Compile Include="Memcached\Results\IGetOperationResults.cs" />
+    <Compile Include="Memcached\Results\IMutateOperationResult.cs" />
     <Compile Include="Memcached\Results\INullableOperationResult`1.cs" />
     <Compile Include="Memcached\Results\IOperationResult.cs" />
     <Compile Include="Memcached\Results\IStoreOperationResult.cs" />
+    <Compile Include="Memcached\Results\MutateOperationResult.cs" />
     <Compile Include="Memcached\Results\OperationResultBase.cs" />
     <Compile Include="Memcached\Results\StoreOperationResult.cs" />
     <Compile Include="Memcached\ServerStats.cs">

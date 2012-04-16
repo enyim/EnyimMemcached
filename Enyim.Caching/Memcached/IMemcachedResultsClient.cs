@@ -18,6 +18,15 @@ namespace Enyim.Caching.Memcached
 		IStoreOperationResult ExecuteStore(StoreMode mode, string key, object value);
 		IStoreOperationResult ExecuteStore(StoreMode mode, string key, object value, DateTime expiresAt);
 		IStoreOperationResult ExecuteStore(StoreMode mode, string key, object value, TimeSpan validFor);
+
+		IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta);
+		IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt);
+		IMutateOperationResult ExecuteDecrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor);
+		
+		IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta);
+		IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt);
+		IMutateOperationResult ExecuteIncrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor);
+
 	}
 }
 

@@ -82,6 +82,20 @@ namespace Enyim.Caching.Tests
 			Assert.That(result.Value, Is.Null, "Value was not null");
 		}
 
+		protected void MutateAssertPass(IMutateOperationResult result, ulong expectedValue)
+		{
+			Assert.That(result.Success, Is.True, "Success was false");
+			Assert.That(result.Value, Is.EqualTo(expectedValue), "Value was not expected value: " + expectedValue);
+			Assert.That(result.Cas, Is.GreaterThan(0), "Cas was not greater than 0");
+			Assert.That(result.StatusCode, Is.Null.Or.EqualTo(0), "StatusCode was not null or 0");
+		}
+
+		protected void MutateAssertFail(IMutateOperationResult result)
+		{
+			Assert.That(result.Success, Is.False, "Success was true");
+			Assert.That(result.Cas, Is.EqualTo(0), "Cas 0");
+			Assert.That(result.StatusCode, Is.Null.Or.Not.EqualTo(0), "StatusCode was 0");
+		}
 	}
 }
 

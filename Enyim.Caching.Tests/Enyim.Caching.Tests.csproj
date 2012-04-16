@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MemcachedClientGetTests.cs" />
+    <Compile Include="MemcachedClientMutateTests.cs" />
     <Compile Include="MemcachedClientStoreTests.cs" />
     <Compile Include="MemcachedClientTestsBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
