@@ -120,7 +120,7 @@
     </Compile>
     <Compile Include="Memcached\IMemcachedNodeLocator.cs">
     </Compile>
-    <Compile Include="Memcached\IMemcachedResultsClient.cs" />
+    <Compile Include="IMemcachedResultsClient.cs" />
     <Compile Include="Memcached\IOperationFactory.cs">
     </Compile>
     <Compile Include="MemcachedClient.Results.cs" />

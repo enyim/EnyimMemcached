@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Results;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	/// <summary>
 	/// Interface for API methods that return detailed operation results
