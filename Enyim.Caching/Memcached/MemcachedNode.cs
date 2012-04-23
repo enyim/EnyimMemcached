@@ -600,9 +600,9 @@ namespace Enyim.Caching.Memcached
 			return this.Ping();
 		}
 
-		bool IMemcachedNode.Execute(IOperation op)
+		IOperationResult IMemcachedNode.Execute(IOperation op)
 		{
-			return this.ExecuteOperation(op).Success;
+			return this.ExecuteOperation(op);
 		}
 
 		bool IMemcachedNode.ExecuteAsync(IOperation op, Action<bool> next)

@@ -450,14 +450,15 @@ namespace Enyim.Caching
 			if (node != null)
 			{
 				var command = this.pool.OperationFactory.Delete(hashedKey, 0);
-				var success = node.Execute(command);
+				var commandResult = node.Execute(command);
 
-				if (success)
+				if (commandResult.Success)
 				{
 					result.Pass();
 				}
 				else
 				{
+					result.InnerResult = commandResult;
 					result.Fail("Failed to remove item, see InnerResult or StatusCode for details");
 				}
 

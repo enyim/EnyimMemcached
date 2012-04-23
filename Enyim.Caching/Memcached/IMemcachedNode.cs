@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Collections.Generic;
 using Enyim.Caching.Memcached.Protocol;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
@@ -11,7 +12,7 @@ namespace Enyim.Caching.Memcached
 		bool IsAlive { get; }
 		bool Ping();
 
-		bool Execute(IOperation op);
+		IOperationResult Execute(IOperation op);
 		bool ExecuteAsync(IOperation op, Action<bool> next);
 
 	//	PooledSocket CreateSocket(TimeSpan connectionTimeout, TimeSpan receiveTimeout);

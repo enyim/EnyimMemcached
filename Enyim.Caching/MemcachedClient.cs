@@ -185,8 +185,9 @@ namespace Enyim.Caching
 			if (node != null)
 			{
 				var command = this.pool.OperationFactory.Get(hashedKey);
+				var commandResult = node.Execute(command);
 
-				if (node.Execute(command))
+				if (commandResult.Success)
 				{
 					result.Value = value = this.transcoder.Deserialize(command.Result);
 					result.Cas = cas = command.CasValue;
@@ -200,6 +201,7 @@ namespace Enyim.Caching
 				{
 					result.Value = value = null;
 					result.Cas = cas = 0;
+					result.InnerResult = commandResult;
 					result.Fail("Get operation failed. See InnerResult or StatusCode for details");
 					return result;
 				}
@@ -362,18 +364,19 @@ namespace Enyim.Caching
 				}
 
 				var command = this.pool.OperationFactory.Store(mode, hashedKey, item, expires, cas);
-				var retval = node.Execute(command);
+				var commandResult = node.Execute(command);
 
 				result.Cas = cas = command.CasValue;
 				result.StatusCode = statusCode = command.StatusCode;
 
-				if (retval)
+				if (commandResult.Success)
 				{
 					if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, true);
 					result.Pass();
 					return result;
 				}
 
+				result.InnerResult = commandResult;
 				result.Fail("Store operation failed, see InnerResult or StatusCode for details");
 				return result;
 			}
@@ -593,14 +596,14 @@ namespace Enyim.Caching
 			if (node != null)
 			{
 				var command = this.pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires, cas);
-				var success = node.Execute(command);
+				var commandResult = node.Execute(command);
 
 				result.Cas = cas = command.CasValue;
 				result.StatusCode = command.StatusCode;
 
-				if (success)
+				if (commandResult.Success)
 				{
-					if (this.performanceMonitor != null) this.performanceMonitor.Mutate(mode, 1, success);
+					if (this.performanceMonitor != null) this.performanceMonitor.Mutate(mode, 1, commandResult.Success);
 					result.Value = command.Result;
 					result.Pass();
 					return result;
@@ -608,6 +611,7 @@ namespace Enyim.Caching
 				else
 				{
 					if (this.performanceMonitor != null) this.performanceMonitor.Mutate(mode, 1, false);
+					result.InnerResult = commandResult;
 					result.Fail("Mutate operation failed, see InnerResult or StatusCode for more details");
 				}
 
@@ -687,9 +691,9 @@ namespace Enyim.Caching
 			if (node != null)
 			{
 				var command = this.pool.OperationFactory.Concat(mode, hashedKey, cas, data);
-				var retval = node.Execute(command);
+				var commandResult = node.Execute(command);
 
-				if (retval)
+				if (commandResult.Success)
 				{
 					result.Cas = cas = command.CasValue;
 					result.StatusCode = command.StatusCode;
@@ -698,6 +702,7 @@ namespace Enyim.Caching
 				}
 				else
 				{
+					result.InnerResult = commandResult;
 					result.Fail("Concat operation failed, see InnerResult or StatusCode for details");
 				}
 
@@ -742,7 +747,7 @@ namespace Enyim.Caching
 			foreach (var node in this.pool.GetWorkingNodes())
 			{
 				var cmd = this.pool.OperationFactory.Stats(type);
-				var action = new Func<IOperation, bool>(node.Execute);
+				var action = new Func<IOperation, IOperationResult>(node.Execute);
 				var mre = new ManualResetEvent(false);
 
 				handles.Add(mre);
@@ -776,17 +781,7 @@ namespace Enyim.Caching
 		/// <returns>true if the item was successfully removed from the cache; false otherwise.</returns>
 		public bool Remove(string key)
 		{
-			var hashedKey = this.keyTransformer.Transform(key);
-			var node = this.pool.Locate(hashedKey);
-
-			if (node != null)
-			{
-				var command = this.pool.OperationFactory.Delete(hashedKey, 0);
-
-				return node.Execute(command);
-			}
-
-			return false;
+			return ExecuteRemove(key).Success;
 		}
 
 		/// <summary>
@@ -829,7 +824,7 @@ namespace Enyim.Caching
 				var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
 
 				// we'll use the delegate's BeginInvoke/EndInvoke to run the gets parallel
-				var action = new Func<IOperation, bool>(node.Execute);
+				var action = new Func<IOperation, IOperationResult>(node.Execute);
 				var mre = new ManualResetEvent(false);
 				handles.Add(mre);
 
@@ -839,7 +834,7 @@ namespace Enyim.Caching
 					try
 					{
 						using (iar.AsyncWaitHandle)
-							if (action.EndInvoke(iar))
+							if (action.EndInvoke(iar).Success)
 							{
 								#region perfmon
 								if (this.performanceMonitor != null)

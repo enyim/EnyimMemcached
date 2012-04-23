@@ -75,6 +75,7 @@ namespace Enyim.Caching.Tests
 			Assert.That(result.Success, Is.False, "Success was true");
 			Assert.That(result.Cas, Is.EqualTo(0), "Cas value was not 0");
 			Assert.That(result.StatusCode, Is.GreaterThan(0), "StatusCode not greater than 0");
+			Assert.That(result.InnerResult, Is.Not.Null, "InnerResult was null");
 		}
 
 		protected void GetAssertPass(IGetOperationResult result, object expectedValue)
