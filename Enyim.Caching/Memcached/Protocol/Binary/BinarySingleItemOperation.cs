@@ -16,7 +16,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return this.Build().CreateBuffer();
 		}
 
-		protected abstract bool ProcessResponse(BinaryResponse response);
+		protected abstract IOperationResult ProcessResponse(BinaryResponse response);
 
 		protected internal override IOperationResult ReadResponse(PooledSocket socket)
 		{
@@ -33,8 +33,10 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 				StatusCode = this.StatusCode
 			};
 
-			if (! this.ProcessResponse(response))
+			IOperationResult responseResult;
+			if (! (responseResult = this.ProcessResponse(response)).Success)
 			{
+				result.InnerResult = responseResult;
 				result.Fail("Failed to process response, see StatusCode or InnerResult for details");				
 			}
 			

@@ -256,6 +256,7 @@
     <Compile Include="Memcached\Results\Factories\IMutateOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\Factories\IRemoveOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\GetOperationResult`1.cs" />
+    <Compile Include="Memcached\Results\Helpers\ResultHelper.cs" />
     <Compile Include="Memcached\Results\IGetOperationResult`1.cs" />
     <Compile Include="Memcached\Results\IPooledSocketResult.cs" />
     <Compile Include="Memcached\Results\IRemoveOperationResult.cs" />

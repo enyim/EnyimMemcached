@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -31,9 +32,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return request;
 		}
 
-		protected override bool ProcessResponse(BinaryResponse response)
+		protected override IOperationResult ProcessResponse(BinaryResponse response)
 		{
-			return true;
+			return new BinaryOperationResult() { Success = true };
 		}
 
 		ConcatenationMode IConcatOperation.Mode

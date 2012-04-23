@@ -1,4 +1,7 @@
 using System;
+using Enyim.Caching.Memcached.Results.Extensions;
+using Enyim.Caching.Memcached.Results.Helpers;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -49,8 +52,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return request;
 		}
 
-		protected override bool ProcessResponse(BinaryResponse response)
+		protected override IOperationResult ProcessResponse(BinaryResponse response)
 		{
+			var result = new BinaryOperationResult();
 			var status = response.StatusCode;
 			this.StatusCode = status;
 
@@ -58,14 +62,15 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			{
 				var data = response.Data;
 				if (data.Count != 8)
-					throw new InvalidOperationException("result must be 8 bytes long, received: " + data.Count);
+					return result.Fail("Result must be 8 bytes long, received: " + data.Count, new InvalidOperationException());
 
 				this.result = BinaryConverter.DecodeUInt64(data.Array, data.Offset);
 
-				return true;
+				return result.Pass();
 			}
 
-			return false;
+			var message = ResultHelper.ProcessResponseData("Mutate failed for key " + Key, response.Data);
+			return result.Fail(message);
 		}
 
 		MutationMode IMutatorOperation.Mode
