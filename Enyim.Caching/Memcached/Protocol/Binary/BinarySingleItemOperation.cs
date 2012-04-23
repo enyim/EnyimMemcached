@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -16,15 +18,27 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 		protected abstract bool ProcessResponse(BinaryResponse response);
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected internal override IOperationResult ReadResponse(PooledSocket socket)
 		{
 			var response = new BinaryResponse();
 			var retval = response.Read(socket);
-
+			
 			this.Cas = response.CAS;
 			this.StatusCode = response.StatusCode;
 
-			return retval & this.ProcessResponse(response);
+			var result = new BinaryOperationResult()
+			{
+				Success = retval,
+				Cas = this.Cas,
+				StatusCode = this.StatusCode
+			};
+
+			if (! this.ProcessResponse(response))
+			{
+				result.Fail("Failed to process response, see StatusCode or InnerResult for details");				
+			}
+			
+			return result;
 		}
 
 		protected internal override bool ReadResponseAsync(PooledSocket socket, Action<bool> next)

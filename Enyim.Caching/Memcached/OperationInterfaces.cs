@@ -2,13 +2,14 @@ using System;
 using System.Net;
 using System.Collections.Generic;
 using Enyim.Caching.Memcached.Protocol;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public interface IOperation
 	{
 		IList<ArraySegment<byte>> GetBuffer();
-		bool ReadResponse(PooledSocket socket);
+		IOperationResult ReadResponse(PooledSocket socket);
 
 		int StatusCode { get; }
 

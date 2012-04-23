@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Text
 {
@@ -25,7 +27,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 			return TextSocketHelper.GetCommandBuffer(command);
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected internal override IOperationResult ReadResponse(PooledSocket socket)
 		{
 			var serverData = new Dictionary<string, string>();
 
@@ -62,7 +64,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 
 			this.result = serverData;
 
-			return true;
+			return new TextOperationResult().Pass();
 		}
 
 		Dictionary<string, string> IStatsOperation.Result

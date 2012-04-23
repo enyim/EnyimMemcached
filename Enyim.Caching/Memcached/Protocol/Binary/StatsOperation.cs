@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Net;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -26,7 +28,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return request;
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected internal override IOperationResult ReadResponse(PooledSocket socket)
 		{
 			var response = new BinaryResponse();
 			var serverData = new Dictionary<string, string>();
@@ -46,7 +48,13 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			this.result = serverData;
 			this.StatusCode = response.StatusCode;
 
-			return retval;
+			var result = new BinaryOperationResult()
+			{
+				StatusCode = StatusCode
+			};
+
+			result.PassOrFail(retval, "Failed to read response");
+			return result;
 		}
 
 		Dictionary<string, string> IStatsOperation.Result

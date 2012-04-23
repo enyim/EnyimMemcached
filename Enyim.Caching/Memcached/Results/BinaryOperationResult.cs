@@ -1,35 +1,22 @@
+﻿using System;
 using System.Collections.Generic;
-using Enyim.Caching.Memcached.Results;
-using Enyim.Caching.Memcached.Results.Extensions;
+using System.Linq;
+using System.Text;
 
-namespace Enyim.Caching.Memcached.Protocol.Text
+namespace Enyim.Caching.Memcached.Results
 {
-	public class FlushOperation : Operation, IFlushOperation
+	public class BinaryOperationResult : OperationResultBase, ICasOperationResult
 	{
-		public FlushOperation() { }
-
-		protected internal override IList<System.ArraySegment<byte>> GetBuffer()
-		{
-			return TextSocketHelper.GetCommandBuffer("flush_all" + TextSocketHelper.CommandTerminator);
-		}
-
-		protected internal override IOperationResult ReadResponse(PooledSocket socket)
-		{
-			TextSocketHelper.ReadResponse(socket);
-			return new TextOperationResult().Pass();
-		}
-
-		protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
-		{
-			throw new System.NotSupportedException();
-		}
+		public ulong Cas { get; set; }
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kisk�, enyim.com
+ *    @author Couchbase <info@couchbase.com>
+ *    @copyright 2012 Couchbase, Inc.
+ *    @copyright 2012 Attila Kiskó, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

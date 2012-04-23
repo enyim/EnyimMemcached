@@ -47,6 +47,23 @@ namespace Enyim.Caching.Memcached.Results.Extensions
 			target.Exception = source.Exception;
 			target.StatusCode = source.StatusCode;
 		}
+
+		/// <summary>
+		/// Copy properties from one IOperationResult to another.  Does not use reflection.
+		/// Ony LCD properties are copied
+		/// </summary>
+		/// <param name="target"></param>
+		public static void PassOrFail(this IOperationResult source, bool success, string message = "", Exception ex = null)
+		{
+			if (success)
+			{
+				Pass(source);
+			}
+			else
+			{
+				Fail(source, message, ex);
+			}
+		}
 	}
 }
 

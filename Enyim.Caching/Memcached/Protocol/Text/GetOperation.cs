@@ -1,3 +1,5 @@
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Text
 {
@@ -14,18 +16,19 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 			return TextSocketHelper.GetCommandBuffer(command);
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected internal override IOperationResult ReadResponse(PooledSocket socket)
 		{
 			GetResponse r = GetHelper.ReadItem(socket);
+			var result = new TextOperationResult();
 
-			if (r == null) return false;
+			if (r == null) return result.Fail("Failed to read response");
 
 			this.result = r.Item;
 			this.Cas = r.CasValue;
 
 			GetHelper.FinishCurrent(socket);
 
-			return true;
+			return result.Pass();
 		}
 
 		CacheItem IGetOperation.Result

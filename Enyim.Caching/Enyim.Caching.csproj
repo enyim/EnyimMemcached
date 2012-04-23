@@ -241,6 +241,7 @@
     </Compile>
     <Compile Include="Memcached\Protocol\Text\TextSocketHelper.cs">
     </Compile>
+    <Compile Include="Memcached\Results\BinaryOperationResult.cs" />
     <Compile Include="Memcached\Results\ConcatOperationResult.cs" />
     <Compile Include="Memcached\Results\Extensions\OperationResultExtensions.cs" />
     <Compile Include="Memcached\Results\Factories\IGetOperationResultFactory`1.cs" />
@@ -272,6 +273,7 @@
     <Compile Include="Memcached\Results\MutateOperationResult.cs" />
     <Compile Include="Memcached\Results\OperationResultBase.cs" />
     <Compile Include="Memcached\Results\StoreOperationResult.cs" />
+    <Compile Include="Memcached\Results\TextOperationResult.cs" />
     <Compile Include="Memcached\ServerStats.cs">
     </Compile>
     <Compile Include="Memcached\SlidingBuffer.cs" />

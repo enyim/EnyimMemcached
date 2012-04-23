@@ -522,7 +522,16 @@ namespace Enyim.Caching.Memcached
 
 					socket.Write(b);
 
-					result.Success = op.ReadResponse(socket);
+					var readResult = op.ReadResponse(socket);
+					if (readResult.Success)
+					{
+						result.Pass();
+					}
+					else
+					{
+						result.InnerResult = readResult;
+						result.Fail("Failed to read response, see inner result for details");
+					}
 					return result;
 				}
 				catch (IOException e)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Protocol
 {
@@ -13,7 +14,7 @@ namespace Enyim.Caching.Memcached.Protocol
 		protected Operation() { }
 
 		internal protected abstract IList<ArraySegment<byte>> GetBuffer();
-		internal protected abstract bool ReadResponse(PooledSocket socket);
+		internal protected abstract IOperationResult ReadResponse(PooledSocket socket);
 		internal protected abstract bool ReadResponseAsync(PooledSocket socket, Action<bool> next);
 
 		IList<ArraySegment<byte>> IOperation.GetBuffer()
@@ -21,7 +22,7 @@ namespace Enyim.Caching.Memcached.Protocol
 			return this.GetBuffer();
 		}
 
-		bool IOperation.ReadResponse(PooledSocket socket)
+		IOperationResult IOperation.ReadResponse(PooledSocket socket)
 		{
 			return this.ReadResponse(socket);
 		}

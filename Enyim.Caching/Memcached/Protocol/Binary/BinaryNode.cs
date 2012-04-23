@@ -52,7 +52,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 			socket.Write(currentStep.GetBuffer());
 
-			while (!currentStep.ReadResponse(socket))
+			while (!currentStep.ReadResponse(socket).Success)
 			{
 				// challenge-response authentication
 				if (currentStep.StatusCode == 0x21)

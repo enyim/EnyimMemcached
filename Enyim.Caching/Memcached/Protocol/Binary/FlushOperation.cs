@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -14,14 +16,20 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return request;
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected internal override IOperationResult ReadResponse(PooledSocket socket)
 		{
 			var response = new BinaryResponse();
 			var retval = response.Read(socket);
 
 			this.StatusCode = StatusCode;
+			var result = new BinaryOperationResult()
+			{
+				Success = retval,
+				StatusCode = this.StatusCode
+			};
 
-			return retval;
+			result.PassOrFail(retval, "Failed to read response");
+			return result;
 		}
 	}
 }
