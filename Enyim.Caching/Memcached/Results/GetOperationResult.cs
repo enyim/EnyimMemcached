@@ -9,7 +9,7 @@ namespace Enyim.Caching.Memcached.Results
 	{
 		public ulong Cas { get; set; }
 
-		public bool HasValue { get; set; }
+		public bool HasValue { get { return Value != null; } }
 
 		public object Value { get; set; }
 

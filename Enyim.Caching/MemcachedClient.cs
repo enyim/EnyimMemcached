@@ -200,7 +200,6 @@ namespace Enyim.Caching
 				{
 					result.Value = value = null;
 					result.Cas = cas = 0;
-					result.HasValue = false;
 					result.Fail("Get operation failed. See InnerResult or StatusCode for details");
 					return result;
 				}
@@ -208,7 +207,6 @@ namespace Enyim.Caching
 
 			result.Value = value = null;
 			result.Cas = cas = 0;
-			result.HasValue = false;
 
 			if (this.performanceMonitor != null) this.performanceMonitor.Get(1, false);
 
