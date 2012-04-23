@@ -256,8 +256,10 @@
     <Compile Include="Memcached\Results\Factories\IRemoveOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\GetOperationResult`1.cs" />
     <Compile Include="Memcached\Results\IGetOperationResult`1.cs" />
+    <Compile Include="Memcached\Results\IPooledSocketResult.cs" />
     <Compile Include="Memcached\Results\IRemoveOperationResult.cs" />
     <Compile Include="Memcached\Results\Factories\IStoreOperationResultFactory.cs" />
+    <Compile Include="Memcached\Results\PooledSocketResult.cs" />
     <Compile Include="Memcached\Results\RemoveOperationResult.cs" />
     <Compile Include="Memcached\Results\GetOperationResult.cs" />
     <Compile Include="Memcached\Results\ICasOperationResult.cs" />
