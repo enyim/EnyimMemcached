@@ -53,16 +53,9 @@ namespace Enyim.Caching.Memcached.Results.Extensions
 		/// Ony LCD properties are copied
 		/// </summary>
 		/// <param name="target"></param>
-		public static void PassOrFail(this IOperationResult source, bool success, string message = "", Exception ex = null)
+		public static IOperationResult PassOrFail(this IOperationResult source, bool success, string message = "", Exception ex = null)
 		{
-			if (success)
-			{
-				Pass(source);
-			}
-			else
-			{
-				Fail(source, message, ex);
-			}
+			return success ? Pass(source) : Fail(source, message, ex);
 		}
 	}
 }
