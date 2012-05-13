@@ -38,8 +38,6 @@
     <Compile Include="BinaryMemcachedClientTest.cs" />
     <Compile Include="ConfigTest.cs" />
     <Compile Include="FailurePolicyTest.cs" />
-    <Compile Include="MembaseClientTest.cs" />
-    <Compile Include="MembaseMemcachedBucketTest.cs" />
     <Compile Include="KetamaTest.cs" />
     <Compile Include="TextMemcachedClientTest.cs" />
     <Compile Include="MemcachedClientTest.cs" />
@@ -54,10 +52,6 @@
     <ProjectReference Include="..\Enyim.Caching\Enyim.Caching.csproj">
       <Project>{D438C0B3-A168-40B8-BDDD-61F0939DFF35}</Project>
       <Name>Enyim.Caching</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Membase\Membase.csproj">
-      <Project>{708A2350-A26C-444D-B975-8164263951A7}</Project>
-      <Name>Membase</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

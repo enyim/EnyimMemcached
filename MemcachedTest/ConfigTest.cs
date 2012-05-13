@@ -1,14 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Net;
-using System.Threading;
 using Enyim.Caching;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using NUnit.Framework;
-using System.Collections.Generic;
-using System.Configuration;
-using Membase.Configuration;
 
 namespace MemcachedTest
 {
@@ -142,18 +140,8 @@ namespace MemcachedTest
 		public void TestPerfMonNull()
 		{
 			Assert.IsNull(((IMemcachedClientConfiguration)ConfigurationManager.GetSection("test/validConfig")).CreatePerformanceMonitor());
-			Assert.IsNull(((IMembaseClientConfiguration)ConfigurationManager.GetSection("test/membase")).CreatePerformanceMonitor());
 
 			Assert.IsNull(((IMemcachedClientConfiguration)new Enyim.Caching.Configuration.MemcachedClientConfiguration()).CreatePerformanceMonitor());
-			Assert.IsNull(((IMembaseClientConfiguration)new Membase.Configuration.MembaseClientConfiguration()).CreatePerformanceMonitor());
-		}
-
-		[TestCase]
-		public void TestPerfMonByMembaseFactory()
-		{
-			var config = ConfigurationManager.GetSection("test/membasePerfMon") as IMembaseClientConfiguration;
-
-			Assert.IsInstanceOf<TestPerfMon>(config.CreatePerformanceMonitor());
 		}
 
 		[TestCase]
@@ -266,19 +254,6 @@ namespace MemcachedTest
 		string IMemcachedKeyTransformer.Transform(string key)
 		{
 			return null;
-		}
-	}
-
-	class TestMembasePerfMonFactory : IMembasePerformanceMonitorFactory
-	{
-		IPerformanceMonitor IMembasePerformanceMonitorFactory.Create(string bucket)
-		{
-			return new TestPerfMon();
-		}
-
-		void IProvider.Initialize(Dictionary<string, string> parameters)
-		{
-			Assert.IsTrue(parameters.ContainsKey("test"));
 		}
 	}
 
