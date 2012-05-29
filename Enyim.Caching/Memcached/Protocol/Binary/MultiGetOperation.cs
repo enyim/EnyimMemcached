@@ -3,6 +3,8 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -145,10 +147,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			}
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected internal override IOperationResult ReadResponse(PooledSocket socket)
 		{
 			this.result = new Dictionary<string, CacheItem>();
 			this.Cas = new Dictionary<string, ulong>();
+			var result = new TextOperationResult();
 
 			var response = new BinaryResponse();
 
@@ -158,7 +161,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 				// found the noop, quit
 				if (response.CorrelationId == this.noopId)
-					return true;
+					return result.Pass();
 
 				string key;
 
@@ -180,7 +183,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			}
 
 			// finished reading but we did not find the NOOP
-			return false;
+			return result.Fail("Found response with CorrelationId {0}, but no key is matching it.");
 		}
 
 		public Dictionary<string, CacheItem> Result

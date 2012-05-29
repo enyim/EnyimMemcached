@@ -2,6 +2,8 @@ using System;
 using System.Globalization;
 using System.Text;
 using System.Collections.Generic;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Text
 {
@@ -34,15 +36,18 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 			return TextSocketHelper.GetCommandBuffer(command);
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected internal override IOperationResult ReadResponse(PooledSocket socket)
 		{
 			string response = TextSocketHelper.ReadResponse(socket);
+			var result = new TextOperationResult();
 
 			//maybe we should throw an exception when the item is not found?
 			if (String.Compare(response, "NOT_FOUND", StringComparison.Ordinal) == 0)
-				return false;
+				return result.Fail("Failed to read response.  Item not found");
 
-			return UInt64.TryParse(response, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite, CultureInfo.InvariantCulture, out this.result);
+			result.Success = 
+				UInt64.TryParse(response, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite, CultureInfo.InvariantCulture, out this.result);
+			return result;
 		}
 
 		MutationMode IMutatorOperation.Mode

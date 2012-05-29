@@ -1,4 +1,6 @@
 using System;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Text
 {
@@ -13,9 +15,12 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 			return TextSocketHelper.GetCommandBuffer(command);
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected internal override IOperationResult ReadResponse(PooledSocket socket)
 		{
-			return String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0;
+			return new TextOperationResult
+			{
+				Success = String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0
+			};
 		}
 
 		protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)

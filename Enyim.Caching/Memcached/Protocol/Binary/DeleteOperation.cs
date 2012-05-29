@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using System.Text;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
+using Enyim.Caching.Memcached.Results.Helpers;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -19,8 +22,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return request;
 		}
 
-		protected override bool ProcessResponse(BinaryResponse response)
+		protected override IOperationResult ProcessResponse(BinaryResponse response)
 		{
+			var result = new BinaryOperationResult();
 #if EVEN_MORE_LOGGING
 			if (log.IsDebugEnabled)
 				if (response.StatusCode == 0)
@@ -28,8 +32,15 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 				else
 					log.DebugFormat("Delete failed for key '{0}'. Reason: {1}", this.Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
 #endif
-
-			return true;
+			if (response.StatusCode == 0)
+			{
+				return result.Pass();
+			}
+			else
+			{
+				var message = ResultHelper.ProcessResponseData("Delete failed for key " + Key, response.Data);
+				return result.Fail(message);
+			}
 		}
 	}
 }

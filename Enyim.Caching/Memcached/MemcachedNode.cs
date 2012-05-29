@@ -9,6 +9,8 @@ using System.Security;
 using Enyim.Caching.Memcached.Protocol.Binary;
 using System.Runtime.Serialization;
 using System.IO;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached
 {
@@ -114,7 +116,7 @@ namespace Enyim.Caching.Memcached
 		/// Acquires a new item from the pool
 		/// </summary>
 		/// <returns>An <see cref="T:PooledSocket"/> instance which is connected to the memcached server, or <value>null</value> if the pool is dead.</returns>
-		public PooledSocket Acquire()
+		public IPooledSocketResult Acquire()
 		{
 			if (!this.isInitialized)
 				lock (this.internalPoolImpl)
@@ -130,9 +132,11 @@ namespace Enyim.Caching.Memcached
 			}
 			catch (Exception e)
 			{
-				log.Error("Acquire failed. Maybe we're already disposed?", e);
-
-				return null;
+				var message = "Acquire failed. Maybe we're already disposed?";
+				log.Error(message, e);
+				var result = new PooledSocketResult();
+				result.Fail(message, e);
+				return result;
 			}
 		}
 
@@ -265,35 +269,45 @@ namespace Enyim.Caching.Memcached
 			/// Acquires a new item from the pool
 			/// </summary>
 			/// <returns>An <see cref="T:PooledSocket"/> instance which is connected to the memcached server, or <value>null</value> if the pool is dead.</returns>
-			public PooledSocket Acquire()
+			public IPooledSocketResult Acquire()
 			{
+				var result = new PooledSocketResult();
+				var message = string.Empty;
+
 				bool hasDebug = log.IsDebugEnabled;
 
 				if (hasDebug) log.Debug("Acquiring stream from pool. " + this.endPoint);
 
 				if (!this.isAlive || this.isDisposed)
 				{
-					if (hasDebug) log.Debug("Pool is dead or disposed, returning null. " + this.endPoint);
+					message = "Pool is dead or disposed, returning null. " + this.endPoint;
+					result.Fail(message);
+					
+					if (hasDebug) log.Debug(message);
 
-					return null;
+					return result;
 				}
 
 				PooledSocket retval = null;
 
 				if (!this.semaphore.WaitOne(this.queueTimeout))
 				{
-					if (hasDebug) log.Debug("Pool is full, timeouting. " + this.endPoint);
+					message = "Pool is full, timeouting. " + this.endPoint;
+					if (hasDebug) log.Debug(message);
+					result.Fail(message, new TimeoutException());
 
 					// everyone is so busy
-					throw new TimeoutException();
+					return result;
 				}
 
 				// maybe we died while waiting
 				if (!this.isAlive)
 				{
-					if (hasDebug) log.Debug("Pool is dead, returning null. " + this.endPoint);
+					message = "Pool is dead, returning null. " + this.endPoint;
+					if (hasDebug) log.Debug(message);
+					result.Fail(message);
 
-					return null;
+					return result;
 				}
 
 				// do we have free items?
@@ -305,33 +319,42 @@ namespace Enyim.Caching.Memcached
 					{
 						retval.Reset();
 
-						if (hasDebug) log.Debug("Socket was reset. " + retval.InstanceId);
+						message = "Socket was reset. " + retval.InstanceId;
+						if (hasDebug) log.Debug(message);
 
-						return retval;
+						result.Pass(message);
+						result.Value = retval;
+						return result;
 					}
 					catch (Exception e)
 					{
-						log.Error("Failed to reset an acquired socket.", e);
+						message = "Failed to reset an acquired socket.";
+						log.Error(message, e);
 
 						this.MarkAsDead();
-
-						return null;
+						result.Fail(message, e);
+						return result;
 					}
 
 					#endregion
 				}
 
 				// free item pool is empty
-				if (hasDebug) log.Debug("Could not get a socket from the pool, Creating a new item. " + this.endPoint);
+				message = "Could not get a socket from the pool, Creating a new item. " + this.endPoint;
+				if (hasDebug) log.Debug(message);
+				
 
 				try
 				{
 					// okay, create the new item
 					retval = this.CreateSocket();
+					result.Value = retval;
+					result.Pass();
 				}
 				catch (Exception e)
 				{
-					log.Error("Failed to create socket. " + this.endPoint, e);
+					message = "Failed to create socket. " + this.endPoint;
+					log.Error(message, e);
 
 					// eventhough this item failed the failure policy may keep the pool alive
 					// so we need to make sure to release the semaphore, so new connections can be
@@ -340,13 +363,13 @@ namespace Enyim.Caching.Memcached
 					semaphore.Release();
 
 					this.MarkAsDead();
-
-					return null;
+					result.Fail(message);
+					return result;
 				}
 
 				if (hasDebug) log.Debug("Done.");
 
-				return retval;
+				return result;
 			}
 
 			private void MarkAsDead()
@@ -487,29 +510,53 @@ namespace Enyim.Caching.Memcached
 		//    return retval;
 		//}
 
-		protected virtual bool ExecuteOperation(IOperation op)
+		protected virtual IPooledSocketResult ExecuteOperation(IOperation op)
 		{
-			using (var socket = this.Acquire())
+			var result = this.Acquire();
+			if (result.Success && result.HasValue)
+			{
 				try
 				{
-					if (socket == null) return false;
+					var socket = result.Value;
 					var b = op.GetBuffer();
 
 					socket.Write(b);
 
-					return op.ReadResponse(socket);
+					var readResult = op.ReadResponse(socket);
+					if (readResult.Success)
+					{
+						result.Pass();
+					}
+					else
+					{
+						result.InnerResult = readResult;
+						result.Fail("Failed to read response, see inner result for details");
+					}
+					return result;
 				}
 				catch (IOException e)
 				{
 					log.Error(e);
 
-					return false;
+					result.Fail("Exception reading response", e);
+					return result;
 				}
+				finally
+				{
+					((IDisposable)result.Value).Dispose();
+				}
+			}
+			else
+			{
+				result.Fail("Failed to obtain socket from pool");
+				return result;
+			}
+
 		}
 
 		protected virtual bool ExecuteOperationAsync(IOperation op, Action<bool> next)
 		{
-			var socket = this.Acquire();
+			var socket = this.Acquire().Value;
 			if (socket == null) return false;
 
 			var b = op.GetBuffer();
@@ -553,7 +600,7 @@ namespace Enyim.Caching.Memcached
 			return this.Ping();
 		}
 
-		bool IMemcachedNode.Execute(IOperation op)
+		IOperationResult IMemcachedNode.Execute(IOperation op)
 		{
 			return this.ExecuteOperation(op);
 		}

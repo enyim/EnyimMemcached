@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Text;
 using System.Collections.Generic;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Protocol.Text
 {
@@ -64,9 +65,12 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 			return buffers;
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected internal override IOperationResult ReadResponse(PooledSocket socket)
 		{
-			return String.Compare(TextSocketHelper.ReadResponse(socket), "STORED", StringComparison.Ordinal) == 0;
+			return new TextOperationResult
+			{
+				Success = String.Compare(TextSocketHelper.ReadResponse(socket), "STORED", StringComparison.Ordinal) == 0
+			};
 		}
 
 		protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)

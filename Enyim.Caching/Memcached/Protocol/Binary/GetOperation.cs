@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using System.Text;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
+using Enyim.Caching.Memcached.Results.Helpers;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -21,9 +24,10 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return request;
 		}
 
-		protected override bool ProcessResponse(BinaryResponse response)
+		protected override IOperationResult ProcessResponse(BinaryResponse response)
 		{
 			var status = response.StatusCode;
+			var result = new BinaryOperationResult();
 
 			this.StatusCode = status;
 
@@ -36,9 +40,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 #if EVEN_MORE_LOGGING
 				if (log.IsDebugEnabled)
 					log.DebugFormat("Get succeeded for key '{0}'.", this.Key);
-#endif
+#endif	
 
-				return true;
+				return result.Pass();
 			}
 
 			this.Cas = 0;
@@ -48,7 +52,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 				log.DebugFormat("Get failed for key '{0}'. Reason: {1}", this.Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
 #endif
 
-			return false;
+			var message = ResultHelper.ProcessResponseData("Get failed for key " + Key, response.Data);
+			return result.Fail(message);
 		}
 
 		CacheItem IGetOperation.Result

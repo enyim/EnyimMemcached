@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Text
 {
@@ -11,11 +13,10 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 			return TextSocketHelper.GetCommandBuffer("flush_all" + TextSocketHelper.CommandTerminator);
 		}
 
-		protected internal override bool ReadResponse(PooledSocket socket)
+		protected internal override IOperationResult ReadResponse(PooledSocket socket)
 		{
 			TextSocketHelper.ReadResponse(socket);
-
-			return true;
+			return new TextOperationResult().Pass();
 		}
 
 		protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
