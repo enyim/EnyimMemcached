@@ -3316,15 +3316,20 @@ namespace MemcachedTest
 			return true;
 		}
 
-		bool IMemcachedNode.Execute(IOperation op)
-		{
-			return true;
-		}
-
 		event Action<IMemcachedNode> IMemcachedNode.Failed
 		{
 			add { }
 			remove { }
+		}
+
+		Enyim.Caching.Memcached.Results.IOperationResult IMemcachedNode.Execute(IOperation op)
+		{
+			return null;
+		}
+
+		bool IMemcachedNode.ExecuteAsync(IOperation op, Action<bool> next)
+		{
+			throw new NotImplementedException();
 		}
 
 		#endregion
@@ -3332,16 +3337,6 @@ namespace MemcachedTest
 		#region IDisposable Members
 
 		void IDisposable.Dispose()
-		{
-			throw new NotImplementedException();
-		}
-
-		#endregion
-
-		#region IMemcachedNode Members
-
-
-		bool IMemcachedNode.ExecuteAsync(IOperation op, Action<bool> next)
 		{
 			throw new NotImplementedException();
 		}
