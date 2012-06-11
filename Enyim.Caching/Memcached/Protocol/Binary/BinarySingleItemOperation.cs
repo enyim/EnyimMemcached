@@ -37,7 +37,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			if (! (responseResult = this.ProcessResponse(response)).Success)
 			{
 				result.InnerResult = responseResult;
-				result.Fail("Failed to process response, see StatusCode or InnerResult for details");				
+				responseResult.Combine(result);
 			}
 			
 			return result;

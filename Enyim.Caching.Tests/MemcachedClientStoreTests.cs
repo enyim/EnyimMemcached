@@ -5,6 +5,7 @@ using System.Text;
 using NUnit.Framework;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.StatusCodes;
 
 namespace Enyim.Caching.Tests
 {
@@ -36,6 +37,7 @@ namespace Enyim.Caching.Tests
 		public void When_Storing_Item_With_New_Key_And_StoreMode_Replace_Result_Is_Not_Successful()
 		{
 			var result = Store(StoreMode.Replace);
+			Assert.That(result.StatusCode, Is.EqualTo((int)StatusCodeEnums.NotFound), "Invalid status code");
 			StoreAssertFail(result);
 
 		}

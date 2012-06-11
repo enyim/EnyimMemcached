@@ -2,33 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Enyim.Caching.Memcached.Results.Factories;
 
-namespace Enyim.Caching.Memcached.Results.Helpers
+namespace Enyim.Caching.Memcached.Results.StatusCodes
 {
-
-	public static class ResultHelper
+	public static class StatusCodeMessages
 	{
-
-		public static string ProcessResponseData(ArraySegment<byte> data, string message = "")
-		{
-
-			if (data != null && data.Count > 0)
-			{
-				try
-				{
-					return message +
-						(! string.IsNullOrEmpty(message) ? ": " : "") +
-						Encoding.ASCII.GetString(data.Array, data.Offset, data.Count);
-				}
-				catch (Exception ex)
-				{
-					return ex.GetBaseException().Message;
-				}
-			}
-
-			return string.Empty;
-		}
+		public const string NOT_FOUND = "Not found";
 	}
 }
 
