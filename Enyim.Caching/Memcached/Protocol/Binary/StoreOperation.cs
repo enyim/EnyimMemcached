@@ -69,7 +69,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			}
 			else
 			{
-				var message = ResultHelper.ProcessResponseData("Store failed for key " + Key, response.Data);
+				var message = ResultHelper.ProcessResponseData(response.Data);
 				return result.Fail(message);
 			}
 		}
