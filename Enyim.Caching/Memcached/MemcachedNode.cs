@@ -529,8 +529,7 @@ namespace Enyim.Caching.Memcached
 					}
 					else
 					{
-						result.InnerResult = readResult;
-						result.Fail("Failed to read response, see inner result for details");
+						readResult.Combine(result);
 					}
 					return result;
 				}

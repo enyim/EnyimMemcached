@@ -174,7 +174,7 @@ namespace Enyim.Caching
 				}
 				return result;
 			}
-			result.Fail("Get failed. See InnerException or StatusCode for details");
+			tryGetResult.Combine(result);
 			return result;
 		}
 

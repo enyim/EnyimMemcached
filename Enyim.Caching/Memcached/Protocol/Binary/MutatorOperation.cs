@@ -69,7 +69,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 				return result.Pass();
 			}
 
-			var message = ResultHelper.ProcessResponseData("Mutate failed for key " + Key, response.Data);
+			var message = ResultHelper.ProcessResponseData(response.Data);
 			return result.Fail(message);
 		}
 

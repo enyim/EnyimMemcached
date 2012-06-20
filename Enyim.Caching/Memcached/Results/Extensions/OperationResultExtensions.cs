@@ -57,6 +57,19 @@ namespace Enyim.Caching.Memcached.Results.Extensions
 		{
 			return success ? Pass(source) : Fail(source, message, ex);
 		}
+
+		/// <summary>
+		/// Combine will attempt to minimize the depth of InnerResults and maintain status codes
+		/// </summary>
+		/// <param name="target"></param>
+		public static void Combine(this IOperationResult source, IOperationResult target)
+		{
+			target.Message = source.Message;
+			target.Success = source.Success;
+			target.Exception = source.Exception;
+			target.StatusCode = source.StatusCode ?? target.StatusCode;
+			target.InnerResult = source.InnerResult ?? source;
+		}
 	}
 }
 

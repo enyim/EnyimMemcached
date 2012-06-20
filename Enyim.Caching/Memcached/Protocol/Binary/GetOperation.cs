@@ -52,7 +52,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 				log.DebugFormat("Get failed for key '{0}'. Reason: {1}", this.Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
 #endif
 
-			var message = ResultHelper.ProcessResponseData("Get failed for key " + Key, response.Data);
+			var message = ResultHelper.ProcessResponseData(response.Data);
 			return result.Fail(message);
 		}
 

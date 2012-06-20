@@ -273,6 +273,8 @@
     <Compile Include="Memcached\Results\IStoreOperationResult.cs" />
     <Compile Include="Memcached\Results\MutateOperationResult.cs" />
     <Compile Include="Memcached\Results\OperationResultBase.cs" />
+    <Compile Include="Memcached\Results\StatusCodes\StatusCodeEnums.cs" />
+    <Compile Include="Memcached\Results\StatusCodes\StatusCodeMessages.cs" />
     <Compile Include="Memcached\Results\StoreOperationResult.cs" />
     <Compile Include="Memcached\Results\TextOperationResult.cs" />
     <Compile Include="Memcached\ServerStats.cs">
