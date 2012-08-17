@@ -10,14 +10,16 @@ namespace Enyim.Caching.Memcached.Results.Helpers
 	public static class ResultHelper
 	{
 
-		public static string ProcessResponseData(string message, ArraySegment<byte> data)
+		public static string ProcessResponseData(ArraySegment<byte> data, string message = "")
 		{
 
 			if (data != null && data.Count > 0)
 			{
 				try
 				{
-					return message + ": " + Encoding.ASCII.GetString(data.Array, data.Offset, data.Count);					
+					return message +
+						(! string.IsNullOrEmpty(message) ? ": " : "") +
+						Encoding.ASCII.GetString(data.Array, data.Offset, data.Count);
 				}
 				catch (Exception ex)
 				{

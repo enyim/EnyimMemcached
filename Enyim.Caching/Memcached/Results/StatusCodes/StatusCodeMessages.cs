@@ -1,35 +1,22 @@
-using Enyim.Caching;
-using NUnit.Framework;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-namespace MemcachedTest
+namespace Enyim.Caching.Memcached.Results.StatusCodes
 {
-	/// <summary>
-	///This is a test class for Enyim.Caching.MemcachedClient and is intended
-	///to contain all Enyim.Caching.MemcachedClient Unit Tests
-	///</summary>
-	[TestFixture]
-	public class NorthScaleMembaseClientTest : BinaryMemcachedClientTest
+	public static class StatusCodeMessages
 	{
-		protected override MemcachedClient GetClient()
-		{
-			var client = new Membase.MembaseClient("test/membase", null);
-			client.FlushAll();
-
-			return client;
-		}
-
-		[TestCase]
-		public override void MultiGetTest()
-		{
-			base.MultiGetTest();
-		}
+		public const string NOT_FOUND = "Not found";
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kisk�, enyim.com
+ *    @author Couchbase <info@couchbase.com>
+ *    @copyright 2012 Couchbase, Inc.
+ *    @copyright 2012 Attila Kiskó, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

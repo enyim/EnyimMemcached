@@ -1,15 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using Enyim.Caching;
-using Enyim.Caching.Memcached;
-using System.Net;
-using Enyim.Caching.Configuration;
-using Membase;
-using Membase.Configuration;
-using System.Threading;
-using System.Linq;
 using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using Enyim.Caching;
+using Enyim.Caching.Configuration;
+using Enyim.Caching.Memcached;
 
 namespace DemoApp
 {

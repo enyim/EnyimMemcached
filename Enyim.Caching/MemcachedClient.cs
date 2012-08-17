@@ -182,6 +182,9 @@ namespace Enyim.Caching
 			var node = this.pool.Locate(hashedKey);
 			var result = GetOperationResultFactory.Create();
 
+			cas = 0;
+			value = null;
+
 			if (node != null)
 			{
 				var command = this.pool.OperationFactory.Get(hashedKey);
@@ -199,16 +202,13 @@ namespace Enyim.Caching
 				}
 				else
 				{
-					result.Value = value = null;
-					result.Cas = cas = 0;
-					result.InnerResult = commandResult;
-					result.Fail("Get operation failed. See InnerResult or StatusCode for details");
+					commandResult.Combine(result);
 					return result;
 				}
 			}
 
-			result.Value = value = null;
-			result.Cas = cas = 0;
+			result.Value = value;
+			result.Cas = cas;
 
 			if (this.performanceMonitor != null) this.performanceMonitor.Get(1, false);
 
@@ -376,8 +376,7 @@ namespace Enyim.Caching
 					return result;
 				}
 
-				result.InnerResult = commandResult;
-				result.Fail("Store operation failed, see InnerResult or StatusCode for details");
+				commandResult.Combine(result);
 				return result;
 			}
 
