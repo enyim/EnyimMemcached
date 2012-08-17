@@ -78,6 +78,24 @@ namespace Enyim.Caching.Tests
 				Assert.That(dict[key].Success, Is.True, "Get failed for key: " + key);
 			}
 		}
+	    [Test]
+	    public void Can_Return_Byte_Cached_Values()
+	    {
+	        var key = GetUniqueKey("Get");
+	        Byte value = 1;
+	        Store(key: key, value: value);
+            var getResult = _Client.ExecuteGet(key);
+            GetAssertPass(getResult,value);
+	    }
+        [Test]
+        public void Can_Return_SByte_Cached_Values()
+        {
+            var key = GetUniqueKey("Get");
+            SByte value = 1;
+            Store(key: key, value: value);
+            var getResult = _Client.ExecuteGet(key);
+            GetAssertPass(getResult, value);
+        }
 	}
 }
 
