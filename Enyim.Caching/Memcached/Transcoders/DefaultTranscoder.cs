@@ -296,14 +296,17 @@ namespace Enyim.Caching.Memcached
 		{
 			return BitConverter.ToSingle(value.Array, value.Offset);
 		}
+
 		protected virtual Byte DeserializeByte(ArraySegment<byte> data)
 		{
 			return data.Array[data.Offset];
 		}
+
 		protected virtual SByte DeserializeSByte(ArraySegment<byte> data)
 		{
 			return (SByte)data.Array[data.Offset];
 		}
+
 		protected virtual object DeserializeObject(ArraySegment<byte> value)
 		{
 			using (var ms = new MemoryStream(value.Array, value.Offset, value.Count))
