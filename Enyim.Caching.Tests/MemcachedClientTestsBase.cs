@@ -49,7 +49,7 @@ namespace Enyim.Caching.Tests
 			return "unit_test_value_" + rand;
 		}
 
-		protected IStoreOperationResult Store(StoreMode mode = StoreMode.Set, string key = null, string value = null)
+		protected IStoreOperationResult Store(StoreMode mode = StoreMode.Set, string key = null, object value = null)
 		{
 			if (string.IsNullOrEmpty(key))
 			{

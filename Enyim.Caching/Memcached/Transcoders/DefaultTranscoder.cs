@@ -133,6 +133,8 @@ namespace Enyim.Caching.Memcached
 				case TypeCode.DateTime: return this.DeserializeDateTime(data);
 				case TypeCode.Double: return this.DeserializeDouble(data);
 				case TypeCode.Single: return this.DeserializeSingle(data);
+				case TypeCode.Byte: return this.DeserializeByte(data);
+				case TypeCode.SByte: return this.DeserializeSByte(data);
 
 				// backward compatibility
 				// earlier versions serialized decimals with TypeCode.Decimal
@@ -142,6 +144,8 @@ namespace Enyim.Caching.Memcached
 				default: throw new InvalidOperationException("Unknown TypeCode was returned: " + code);
 			}
 		}
+
+
 
 		#region [ Typed serialization          ]
 
@@ -291,6 +295,16 @@ namespace Enyim.Caching.Memcached
 		protected virtual Single DeserializeSingle(ArraySegment<byte> value)
 		{
 			return BitConverter.ToSingle(value.Array, value.Offset);
+		}
+
+		protected virtual Byte DeserializeByte(ArraySegment<byte> data)
+		{
+			return data.Array[data.Offset];
+		}
+
+		protected virtual SByte DeserializeSByte(ArraySegment<byte> data)
+		{
+			return (SByte)data.Array[data.Offset];
 		}
 
 		protected virtual object DeserializeObject(ArraySegment<byte> value)
