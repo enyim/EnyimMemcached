@@ -94,6 +94,12 @@ namespace Enyim.Caching
 
 			this.pool = pool;
 			this.StartPool();
+
+            StoreOperationResultFactory = new DefaultStoreOperationResultFactory();
+            GetOperationResultFactory = new DefaultGetOperationResultFactory();
+            MutateOperationResultFactory = new DefaultMutateOperationResultFactory();
+            ConcatOperationResultFactory = new DefaultConcatOperationResultFactory();
+            RemoveOperationResultFactory = new DefaultRemoveOperationResultFactory();
 		}
 
 		private void StartPool()
