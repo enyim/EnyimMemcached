@@ -532,11 +532,12 @@ namespace Enyim.Caching.Memcached
 		//{
 		//    PooledSocket retval = new PooledSocket(endPoint, connectionTimeout, receiveTimeout);
 
-		//    return retval;
+		//    return retval;dis
 		//}
 
 		protected virtual IPooledSocketResult ExecuteOperation(IOperation op)
 		{
+			IOperationResult readResult = new BinaryOperationResult();
 			var result = this.Acquire();
 			if (result.Success && result.HasValue)
 			{
@@ -547,7 +548,7 @@ namespace Enyim.Caching.Memcached
 
 					socket.Write(b);
 
-					var readResult = op.ReadResponse(socket);
+					readResult = op.ReadResponse(socket);
 					if (readResult.Success)
 					{
 						result.Pass();
@@ -572,7 +573,7 @@ namespace Enyim.Caching.Memcached
 			}
 			else
 			{
-				result.Fail("Failed to obtain socket from pool");
+				readResult.Combine(result);
 				return result;
 			}
 
