@@ -124,6 +124,7 @@
     <Compile Include="Memcached\IOperationFactory.cs">
     </Compile>
     <Compile Include="MemcachedClient.Results.cs" />
+    <Compile Include="Memcached\KeyTransformers\LegacyMemcachedKeyTransformer.cs" />
     <Compile Include="Memcached\PerformanceMonitor\DefaultPerformanceMonitorFactory.cs" />
     <Compile Include="Memcached\PerformanceMonitor\IPerformanceMonitor.cs" />
     <Compile Include="Memcached\PerformanceMonitor\PerformanceCounterInstaller.cs">
