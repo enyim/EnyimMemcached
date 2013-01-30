@@ -458,8 +458,7 @@ namespace Enyim.Caching
 				}
 				else
 				{
-					result.InnerResult = commandResult;
-					result.Fail("Failed to remove item, see InnerResult or StatusCode for details");
+					commandResult.Combine(result);
 				}
 
 				return result;
