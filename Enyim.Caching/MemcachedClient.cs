@@ -784,6 +784,17 @@ namespace Enyim.Caching
 		}
 
 		/// <summary>
+		/// Removes the specified item from the cache.
+		/// </summary>
+		/// <param name="key">The identifier for the item to delete.</param>
+		/// <param name="cas">The Cas value associated with the key</param>
+		/// <returns>true if the item was successfully removed from the cache; false otherwise.</returns>
+		public bool Remove(string key, ulong cas)
+		{
+			return ExecuteRemove(key, cas).Success;
+		}
+
+		/// <summary>
 		/// Retrieves multiple items from the cache.
 		/// </summary>
 		/// <param name="keys">The list of identifiers for the items to retrieve.</param>

@@ -8,7 +8,8 @@ namespace Enyim.Caching.Memcached.Results.StatusCodes
 	public enum StatusCodeEnums
 	{
 		Success = 0,
-		NotFound
+		NotFound,
+		DataExistsForKey
 	}
 }
 
