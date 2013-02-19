@@ -50,6 +50,7 @@ namespace Enyim.Caching
 		IConcatOperationResult ExecutePrepend(string key, ulong cas, ArraySegment<byte> data);
 
 		IRemoveOperationResult ExecuteRemove(string key);
+		IRemoveOperationResult ExecuteRemove(string key, ulong cas);
 	}
 }
 
