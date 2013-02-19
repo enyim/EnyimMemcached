@@ -479,24 +479,26 @@ namespace Enyim.Caching.Memcached
 				// if someone uses a pooled item then 99% that an exception will be thrown
 				// somewhere. But since the dispose is mostly used when everyone else is finished
 				// this should not kill any kittens
-				if (!this.isDisposed)
-				{
-					this.isAlive = false;
-					this.isDisposed = true;
-
-					PooledSocket ps;
-
-					while (this.freeItems.TryPop(out ps))
+				new Timer((s) => {
+					if (!this.isDisposed)
 					{
-						try { ps.Destroy(); }
-						catch { }
-					}
+						this.isAlive = false;
+						this.isDisposed = true;
 
-					this.ownerNode = null;
-					this.semaphore.Close();
-					this.semaphore = null;
-					this.freeItems = null;
-				}
+						PooledSocket ps;
+
+						while (this.freeItems.TryPop(out ps))
+						{
+							try { ps.Destroy(); }
+							catch { }
+						}
+
+						this.ownerNode = null;
+						this.semaphore.Close();
+						this.semaphore = null;
+						this.freeItems = null;
+					}
+				}, null, 1000, Timeout.Infinite);
 			}
 
 			void IDisposable.Dispose()
