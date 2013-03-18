@@ -2,6 +2,8 @@
 
 This is a .NET client library for [memcached](http://memcached.org) written in C#. There is also a client for [Membase](http://membase.com)'s persistent memcached server.
 
+* This fork of EnyimMemcached contains core API changes to support detailed results from performed operations.  Couchbase is currently working with Attila to get these changes into the EnyimMemcached library.
+
 Features:
 
 * Understands both the binary and text protocols

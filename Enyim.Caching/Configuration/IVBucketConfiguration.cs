@@ -21,15 +21,18 @@ namespace Enyim.Caching.Configuration
 	{
 		private int master;
 		private int[] replicas;
+		private int index;
 
-		public VBucket(int master, int[] replicas)
+		public VBucket(int master, int[] replicas, int index)
 		{
 			this.master = master;
 			this.replicas = replicas;
+			this.index = index;
 		}
 
 		public int Master { get { return this.master; } }
 		public int[] Replicas { get { return this.replicas; } }
+		public int Index { get { return this.index; } }
 	}
 }
 

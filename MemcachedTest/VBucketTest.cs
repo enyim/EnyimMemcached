@@ -25,13 +25,13 @@ namespace MemcachedTest
 		};
 
 		// copied from libvbucket
-		VBucket[] buckets = new[]
-		{
-			new VBucket(0, new [] { 1, 2 }),
-			new VBucket(1, new [] { 2, 0 }),
-			new VBucket(2, new [] { 1, -1 }),
-			new VBucket(1, new [] { 2, 0 }),
-		};
+	    private VBucket[] buckets = new[]
+	        {
+	            new VBucket(0, new[] {1, 2}, 0),
+	            new VBucket(1, new[] {2, 0}, 1),
+	            new VBucket(2, new[] {1, -1}, 2),
+	            new VBucket(1, new[] {2, 0}, 3)
+	        };
 
 		[TestCase]
 		public void TestBuckets()
