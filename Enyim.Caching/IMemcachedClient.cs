@@ -49,6 +49,7 @@ namespace Enyim.Caching
 		CasResult<ulong> Increment(string key, ulong defaultValue, ulong delta, TimeSpan validFor, ulong cas);
 
 		bool Remove(string key);
+		bool Remove(string key, ulong cas);
 
 		void FlushAll();
 

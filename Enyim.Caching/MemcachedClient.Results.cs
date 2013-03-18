@@ -441,7 +441,17 @@ namespace Enyim.Caching
 		/// </summary>
 		/// <param name="key">The identifier for the item to delete.</param>
 		/// <returns>true if the item was successfully removed from the cache; false otherwise.</returns>
+		public IRemoveOperationResult ExecuteRemove(string key, ulong cas)
+		{
+			return PerformRemove(key, cas);
+		}
+
 		public IRemoveOperationResult ExecuteRemove(string key)
+		{
+			return PerformRemove(key);
+		}
+
+		protected IRemoveOperationResult PerformRemove(string key, ulong cas = 0)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
 			var node = this.pool.Locate(hashedKey);
@@ -449,7 +459,7 @@ namespace Enyim.Caching
 
 			if (node != null)
 			{
-				var command = this.pool.OperationFactory.Delete(hashedKey, 0);
+				var command = this.pool.OperationFactory.Delete(hashedKey, cas);
 				var commandResult = node.Execute(command);
 
 				if (commandResult.Success)
@@ -458,8 +468,7 @@ namespace Enyim.Caching
 				}
 				else
 				{
-					result.InnerResult = commandResult;
-					result.Fail("Failed to remove item, see InnerResult or StatusCode for details");
+					commandResult.Combine(result);
 				}
 
 				return result;

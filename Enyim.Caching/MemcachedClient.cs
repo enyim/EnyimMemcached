@@ -444,7 +444,7 @@ namespace Enyim.Caching
 		public CasResult<ulong> Increment(string key, ulong defaultValue, ulong delta, ulong cas)
 		{
 			var result = this.CasMutate(MutationMode.Increment, key, defaultValue, delta, 0, cas);
-			return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode.Value };
+			return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode == null ? default(int) : result.StatusCode.Value };
 		}
 
 		/// <summary>
@@ -460,7 +460,7 @@ namespace Enyim.Caching
 		public CasResult<ulong> Increment(string key, ulong defaultValue, ulong delta, TimeSpan validFor, ulong cas)
 		{
 			var result = this.CasMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null), cas);
-			return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode.Value };
+            return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode == null ? default(int) : result.StatusCode.Value };
 		}
 
 		/// <summary>
@@ -476,7 +476,7 @@ namespace Enyim.Caching
 		public CasResult<ulong> Increment(string key, ulong defaultValue, ulong delta, DateTime expiresAt, ulong cas)
 		{
 			var result = this.CasMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt), cas);
-			return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode.Value };
+            return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode == null ? default(int) : result.StatusCode.Value };
 		}
 
 		#endregion
@@ -534,7 +534,7 @@ namespace Enyim.Caching
 		public CasResult<ulong> Decrement(string key, ulong defaultValue, ulong delta, ulong cas)
 		{
 			var result = this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, 0, cas);
-			return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode.Value };
+            return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode == null ? default(int) : result.StatusCode.Value };
 		}
 
 		/// <summary>
@@ -550,7 +550,7 @@ namespace Enyim.Caching
 		public CasResult<ulong> Decrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor, ulong cas)
 		{
 			var result = this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null), cas);
-			return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode.Value };
+            return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode == null ? default(int) : result.StatusCode.Value };
 		}
 
 		/// <summary>
@@ -566,7 +566,7 @@ namespace Enyim.Caching
 		public CasResult<ulong> Decrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt, ulong cas)
 		{
 			var result = this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt), cas);
-			return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode.Value };
+            return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode == null ? default(int) : result.StatusCode.Value };
 		}
 
 		#endregion
@@ -781,6 +781,17 @@ namespace Enyim.Caching
 		public bool Remove(string key)
 		{
 			return ExecuteRemove(key).Success;
+		}
+
+		/// <summary>
+		/// Removes the specified item from the cache.
+		/// </summary>
+		/// <param name="key">The identifier for the item to delete.</param>
+		/// <param name="cas">The Cas value associated with the key</param>
+		/// <returns>true if the item was successfully removed from the cache; false otherwise.</returns>
+		public bool Remove(string key, ulong cas)
+		{
+			return ExecuteRemove(key, cas).Success;
 		}
 
 		/// <summary>

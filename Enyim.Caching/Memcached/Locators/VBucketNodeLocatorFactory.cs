@@ -36,7 +36,8 @@ namespace Enyim.Caching.Memcached
 
 			var tmp = new JavaScriptSerializer().Deserialize<int[][]>(json);
 
-			this.buckets = tmp.Select(entry => new VBucket(entry[0], entry.Skip(1).ToArray())).ToArray();
+			var i = 0;
+			this.buckets = tmp.Select(entry => new VBucket(entry[0], entry.Skip(1).ToArray(), ++i)).ToArray();
 		}
 
 		IMemcachedNodeLocator IProviderFactory<IMemcachedNodeLocator>.Create()

@@ -76,7 +76,7 @@ namespace Enyim.Caching.Memcached
 		IMemcachedNode IMemcachedNodeLocator.Locate(string key)
 		{
 			var bucket = this.GetVBucket(key);
-
+			if (bucket.Master == -1) return null; //situation during a failover, before a rebalance
 			return this.nodes[bucket.Master];
 		}
 

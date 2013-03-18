@@ -89,7 +89,8 @@ namespace Enyim.Caching.Memcached
 				if (errorCode == SocketError.Success && retval > 0)
 					return retval;
 
-				throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode == SocketError.Success ? "?" : errorCode.ToString()));
+				string errorMessage = errorCode == SocketError.Success ? "SocketError value was Success, but 0 bytes were received" : errorCode.ToString();
+				throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorMessage));
 			}
 
 			public override long Seek(long offset, SeekOrigin origin)

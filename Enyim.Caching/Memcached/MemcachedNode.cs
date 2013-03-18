@@ -139,6 +139,33 @@ namespace Enyim.Caching.Memcached
 				return result;
 			}
 		}
+		/// <summary>
+		/// Tries to perform any actions on failure. Returns true if the policy
+		/// indicates that we should fail this node
+		/// </summary>
+		/// <returns></returns>
+		private bool TryToFail()
+		{
+
+			bool shouldFail;
+			if (failurePolicy != null)
+			{
+				shouldFail = failurePolicy.ShouldFail();
+			}
+			else
+			{
+				shouldFail = true;
+			}
+
+			if (!shouldFail)
+			{
+				return false;
+			}
+			if (Failed != null) {
+				Failed(this);
+			}
+			return true;
+        }
 
 		~MemcachedNode()
 		{
@@ -375,23 +402,15 @@ namespace Enyim.Caching.Memcached
 			private void MarkAsDead()
 			{
 				if (log.IsDebugEnabled) log.DebugFormat("Mark as dead was requested for {0}", this.endPoint);
-
-				var shouldFail = ownerNode.FailurePolicy.ShouldFail();
-
-				if (log.IsDebugEnabled) log.Debug("FailurePolicy.ShouldFail(): " + shouldFail);
-
-				if (shouldFail)
+				if (ownerNode == null || ownerNode.TryToFail() == false)
 				{
-					if (log.IsWarnEnabled) log.WarnFormat("Marking node {0} as dead", this.endPoint);
-
-					this.isAlive = false;
-					this.markedAsDeadUtc = DateTime.UtcNow;
-
-					var f = this.ownerNode.Failed;
-
-					if (f != null)
-						f(this.ownerNode);
+					return;
 				}
+
+				if (log.IsWarnEnabled) log.WarnFormat("Marking node {0} as dead", this.endPoint);
+
+				this.isAlive = false;
+				this.markedAsDeadUtc = DateTime.UtcNow;
 			}
 
 			/// <summary>
@@ -413,9 +432,6 @@ namespace Enyim.Caching.Memcached
 					{
 						// mark the item as free
 						this.freeItems.Push(socket);
-
-						// signal the event so if someone is waiting for it can reuse this item
-						this.semaphore.Release();
 					}
 					else
 					{
@@ -424,10 +440,6 @@ namespace Enyim.Caching.Memcached
 
 						// mark ourselves as not working for a while
 						this.MarkAsDead();
-
-						// make sure to signal the Acquire so it can create a new conenction
-						// if the failure policy keeps the pool alive
-						this.semaphore.Release();
 					}
 				}
 				else
@@ -435,6 +447,19 @@ namespace Enyim.Caching.Memcached
 					// one of our previous sockets has died, so probably all of them 
 					// are dead. so, kill the socket (this will eventually clear the pool as well)
 					socket.Destroy();
+				}
+
+				// In any event, we want to let any waiters know that we can create a new
+				// socket:
+				if (semaphore != null)
+				{
+					try
+					{
+						semaphore.Release();
+					}
+					catch (ObjectDisposedException)
+					{
+					}
 				}
 			}
 
@@ -454,24 +479,26 @@ namespace Enyim.Caching.Memcached
 				// if someone uses a pooled item then 99% that an exception will be thrown
 				// somewhere. But since the dispose is mostly used when everyone else is finished
 				// this should not kill any kittens
-				if (!this.isDisposed)
-				{
-					this.isAlive = false;
-					this.isDisposed = true;
-
-					PooledSocket ps;
-
-					while (this.freeItems.TryPop(out ps))
+				new Timer((s) => {
+					if (!this.isDisposed)
 					{
-						try { ps.Destroy(); }
-						catch { }
-					}
+						this.isAlive = false;
+						this.isDisposed = true;
 
-					this.ownerNode = null;
-					this.semaphore.Close();
-					this.semaphore = null;
-					this.freeItems = null;
-				}
+						PooledSocket ps;
+
+						while (this.freeItems.TryPop(out ps))
+						{
+							try { ps.Destroy(); }
+							catch { }
+						}
+
+						this.ownerNode = null;
+						this.semaphore.Close();
+						this.semaphore = null;
+						this.freeItems = null;
+					}
+				}, null, 1000, Timeout.Infinite);
 			}
 
 			void IDisposable.Dispose()
@@ -507,11 +534,12 @@ namespace Enyim.Caching.Memcached
 		//{
 		//    PooledSocket retval = new PooledSocket(endPoint, connectionTimeout, receiveTimeout);
 
-		//    return retval;
+		//    return retval;dis
 		//}
 
 		protected virtual IPooledSocketResult ExecuteOperation(IOperation op)
 		{
+			IOperationResult readResult = new BinaryOperationResult();
 			var result = this.Acquire();
 			if (result.Success && result.HasValue)
 			{
@@ -522,7 +550,7 @@ namespace Enyim.Caching.Memcached
 
 					socket.Write(b);
 
-					var readResult = op.ReadResponse(socket);
+					readResult = op.ReadResponse(socket);
 					if (readResult.Success)
 					{
 						result.Pass();
@@ -547,7 +575,7 @@ namespace Enyim.Caching.Memcached
 			}
 			else
 			{
-				result.Fail("Failed to obtain socket from pool");
+				readResult.Combine(result);
 				return result;
 			}
 
