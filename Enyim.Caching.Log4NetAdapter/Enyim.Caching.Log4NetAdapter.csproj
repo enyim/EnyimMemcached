@@ -41,7 +41,9 @@
     <None Include="Demo.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Enyim.Caching.Log4NetAdapter.nuspec" />
+    <None Include="Enyim.Caching.Log4NetAdapter.nuspec">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
