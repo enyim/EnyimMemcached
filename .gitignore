@@ -5,3 +5,4 @@ TestResults/*
 *.user
 build/output/*
 _ReSharper*
+/packages

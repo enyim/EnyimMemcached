@@ -50,7 +50,9 @@
     <None Include="Demo.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Enyim.Caching.NLogAdapter.nuspec" />
+    <None Include="Enyim.Caching.NLogAdapter.nuspec">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
