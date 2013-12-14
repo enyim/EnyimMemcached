@@ -224,7 +224,7 @@ namespace Enyim.Caching.Memcached
 
 			public void Dispose()
 			{
-				((IDisposable)this.pcTotalPerSec).Dispose();
+				((IDisposable)this).Dispose();
 			}
 
 			void IDisposable.Dispose()
