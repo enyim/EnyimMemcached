@@ -29,7 +29,7 @@ namespace Enyim.Caching.Memcached
 
 			var socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 			// TODO test if we're better off using nagle
-			socket.NoDelay = true;
+			socket.NoDelay = false;
 
 			var timeout = connectionTimeout == TimeSpan.MaxValue
 							? Timeout.Infinite
