@@ -21,7 +21,7 @@
 	<PropertyGroup>
 		<OutputPath>bin\$(Configuration)</OutputPath>
 		<IntermediateOutputPath>obj\$(Configuration)</IntermediateOutputPath>
-		<SignAssembly>true</SignAssembly>
+		<SignAssembly>false</SignAssembly>
 	</PropertyGroup>
 
 	<!-- delay sign the assembly if the PrivateKeyPath property is not specified -->
