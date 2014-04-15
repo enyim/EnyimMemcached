@@ -49,5 +49,5 @@ param(
 $tmp = $buildParams + @{ "private_key_path" = "$KeyPath"; "private_key_name" = "$KeyName"; }
 
 import-module .\psake.psm1
-invoke-psake -buildFile .\default.ps1 -TaskList $TaskList -framework 4.0 -parameters $tmp
+invoke-psake -buildFile .\default.ps1 -TaskList $TaskList -framework 4.5 -parameters $tmp
 remove-module psake
