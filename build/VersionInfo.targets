@@ -30,7 +30,7 @@
 		<GitDescribe>$(IntermediateOutputPath)\__gitinfo</GitDescribe>
 		<GitVersionCache>$(IntermediateOutputPath)\__gitlastknown</GitVersionCache>
 		<GitTagMatch Condition=" '$(GitTagMatch)' == '' ">*</GitTagMatch>
-		<HasForcedKey Condition=" '$(PrivateKeyName)' != '' Or '$(PrivateKeyPath)' != '' ">true</HasForcedKey>
+		<HasForcedKey Condition=" '$(PrivateKeyName)' != '' Or '$(PrivateKeyPath)' != '' ">false</HasForcedKey>
 	</PropertyGroup>
 
 	<Target Name="GetGitVersionInfo">

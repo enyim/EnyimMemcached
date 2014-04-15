@@ -6,3 +6,4 @@ TestResults/*
 build/output/*
 _ReSharper*
 packages/*/
+/publish/packages
