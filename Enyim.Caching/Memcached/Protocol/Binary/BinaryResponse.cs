@@ -53,7 +53,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             if (!socket.IsAlive)
                 return false;
 
+            var startTime = DateTime.Now;
             var header = socket.ReadBytes(HeaderLength);
+            LogExecutionTime("header_socket_read", startTime, 100);
 
             int dataLength, extraLength;
 
@@ -61,7 +63,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
             if (dataLength > 0)
             {
+                startTime = DateTime.Now;
                 var data = socket.ReadBytes(dataLength);
+                LogExecutionTime("data_socket_read", startTime, 100);
 
                 this.Extra = new ArraySegment<byte>(data, 0, extraLength);
                 this.Data = new ArraySegment<byte>(data, extraLength, data.Length - extraLength);
@@ -198,6 +202,15 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
                 dataLength = BinaryConverter.DecodeInt32(buffer, HEADER_BODY);
                 extraLength = buffer[HEADER_EXTRA];
+            }
+        }
+
+        private void LogExecutionTime(string title, DateTime startTime, int thresholdMs)
+        {
+            var duration = (DateTime.Now - startTime).TotalMilliseconds;
+            if (duration > thresholdMs)
+            {
+                log.ErrorFormat("MemcachedBinaryResponse-{0}: {1}ms", title, duration);
             }
         }
     }
