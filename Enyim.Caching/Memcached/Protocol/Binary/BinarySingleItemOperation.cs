@@ -1,59 +1,85 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public abstract class BinarySingleItemOperation : SingleItemOperation
-	{
-		protected BinarySingleItemOperation(string key) : base(key) { }
+    public abstract class BinarySingleItemOperation : SingleItemOperation
+    {
+        protected BinarySingleItemOperation(string key) : base(key) { }
 
-		protected abstract BinaryRequest Build();
+        protected abstract BinaryRequest Build();
 
-		protected internal override IList<ArraySegment<byte>> GetBuffer()
-		{
-			return this.Build().CreateBuffer();
-		}
+        protected internal override IList<ArraySegment<byte>> GetBuffer()
+        {
+            return this.Build().CreateBuffer();
+        }
 
-		protected abstract IOperationResult ProcessResponse(BinaryResponse response);
+        protected abstract IOperationResult ProcessResponse(BinaryResponse response);
 
-		protected internal override IOperationResult ReadResponse(PooledSocket socket)
-		{
-			var response = new BinaryResponse();
-			var retval = response.Read(socket);
-			
-			this.Cas = response.CAS;
-			this.StatusCode = response.StatusCode;
+        protected internal override IOperationResult ReadResponse(PooledSocket socket)
+        {
+            var response = new BinaryResponse();
+            var retval = response.Read(socket);
 
-			var result = new BinaryOperationResult()
-			{
-				Success = retval,
-				Cas = this.Cas,
-				StatusCode = this.StatusCode
-			};
+            this.Cas = response.CAS;
+            this.StatusCode = response.StatusCode;
 
-			IOperationResult responseResult;
-			if (! (responseResult = this.ProcessResponse(response)).Success)
-			{
-				result.InnerResult = responseResult;
-				responseResult.Combine(result);
-			}
-			
-			return result;
-		}
+            var result = new BinaryOperationResult()
+            {
+                Success = retval,
+                Cas = this.Cas,
+                StatusCode = this.StatusCode
+            };
 
-		protected internal override bool ReadResponseAsync(PooledSocket socket, Action<bool> next)
-		{
-			throw new NotImplementedException();
-		}
-	}
+            IOperationResult responseResult;
+            if (!(responseResult = this.ProcessResponse(response)).Success)
+            {
+                result.InnerResult = responseResult;
+                responseResult.Combine(result);
+            }
+
+            return result;
+        }
+
+        protected internal override async Task<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        {
+            var response = new BinaryResponse();
+            var retval = await response.ReadAsync(socket);
+
+            this.Cas = response.CAS;
+            this.StatusCode = response.StatusCode;
+
+            var result = new BinaryOperationResult()
+            {
+                Success = retval,
+                Cas = this.Cas,
+                StatusCode = this.StatusCode
+            };
+
+            IOperationResult responseResult;
+            if (!(responseResult = this.ProcessResponse(response)).Success)
+            {
+                result.InnerResult = responseResult;
+                responseResult.Combine(result);
+            }
+
+            return result;
+        }
+
+        protected internal override bool ReadResponseAsync(PooledSocket socket, Action<bool> next)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

@@ -3,29 +3,29 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public abstract class BinaryMultiItemOperation : MultiItemOperation
-	{
-		public BinaryMultiItemOperation(IList<string> keys) : base(keys) { }
+    public abstract class BinaryMultiItemOperation : MultiItemOperation
+    {
+        public BinaryMultiItemOperation(IList<string> keys) : base(keys) { }
 
-		protected abstract BinaryRequest Build(string key);
+        protected abstract BinaryRequest Build(string key);
 
-		protected internal override IList<ArraySegment<byte>> GetBuffer()
-		{
-			var keys = this.Keys;
-			var retval = new List<ArraySegment<byte>>(keys.Count * 2);
+        protected internal override IList<ArraySegment<byte>> GetBuffer()
+        {
+            var keys = this.Keys;
+            var retval = new List<ArraySegment<byte>>(keys.Count * 2);
 
-			foreach (var k in keys)
-				this.Build(k).CreateBuffer(retval);
+            foreach (var k in keys)
+                this.Build(k).CreateBuffer(retval);
 
-			return retval;
-		}
-	}
+            return retval;
+        }
+    }
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

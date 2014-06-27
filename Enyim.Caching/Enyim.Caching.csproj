@@ -283,6 +283,8 @@
     <Compile Include="Memcached\ServerStats.cs">
     </Compile>
     <Compile Include="Memcached\SlidingBuffer.cs" />
+    <Compile Include="Memcached\Socket\SocketAwaitable.cs" />
+    <Compile Include="Memcached\Socket\SocketExtensions.cs" />
     <Compile Include="Memcached\StatItem.cs">
     </Compile>
     <Compile Include="Memcached\StoreMode.cs">

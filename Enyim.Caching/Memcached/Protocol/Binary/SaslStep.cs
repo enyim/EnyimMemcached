@@ -33,6 +33,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 			return result;
 		}
 
+        protected internal override System.Threading.Tasks.Task<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        {
+            throw new NotImplementedException();
+        }
+
 		public byte[] Data { get; private set; }
 	}
 }
@@ -40,7 +45,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

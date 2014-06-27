@@ -74,6 +74,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		private bool? asyncLoopState;
 		private Action<bool> afterAsyncRead;
 
+        protected internal override System.Threading.Tasks.Task<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        {
+            throw new NotImplementedException();
+        }
+
 		protected internal override bool ReadResponseAsync(PooledSocket socket, Action<bool> next)
 		{
 			this.result = new Dictionary<string, CacheItem>();
@@ -201,7 +206,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

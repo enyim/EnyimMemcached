@@ -6,67 +6,67 @@ using Enyim.Caching.Memcached.Results.Helpers;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public class GetOperation : BinarySingleItemOperation, IGetOperation
-	{
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(GetOperation));
-		private CacheItem result;
+    public class GetOperation : BinarySingleItemOperation, IGetOperation
+    {
+        private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(GetOperation));
+        private CacheItem result;
 
-		public GetOperation(string key) : base(key) { }
+        public GetOperation(string key) : base(key) { }
 
-		protected override BinaryRequest Build()
-		{
-			var request = new BinaryRequest(OpCode.Get)
-			{
-				Key = this.Key,
-				Cas = this.Cas
-			};
+        protected override BinaryRequest Build()
+        {
+            var request = new BinaryRequest(OpCode.Get)
+            {
+                Key = this.Key,
+                Cas = this.Cas
+            };
 
-			return request;
-		}
+            return request;
+        }
 
-		protected override IOperationResult ProcessResponse(BinaryResponse response)
-		{
-			var status = response.StatusCode;
-			var result = new BinaryOperationResult();
+        protected override IOperationResult ProcessResponse(BinaryResponse response)
+        {
+            var status = response.StatusCode;
+            var result = new BinaryOperationResult();
 
-			this.StatusCode = status;
+            this.StatusCode = status;
 
-			if (status == 0)
-			{
-				int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
-				this.result = new CacheItem((ushort)flags, response.Data);
-				this.Cas = response.CAS;
+            if (status == 0)
+            {
+                int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
+                this.result = new CacheItem((ushort)flags, response.Data);
+                this.Cas = response.CAS;
 
 #if EVEN_MORE_LOGGING
 				if (log.IsDebugEnabled)
 					log.DebugFormat("Get succeeded for key '{0}'.", this.Key);
-#endif	
+#endif
 
-				return result.Pass();
-			}
+                return result.Pass();
+            }
 
-			this.Cas = 0;
+            this.Cas = 0;
 
 #if EVEN_MORE_LOGGING
 			if (log.IsDebugEnabled)
 				log.DebugFormat("Get failed for key '{0}'. Reason: {1}", this.Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
 #endif
 
-			var message = ResultHelper.ProcessResponseData(response.Data);
-			return result.Fail(message);
-		}
+            var message = ResultHelper.ProcessResponseData(response.Data);
+            return result.Fail(message);
+        }
 
-		CacheItem IGetOperation.Result
-		{
-			get { return this.result; }
-		}
-	}
+        CacheItem IGetOperation.Result
+        {
+            get { return this.result; }
+        }
+    }
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

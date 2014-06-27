@@ -3,39 +3,39 @@ using System.Diagnostics;
 
 namespace Enyim.Caching.Memcached.Protocol
 {
-	/// <summary>
-	/// Base class for implementing operations working with keyed items.
-	/// </summary>
-	public abstract class SingleItemOperation : Operation, ISingleItemOperation
-	{
-		protected SingleItemOperation(string key)
-		{
-			this.Key = key;
-		}
+    /// <summary>
+    /// Base class for implementing operations working with keyed items.
+    /// </summary>
+    public abstract class SingleItemOperation : Operation, ISingleItemOperation
+    {
+        protected SingleItemOperation(string key)
+        {
+            this.Key = key;
+        }
 
-		public string Key { get; private set; }
+        public string Key { get; private set; }
 
-		public ulong Cas { get; set; }
+        public ulong Cas { get; set; }
 
-		/// <summary>
-		/// The item key of the current operation.
-		/// </summary>
-		string ISingleItemOperation.Key
-		{
-			get { return this.Key; }
-		}
+        /// <summary>
+        /// The item key of the current operation.
+        /// </summary>
+        string ISingleItemOperation.Key
+        {
+            get { return this.Key; }
+        }
 
-		ulong ISingleItemOperation.CasValue
-		{
-			get { return this.Cas; }
-		}
-	}
+        ulong ISingleItemOperation.CasValue
+        {
+            get { return this.Cas; }
+        }
+    }
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

@@ -10,6 +10,7 @@ using System.Diagnostics;
 using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached.Results.Factories;
 using Enyim.Caching.Memcached.Results.Extensions;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
@@ -137,6 +138,43 @@ namespace Enyim.Caching
 			return TryGet(key, out tmp) ? (T)tmp : default(T);
 		}
 
+        public async Task<IGetOperationResult<T>> GetAsync<T>(string key)
+        {
+            var result = new DefaultGetOperationResultFactory<T>().Create();
+
+            var hashedKey = this.keyTransformer.Transform(key);
+            var node = this.pool.Locate(hashedKey);
+      
+            if (node != null)
+            {
+                var command = this.pool.OperationFactory.Get(hashedKey);
+                var commandResult = await node.ExecuteAsync(command);
+
+                if (commandResult.Success)
+                {
+                    if (this.performanceMonitor != null) this.performanceMonitor.Get(1, true);
+                    
+                    var tempResult = this.transcoder.Deserialize(command.Result);  
+                    if(tempResult != null)
+                    {
+                        result.Success = true;
+                        result.Value = (T)tempResult;
+                        return result;
+                    }
+                }               
+            }  
+            else
+            {
+                log.Error("Unable to locate node");
+            }
+
+            if (this.performanceMonitor != null) this.performanceMonitor.Get(1, false);            
+
+            result.Success = false;
+            result.Value = default(T);
+            return result;
+        }
+
 		/// <summary>
 		/// Tries to get an item from the cache.
 		/// </summary>
@@ -149,6 +187,7 @@ namespace Enyim.Caching
 
 			return this.PerformTryGet(key, out cas, out value).Success;
 		}
+        
 
 		public CasResult<object> GetWithCas(string key)
 		{
@@ -215,6 +254,7 @@ namespace Enyim.Caching
 			result.Fail("Unable to locate node");
 			return result;
 		}
+ 
 
 		#region [ Store                        ]
 

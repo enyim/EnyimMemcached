@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached
 {
@@ -31,7 +32,7 @@ namespace Enyim.Caching.Memcached
             var socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             // TODO test if we're better off using nagle
             //PHP: OPT_TCP_NODELAY
-            socket.NoDelay = true;
+            //socket.NoDelay = true;
 
             var timeout = connectionTimeout == TimeSpan.MaxValue
                             ? Timeout.Infinite
@@ -214,6 +215,16 @@ namespace Enyim.Caching.Memcached
                 throw;
             }
         }
+
+        public async Task<byte[]> ReadBytesAsync(int count)
+        {
+            var args = new SocketAsyncEventArgs();
+            args.SetBuffer(new byte[count], 0, count);
+            var awaitable = new SocketAwaitable(args);
+            await this.socket.ReceiveAsync(awaitable);
+            return args.Buffer;
+        }
+
         /// <summary>
         /// Reads data from the server into the specified buffer.
         /// </summary>
@@ -279,7 +290,7 @@ namespace Enyim.Caching.Memcached
             if (this.socket.Send(buffers, SocketFlags.None, out status) != total)
                 System.Diagnostics.Debugger.Break();
 #else
-			this.socket.Send(buffers, SocketFlags.None, out status);
+            this.socket.Send(buffers, SocketFlags.None, out status);
 #endif
 
             if (status != SocketError.Success)
@@ -287,6 +298,21 @@ namespace Enyim.Caching.Memcached
                 this.isAlive = false;
 
                 ThrowHelper.ThrowSocketWriteError(this.endpoint, status);
+            }
+        }
+
+        public async Task WriteSync(IList<ArraySegment<byte>> buffers)
+        {
+            var args = new SocketAsyncEventArgs();
+            args.BufferList = buffers;
+            var awaitable = new SocketAwaitable(args);
+            await this.socket.SendAsync(awaitable);
+
+            if (args.SocketError != SocketError.Success)
+            {
+                this.isAlive = false;
+
+                ThrowHelper.ThrowSocketWriteError(this.endpoint, args.SocketError);
             }
         }
 
