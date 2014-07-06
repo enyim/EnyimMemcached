@@ -194,11 +194,15 @@ namespace Enyim.Caching.Memcached
 
         public async Task<byte[]> ReadBytesAsync(int count)
         {
-            var args = new SocketAsyncEventArgs();
-            args.SetBuffer(new byte[count], 0, count);
-            var awaitable = new SocketAwaitable(args);
-            await this.socket.ReceiveAsync(awaitable);
-            return args.Buffer;
+            using (var args = new SocketAsyncEventArgs())
+            {
+                args.SetBuffer(new byte[count], 0, count);
+                var awaitable = new SocketAwaitable(args);
+                await this.socket.ReceiveAsync(awaitable);
+                var receivedBytes = new Byte[args.BytesTransferred];
+                Buffer.BlockCopy(args.Buffer, 0, receivedBytes, 0, args.BytesTransferred);
+                return receivedBytes;
+            }
         }
 
         /// <summary>
@@ -278,16 +282,16 @@ namespace Enyim.Caching.Memcached
 
         public async Task WriteSync(IList<ArraySegment<byte>> buffers)
         {
-            var args = new SocketAsyncEventArgs();
-            args.BufferList = buffers;
-            var awaitable = new SocketAwaitable(args);
-            await this.socket.SendAsync(awaitable);
-
-            if (args.SocketError != SocketError.Success)
+            using (var args = new SocketAsyncEventArgs())
             {
-                this.isAlive = false;
-
-                ThrowHelper.ThrowSocketWriteError(this.endpoint, args.SocketError);
+                args.BufferList = buffers;
+                var awaitable = new SocketAwaitable(args);
+                await this.socket.SendAsync(awaitable);
+                if (args.SocketError != SocketError.Success)
+                {
+                    this.isAlive = false;
+                    ThrowHelper.ThrowSocketWriteError(this.endpoint, args.SocketError);
+                }
             }
         }
 
