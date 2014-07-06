@@ -22,7 +22,6 @@ namespace Enyim.Caching.Memcached
         private IPEndPoint endpoint;
 
         private BufferedStream inputStream;
-        private BinaryReader binReader;
         private AsyncSocketHelper helper;
 
         public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
@@ -52,8 +51,6 @@ namespace Enyim.Caching.Memcached
             this.endpoint = endpoint;
 
             this.inputStream = new BufferedStream(new BasicNetworkStream(socket));
-
-            binReader = new BinaryReader(this.inputStream);
         }
 
         private static void ConnectWithTimeout(Socket socket, IPEndPoint endpoint, int timeout)
@@ -146,13 +143,7 @@ namespace Enyim.Caching.Memcached
                     if (this.inputStream != null)
                         this.inputStream.Dispose();
 
-                    if (this.binReader != null)
-                    {
-                        this.binReader.Dispose();
-                    }
-
                     this.inputStream = null;
-                    this.binReader = null;
                     this.socket = null;
                     this.CleanupCallback = null;
                 }
@@ -201,21 +192,6 @@ namespace Enyim.Caching.Memcached
             }
         }
 
-        public byte[] ReadBytes(int count)
-        {
-            this.CheckDisposed();
-
-            try
-            {
-                return binReader.ReadBytes(count);
-            }
-            catch (IOException)
-            {
-                this.isAlive = false;
-                throw;
-            }
-        }
-
         public async Task<byte[]> ReadBytesAsync(int count)
         {
             var args = new SocketAsyncEventArgs();
@@ -232,7 +208,6 @@ namespace Enyim.Caching.Memcached
         /// <param name="offset">The location in buffer to store the received data.</param>
         /// <param name="count">The number of bytes to read.</param>
         /// <remarks>This method blocks and will not return until the specified amount of bytes are read.</remarks>
-        [Obsolete]
         public void Read(byte[] buffer, int offset, int count)
         {
             this.CheckDisposed();
