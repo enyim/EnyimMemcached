@@ -171,7 +171,7 @@ namespace Enyim.Caching.Memcached
 		{
 			string tmp;
 
-			return this.results.Select(kvp => new KeyValuePair<IPEndPoint, string>(kvp.Key, kvp.Value.TryGetValue(key, out tmp) ? tmp : null)).ToList();
+			return this.results.Select(kvp => new KeyValuePair<IPEndPoint, string>(kvp.Key, kvp.Value != null &&  kvp.Value.TryGetValue(key, out tmp) ? tmp : null)).ToList();
 		}
 	}
 }
@@ -179,7 +179,7 @@ namespace Enyim.Caching.Memcached
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila KiskÃ³, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
