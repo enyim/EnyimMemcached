@@ -40,8 +40,8 @@ namespace Enyim.Caching.Memcached
 				throw new ArgumentException("Unknown hash algorithm: " + hashAlgorithm, "hashAlgorithm");
 		}
 
-		[ThreadStatic]
-		private static HashAlgorithm currentAlgo;
+		//[ThreadStatic]
+		//private static HashAlgorithm currentAlgo;
 
 		//private HashAlgorithm GetAlgo()
 		//{

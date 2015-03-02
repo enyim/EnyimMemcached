@@ -2,18 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Enyim.Caching.Memcached.Results.Factories;
 
 namespace Enyim.Caching.Memcached.Results.Helpers
 {
-
 	public static class ResultHelper
 	{
-
 		public static string ProcessResponseData(ArraySegment<byte> data, string message = "")
 		{
-
-			if (data != null && data.Count > 0)
+			if (data.Count > 0)
 			{
 				try
 				{
