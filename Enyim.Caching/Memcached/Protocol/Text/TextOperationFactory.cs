@@ -5,18 +5,31 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 {
 	public class TextOperationFactory : IOperationFactory
 	{
+		private static void ValidateKey(string key, string parameterName)
+		{
+			// spec - https://github.com/memcached/memcached/blob/master/doc/protocol.txt#L47
+			if (key.Length > 250)
+				throw new ArgumentException("Keys must be no more than 250 characters in length.", parameterName);
+		}
+
 		IGetOperation IOperationFactory.Get(string key)
 		{
+			ValidateKey(key, "key");
 			return new GetOperation(key);
 		}
 
 		IMultiGetOperation IOperationFactory.MultiGet(IList<string> keys)
 		{
+			foreach (var key in keys)
+			{
+				ValidateKey(key, "keys");
+			}
 			return new MultiGetOperation(keys);
 		}
 
 		IStoreOperation IOperationFactory.Store(StoreMode mode, string key, CacheItem value, uint expires, ulong cas)
 		{
+			ValidateKey(key, "key");
 			if (cas == 0)
 				return new StoreOperation(mode, key, value, expires);
 
@@ -25,6 +38,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 
 		IDeleteOperation IOperationFactory.Delete(string key, ulong cas)
 		{
+			ValidateKey(key, "key");
 			if (cas > 0) throw new NotSupportedException("Text protocol does not support delete with cas.");
 
 			return new DeleteOperation(key);
@@ -32,6 +46,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 
 		IMutatorOperation IOperationFactory.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ulong cas)
 		{
+			ValidateKey(key, "key");
 			if (cas > 0) throw new NotSupportedException("Text protocol does not support " + mode + " with cas.");
 
 			return new MutatorOperation(mode, key, delta);
@@ -39,6 +54,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 
 		IConcatOperation IOperationFactory.Concat(ConcatenationMode mode, string key, ulong cas, ArraySegment<byte> data)
 		{
+			ValidateKey(key, "key");
 			if (cas > 0) throw new NotSupportedException("Text protocol does not support " + mode + " with cas.");
 
 			return new ConcateOperation(mode, key, data);
