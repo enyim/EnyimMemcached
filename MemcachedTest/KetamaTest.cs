@@ -5,6 +5,8 @@ using System.Text;
 using NUnit.Framework;
 using Enyim.Caching.Memcached;
 using System.Net;
+using Enyim.Caching.Memcached.Results;
+using System.Threading.Tasks;
 
 namespace MemcachedTest
 {
@@ -3341,8 +3343,13 @@ namespace MemcachedTest
 			throw new NotImplementedException();
 		}
 
-		#endregion
-	}
+        Task<IOperationResult> IMemcachedNode.ExecuteAsync(IOperation op)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+    }
 }
 
 #region [ License information          ]
