@@ -113,7 +113,7 @@ namespace Enyim.Caching.Configuration
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
