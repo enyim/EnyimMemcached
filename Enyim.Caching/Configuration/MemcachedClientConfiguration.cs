@@ -29,6 +29,18 @@ namespace Enyim.Caching.Configuration
 			this.Protocol = MemcachedProtocol.Binary;
 		}
 
+        public static IMemcachedClientConfiguration CreateDefault()
+        {
+            var config = new MemcachedClientConfiguration();
+            config.AddServer("memcached", 11211);
+            config.SocketPool.MinPoolSize = 20;
+            config.SocketPool.MaxPoolSize = 1000;
+            config.SocketPool.ConnectionTimeout = new TimeSpan(0, 0, 2);
+            config.SocketPool.ReceiveTimeout = new TimeSpan(0, 0, 2);
+            config.SocketPool.DeadTimeout = new TimeSpan(0, 0, 2);
+            return config;
+        }
+
 		/// <summary>
 		/// Adds a new server to the pool.
 		/// </summary>
@@ -139,8 +151,8 @@ namespace Enyim.Caching.Configuration
 			if (f != null) return f.Create();
 
 			return this.NodeLocator == null
-					? new DefaultNodeLocator()
-					: (IMemcachedNodeLocator)FastActivator.Create(this.NodeLocator);
+					? new SingleNodeLocator() 
+                    : (IMemcachedNodeLocator)FastActivator.Create(this.NodeLocator);
 		}
 
 		ITranscoder IMemcachedClientConfiguration.CreateTranscoder()

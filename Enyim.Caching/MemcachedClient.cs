@@ -23,7 +23,7 @@ namespace Enyim.Caching
         /// Represents a value which indicates that an item should never expire.
         /// </summary>
         public static readonly TimeSpan Infinite = TimeSpan.Zero;
-        internal static readonly MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
+        //internal static readonly MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
         private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MemcachedClient));
 
         private IServerPool pool;
@@ -41,7 +41,7 @@ namespace Enyim.Caching
         /// Initializes a new MemcachedClient instance using the default configuration section (enyim/memcached).
         /// </summary>
         public MemcachedClient()
-            : this(DefaultSettings) { }
+            : this(MemcachedClientConfiguration.CreateDefault()) { }
 
         protected IServerPool Pool { get { return this.pool; } }
         protected IMemcachedKeyTransformer KeyTransformer { get { return this.keyTransformer; } }
@@ -119,6 +119,7 @@ namespace Enyim.Caching
         /// </summary>
         /// <param name="key">The identifier for the item to retrieve.</param>
         /// <returns>The retrieved item, or <value>null</value> if the key was not found.</returns>
+        [Obsolete]
         public object Get(string key)
         {
             object tmp;
@@ -131,6 +132,7 @@ namespace Enyim.Caching
         /// </summary>
         /// <param name="key">The identifier for the item to retrieve.</param>
         /// <returns>The retrieved item, or <value>default(T)</value> if the key was not found.</returns>
+        [Obsolete]
         public T Get<T>(string key)
         {
             object tmp;
@@ -142,18 +144,16 @@ namespace Enyim.Caching
         {
             var result = new DefaultGetOperationResultFactory<T>().Create();
 
-            var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            //var hashedKey = this.keyTransformer.Transform(key);
+            var node = this.pool.Locate(key);
 
             if (node != null)
             {
-                var command = this.pool.OperationFactory.Get(hashedKey);
+                var command = this.pool.OperationFactory.Get(key);
                 var commandResult = await node.ExecuteAsync(command);
 
                 if (commandResult.Success)
                 {
-                    if (this.performanceMonitor != null) this.performanceMonitor.Get(1, true);
-
                     var tempResult = this.transcoder.Deserialize(command.Result);
                     if (tempResult != null)
                     {
@@ -168,8 +168,6 @@ namespace Enyim.Caching
                 log.Error("Unable to locate node");
             }
 
-            if (this.performanceMonitor != null) this.performanceMonitor.Get(1, false);
-
             result.Success = false;
             result.Value = default(T);
             return result;
@@ -181,6 +179,7 @@ namespace Enyim.Caching
         /// <param name="key">The identifier for the item to retrieve.</param>
         /// <param name="value">The retrieved item or null if not found.</param>
         /// <returns>The <value>true</value> if the item was successfully retrieved.</returns>
+        [Obsolete]
         public bool TryGet(string key, out object value)
         {
             ulong cas = 0;
@@ -188,12 +187,13 @@ namespace Enyim.Caching
             return this.PerformTryGet(key, out cas, out value).Success;
         }
 
-
+        [Obsolete]
         public CasResult<object> GetWithCas(string key)
         {
             return this.GetWithCas<object>(key);
         }
 
+        [Obsolete]
         public CasResult<T> GetWithCas<T>(string key)
         {
             CasResult<object> tmp;
@@ -203,6 +203,7 @@ namespace Enyim.Caching
                     : new CasResult<T> { Cas = tmp.Cas, Result = default(T) };
         }
 
+        [Obsolete]
         public bool TryGetWithCas(string key, out CasResult<object> value)
         {
             object tmp;
@@ -382,11 +383,12 @@ namespace Enyim.Caching
 
         protected virtual IStoreOperationResult PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas, out int statusCode)
         {
-            var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            //var hashedKey = this.keyTransformer.Transform(key);
+            var node = this.pool.Locate(key);
             var result = StoreOperationResultFactory.Create();           
 
             statusCode = -1;
+            
 
             if (value == null)
             {
@@ -403,13 +405,11 @@ namespace Enyim.Caching
                 {
                     log.Error(e);
 
-                    if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, false);
-
                     result.Fail("PerformStore failed", e);
                     return result;
                 }
 
-                var command = this.pool.OperationFactory.Store(mode, hashedKey, item, expires, cas);
+                var command = this.pool.OperationFactory.Store(mode, key, item, expires, cas);
                 var commandResult = node.Execute(command);
 
                 result.Cas = cas = command.CasValue;
@@ -426,7 +426,7 @@ namespace Enyim.Caching
                 return result;
             }
 
-            if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, false);
+            //if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, false);
 
             result.Fail("Unable to locate node");
             return result;

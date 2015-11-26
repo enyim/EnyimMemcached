@@ -15,14 +15,14 @@ namespace Enyim.Caching.Memcached
 
 		void IMemcachedNodeLocator.Initialize(IList<IMemcachedNode> nodes)
 		{
-			if (this.isInitialized)
-				throw new InvalidOperationException("Instance is already initialized.");
+            if (this.isInitialized)
+                return;
 
 			// locking on this is rude but easy
 			lock (initLock)
 			{
-				if (this.isInitialized)
-					throw new InvalidOperationException("Instance is already initialized.");
+                if (this.isInitialized)
+                    return;
 
 				if (nodes.Count > 0)
 					node = nodes[0];
@@ -35,6 +35,8 @@ namespace Enyim.Caching.Memcached
 		{
 			if (!this.isInitialized)
 				throw new InvalidOperationException("You must call Initialize first");
+
+            if (this.node == null) return null;
 
 			return this.node.IsAlive
 					? this.node

@@ -12,7 +12,7 @@ namespace Enyim.Caching
 	{
 		private TextWriter writer;
 
-		public DiagnosticsLogFactory() : this(ConfigurationManager.AppSettings["Enyim.Caching.Diagnostics.LogPath"]) { }
+		public DiagnosticsLogFactory() : this(@"C:\temp\EnyimMemcached.log") { }
 
 		public DiagnosticsLogFactory(string logPath)
 		{
