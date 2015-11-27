@@ -291,6 +291,7 @@ namespace Enyim.Caching
             return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), ref tmp, out status).Success;
         }
 
+        //TODO: Not Implement
         public async Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor)
         {
             throw new NotFiniteNumberException();
@@ -832,6 +833,12 @@ namespace Enyim.Caching
         public bool Remove(string key)
         {
             return ExecuteRemove(key).Success;
+        }
+
+        //TODO: Not Implement
+        public async Task<bool> RemoveAsync(string key)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>

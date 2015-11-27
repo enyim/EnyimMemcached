@@ -53,8 +53,9 @@ namespace Enyim.Caching
 		CasResult<ulong> Increment(string key, ulong defaultValue, ulong delta, TimeSpan validFor, ulong cas);
 
 		bool Remove(string key);
+        Task<bool> RemoveAsync(string key);
 
-		void FlushAll();
+        void FlushAll();
 
 		ServerStats Stats();
 		ServerStats Stats(string type);

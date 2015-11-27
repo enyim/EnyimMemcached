@@ -163,7 +163,12 @@ namespace Enyim.Caching
 
         public bool Remove(string key)
         {
-            throw new NotImplementedException();
+            return true;
+        }
+
+        public async Task<bool> RemoveAsync(string key)
+        {
+            return true;
         }
 
         public ServerStats Stats()
