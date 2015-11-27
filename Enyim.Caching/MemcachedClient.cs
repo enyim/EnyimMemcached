@@ -287,6 +287,11 @@ namespace Enyim.Caching
             return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), ref tmp, out status).Success;
         }
 
+        public async Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor)
+        {
+            throw new NotFiniteNumberException();
+        }
+
         /// <summary>
         /// Inserts an item into the cache with a cache key to reference its location.
         /// </summary>

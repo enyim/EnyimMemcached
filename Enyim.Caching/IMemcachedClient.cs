@@ -28,8 +28,9 @@ namespace Enyim.Caching
 		bool Store(StoreMode mode, string key, object value);
 		bool Store(StoreMode mode, string key, object value, DateTime expiresAt);
 		bool Store(StoreMode mode, string key, object value, TimeSpan validFor);
+        Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor);
 
-		CasResult<bool> Cas(StoreMode mode, string key, object value);
+        CasResult<bool> Cas(StoreMode mode, string key, object value);
 		CasResult<bool> Cas(StoreMode mode, string key, object value, ulong cas);
 		CasResult<bool> Cas(StoreMode mode, string key, object value, DateTime expiresAt, ulong cas);
 		CasResult<bool> Cas(StoreMode mode, string key, object value, TimeSpan validFor, ulong cas);
