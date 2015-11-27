@@ -1,12 +1,14 @@
 ﻿using System;
 using Enyim.Caching.Memcached;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
 	public interface IMemcachedClient : IDisposable
 	{
-		object Get(string key);
+        Task<T> GetAsync<T>(string key);
+        object Get(string key);
 		T Get<T>(string key);
 		IDictionary<string, object> Get(IEnumerable<string> keys);
 
