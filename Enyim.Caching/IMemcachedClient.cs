@@ -2,12 +2,13 @@
 using Enyim.Caching.Memcached;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching
 {
 	public interface IMemcachedClient : IDisposable
 	{
-        Task<T> GetAsync<T>(string key);
+        Task<IGetOperationResult<T>> GetAsync<T>(string key);
         object Get(string key);
 		T Get<T>(string key);
 		IDictionary<string, object> Get(IEnumerable<string> keys);

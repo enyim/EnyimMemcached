@@ -140,7 +140,7 @@ namespace Enyim.Caching
             return TryGet(key, out tmp) ? (T)tmp : default(T);
         }
 
-        public async Task<T> GetAsync<T>(string key)
+        public async Task<IGetOperationResult<T>> GetAsync<T>(string key)
         {
             var result = new DefaultGetOperationResultFactory<T>().Create();
 
@@ -157,7 +157,9 @@ namespace Enyim.Caching
                     var tempResult = this.transcoder.Deserialize(command.Result);
                     if (tempResult != null)
                     {
-                        return (T)tempResult;
+                        result.Success = true;
+                        result.Value = (T)tempResult;
+                        return result;
                     }
                 }
             }
@@ -166,7 +168,9 @@ namespace Enyim.Caching
                 log.Error("Unable to locate node");
             }
 
-            return default(T);
+            result.Success = false;
+            result.Value = default(T);
+            return result;
         }
 
         /// <summary>

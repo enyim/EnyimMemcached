@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Enyim.Caching.Memcached;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Factories;
 
 namespace Enyim.Caching
 {
@@ -96,9 +98,12 @@ namespace Enyim.Caching
             return default(T);
         }
 
-        public async Task<T> GetAsync<T>(string key)
+        public async Task<IGetOperationResult<T>> GetAsync<T>(string key)
         {
-            return default(T);
+            var result = new DefaultGetOperationResultFactory<T>().Create();
+            result.Success = false;
+            result.Value = default(T);
+            return result;
         }
 
         public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
