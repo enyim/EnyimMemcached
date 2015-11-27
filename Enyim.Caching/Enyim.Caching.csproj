@@ -298,6 +298,7 @@
     </Compile>
     <Compile Include="Memcached\Transcoders\ITranscoder.cs">
     </Compile>
+    <Compile Include="NullMemcachedClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TigerHash.cs" />
     <Compile Include="UIntEqualityComparer.cs" />
