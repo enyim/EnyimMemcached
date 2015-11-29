@@ -291,10 +291,9 @@ namespace Enyim.Caching
             return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), ref tmp, out status).Success;
         }
 
-        //TODO: Not Implement
         public async Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor)
         {
-            throw new NotFiniteNumberException();
+            return (await this.PerformStoreAsync(mode, key, value, MemcachedClient.GetExpiration(validFor, null))).Success;
         }
 
         /// <summary>
@@ -424,6 +423,54 @@ namespace Enyim.Caching
                 if (commandResult.Success)
                 {
                     if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, true);
+                    result.Pass();
+                    return result;
+                }
+
+                commandResult.Combine(result);
+                return result;
+            }
+
+            //if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, false);
+
+            result.Fail("Unable to locate node");
+            return result;
+        }
+
+        protected async virtual Task<IStoreOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, uint expires)
+        {
+            var node = this.pool.Locate(key);
+            var result = StoreOperationResultFactory.Create();
+
+            int statusCode = -1;
+            ulong cas = 0;
+            if (value == null)
+            {
+                result.Fail("value is null");
+                return result;
+            }
+
+            if (node != null)
+            {
+                CacheItem item;
+
+                try { item = this.transcoder.Serialize(value); }
+                catch (Exception e)
+                {
+                    log.Error(e);
+
+                    result.Fail("PerformStore failed", e);
+                    return result;
+                }
+
+                var command = this.pool.OperationFactory.Store(mode, key, item, expires, cas);
+                var commandResult = await node.ExecuteAsync(command);
+
+                result.Cas = cas = command.CasValue;
+                result.StatusCode = statusCode = command.StatusCode;
+
+                if (commandResult.Success)
+                {
                     result.Pass();
                     return result;
                 }
@@ -838,7 +885,7 @@ namespace Enyim.Caching
         //TODO: Not Implement
         public async Task<bool> RemoveAsync(string key)
         {
-            throw new NotImplementedException();
+            return (await ExecuteRemoveAsync(key)).Success;
         }
 
         /// <summary>
