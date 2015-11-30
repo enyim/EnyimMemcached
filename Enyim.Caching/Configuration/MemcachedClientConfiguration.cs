@@ -114,11 +114,6 @@ namespace Enyim.Caching.Configuration
 		}
 
 		/// <summary>
-		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IPerformanceMonitor"/> instance which will be used monitor the performance of the client.
-		/// </summary>
-		public IPerformanceMonitor PerformanceMonitor { get; set; }
-
-		/// <summary>
 		/// Gets or sets the type of the communication between client and server.
 		/// </summary>
 		public MemcachedProtocol Protocol { get; set; }
@@ -169,12 +164,7 @@ namespace Enyim.Caching.Configuration
 			}
 
 			throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);
-		}
-
-		IPerformanceMonitor IMemcachedClientConfiguration.CreatePerformanceMonitor()
-		{
-			return this.PerformanceMonitor;
-		}
+		}		
 
 		#endregion
 	}

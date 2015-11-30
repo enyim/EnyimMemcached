@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Security.Cryptography;
 using System.Net;
-using System.Web.Script.Serialization;
 using System.Collections.ObjectModel;
 using System.Web;
 using Enyim.Caching.Configuration;
@@ -34,9 +33,9 @@ namespace Enyim.Caching.Memcached
 			ConfigurationHelper.TryGetAndRemove(parameters, String.Empty, out json, true);
 			ConfigurationHelper.CheckForUnknownAttributes(parameters);
 
-			var tmp = new JavaScriptSerializer().Deserialize<int[][]>(json);
+            //var tmp = new JavaScriptSerializer().Deserialize<int[][]>(json);
 
-			this.buckets = tmp.Select(entry => new VBucket(entry[0], entry.Skip(1).ToArray())).ToArray();
+			//this.buckets = tmp.Select(entry => new VBucket(entry[0], entry.Skip(1).ToArray())).ToArray();
 		}
 
 		IMemcachedNodeLocator IProviderFactory<IMemcachedNodeLocator>.Create()
