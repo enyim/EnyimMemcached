@@ -32,7 +32,7 @@ namespace Enyim.Caching
 
 		static LogManager()
 		{
-            factory = new DiagnosticsLogFactory();
+            factory = new ConsoleLogFactory();
 //			var section = ConfigurationManager.GetSection("enyim.com/log") as Enyim.Caching.Configuration.LoggerSection;
 //			ILogFactory f = null;
 

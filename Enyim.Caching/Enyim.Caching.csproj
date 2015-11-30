@@ -129,9 +129,7 @@
     <Compile Include="MemcachedClient.Results.cs" />
     <Compile Include="Memcached\PerformanceMonitor\DefaultPerformanceMonitorFactory.cs" />
     <Compile Include="Memcached\PerformanceMonitor\IPerformanceMonitor.cs" />
-    <Compile Include="Memcached\PerformanceMonitor\PerformanceCounterInstaller.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="Memcached\PerformanceMonitor\PerformanceCounterInstaller.cs" />
     <Compile Include="Memcached\PerformanceMonitor\DefaultPerformanceMonitor.cs">
     </Compile>
     <Compile Include="Memcached\IProviderFactory.cs">

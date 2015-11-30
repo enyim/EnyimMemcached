@@ -1,11 +1,12 @@
 {
     "version": "3.2.0-*",
+    "summary": "EnyimMemcached",
     "frameworks": {
-        "netcore5": {
+        "net451": {
             "frameworkAssemblies": {
                 "System.Configuration": "4.0.0.0",
                 "System.Xml.Linq": "4.0.0.0",
-                "System.Runtime.Serialization":  "4.0.0.0"
+                "System.Runtime.Serialization": "4.0.0.0"
             }
         }
     },
