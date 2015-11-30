@@ -1,7 +1,7 @@
 {
     "version": "3.2.0-*",
     "frameworks": {
-        "net461": {
+        "netcore5": {
             "frameworkAssemblies": {
                 "System.Configuration": "4.0.0.0",
                 "System.Xml.Linq": "4.0.0.0",
