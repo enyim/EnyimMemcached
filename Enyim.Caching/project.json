@@ -21,5 +21,9 @@
                 "allowUnsafe": true
             }
         }
+    },
+    "dependencies": {
+        "Microsoft.Extensions.Logging.Abstractions": "1.0.0-rc1-final",
+        "Microsoft.Extensions.DependencyInjection.Abstractions": "1.0.0-rc1-final"
     }
 }
