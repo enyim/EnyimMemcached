@@ -12,7 +12,6 @@ using Enyim.Caching.Memcached.Results.Factories;
 using Enyim.Caching.Memcached.Results.Extensions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Enyim.Caching
 {
