@@ -124,8 +124,6 @@ namespace Enyim.Caching
         {
             var result = new DefaultGetOperationResultFactory<T>().Create();
 
-            _loggger.LogError("GetAsync");
-
             //var hashedKey = this.keyTransformer.Transform(key);
             var node = this.pool.Locate(key);
 
@@ -147,7 +145,7 @@ namespace Enyim.Caching
             }
             else
             {
-                _loggger.LogError("Unable to locate node");
+                _loggger.LogError($"Unable to locate memcached node");
             }
 
             result.Success = false;
@@ -458,7 +456,7 @@ namespace Enyim.Caching
 
             //if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, false);
 
-            result.Fail("Unable to locate node");
+            result.Fail("Unable to locate memcached node");
             return result;
         }
 
