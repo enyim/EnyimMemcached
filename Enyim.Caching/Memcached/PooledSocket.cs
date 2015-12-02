@@ -286,7 +286,16 @@ namespace Enyim.Caching.Memcached
             {
                 args.BufferList = buffers;
                 var awaitable = new SocketAwaitable(args);
-                await this.socket.SendAsync(awaitable);
+                try
+                {
+                    await this.socket.SendAsync(awaitable);
+                }
+                catch
+                {
+                    this.isAlive = false;
+                    ThrowHelper.ThrowSocketWriteError(this.endpoint, args.SocketError);
+                }
+
                 if (args.SocketError != SocketError.Success)
                 {
                     this.isAlive = false;
