@@ -10,7 +10,7 @@ namespace Enyim.Caching.Memcached
 	{
 		public override string Transform(string key)
 		{
-			return Convert.ToBase64String(Encoding.UTF8.GetBytes(key), Base64FormattingOptions.None);
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(key));//, Base64FormattingOptions.None);
 		}
 	}
 }
@@ -18,7 +18,7 @@ namespace Enyim.Caching.Memcached
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

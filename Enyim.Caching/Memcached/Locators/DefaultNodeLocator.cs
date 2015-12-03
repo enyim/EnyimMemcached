@@ -167,7 +167,7 @@ namespace Enyim.Caching.Memcached
 
 			for (int i = 0; i < numberOfKeys; i++)
 			{
-				byte[] data = fnv.ComputeHash(Encoding.ASCII.GetBytes(String.Concat(address, "-", i)));
+				byte[] data = fnv.ComputeHash(Encoding.UTF8.GetBytes(String.Concat(address, "-", i)));
 
 				for (int h = 0; h < PartCount; h++)
 				{

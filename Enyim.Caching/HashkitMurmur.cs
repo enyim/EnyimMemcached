@@ -14,14 +14,9 @@ namespace Enyim
 	{
 		public HashkitMurmur()
 		{
-			this.HashSizeValue = 32;
+			
 		}
-
-		public override bool CanTransformMultipleBlocks
-		{
-			get { return false; }
-		}
-
+	
 		public override void Initialize() { }
 
 		protected override void HashCore(byte[] array, int ibStart, int cbSize)

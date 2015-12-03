@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.IO;
-using System.Configuration;
 
 namespace Enyim.Caching
 {
@@ -21,7 +20,7 @@ namespace Enyim.Caching
 					"Log path must be defined.  Add the following to configuration/appSettings: <add key=\"Enyim.Caching.Diagnostics.LogPath\" "
 					+ "value=\"path to the log file\" /> or specify a valid path in in the constructor.");
 
-			this.writer = new StreamWriter(logPath, true);
+			this.writer = new StreamWriter(new FileStream(logPath, FileMode.OpenOrCreate));
 		}
 
 		ILog ILogFactory.GetLogger(string name)
@@ -39,7 +38,7 @@ namespace Enyim.Caching
 	{
 		ILog ILogFactory.GetLogger(string name)
 		{
-			return new TextWriterLog(name, Console.Out);
+			return new TextWriterLog(name,  Console.Out);
 		}
 
 		ILog ILogFactory.GetLogger(Type type)

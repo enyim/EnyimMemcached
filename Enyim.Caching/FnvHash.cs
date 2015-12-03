@@ -22,7 +22,7 @@ namespace Enyim
 		/// </summary>
 		public FNV64()
 		{
-			base.HashSizeValue = 64;
+			//base.HashSize = 64;
 		}
 
 		/// <summary>
@@ -109,7 +109,6 @@ namespace Enyim
 		/// </summary>
 		public FNV1()
 		{
-			this.HashSizeValue = 32;
 		}
 
 		/// <summary>
@@ -204,7 +203,7 @@ namespace Enyim
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

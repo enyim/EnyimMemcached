@@ -24,7 +24,7 @@ namespace Enyim.Caching.Configuration
 		{
 			this.Servers = new List<IPEndPoint>();
 			this.SocketPool = new SocketPoolConfiguration();
-			this.Authentication = new AuthenticationConfiguration();
+			//this.Authentication = new AuthenticationConfiguration();
 
 			this.Protocol = MemcachedProtocol.Binary;
 		}

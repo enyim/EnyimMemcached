@@ -5,7 +5,7 @@ namespace Enyim.Caching.Memcached
 	/// <summary>
 	/// The exception that is thrown when an unknown error occures in the <see cref="T:MemcachedClient"/>
 	/// </summary>
-	[global::System.Serializable]
+	//[global::System.Serializable]
 	public class MemcachedException : Exception
 	{
 		/// <summary>
@@ -19,21 +19,14 @@ namespace Enyim.Caching.Memcached
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception.
 		/// </summary>
-		public MemcachedException(string message, Exception inner) : base(message, inner) { }
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:MemcachedException"/> class with serialized data.
-		/// </summary>
-		protected MemcachedException(
-		  System.Runtime.Serialization.SerializationInfo info,
-		  System.Runtime.Serialization.StreamingContext context)
-			: base(info, context) { }
+		public MemcachedException(string message, Exception inner) : base(message, inner) { }		
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

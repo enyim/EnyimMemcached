@@ -17,7 +17,7 @@ namespace Enyim.Caching.Configuration
 			}
 
 			if (required)
-				throw new System.Configuration.ConfigurationErrorsException("Missing or invalid parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
+				throw new Exception("Missing or invalid parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
 
 			value = 0;
 
@@ -34,7 +34,7 @@ namespace Enyim.Caching.Configuration
 			}
 
 			if (required)
-				throw new System.Configuration.ConfigurationErrorsException("Missing or invalid parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
+				throw new Exception("Missing or invalid parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
 
 			value = TimeSpan.Zero;
 
@@ -52,7 +52,7 @@ namespace Enyim.Caching.Configuration
 			}
 
 			if (required)
-				throw new System.Configuration.ConfigurationErrorsException("Missing parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
+				throw new Exception("Missing parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
 
 			return false;
 		}
@@ -60,15 +60,15 @@ namespace Enyim.Caching.Configuration
 		internal static void CheckForUnknownAttributes(Dictionary<string, string> dict)
 		{
 			if (dict.Count > 0)
-				throw new System.Configuration.ConfigurationErrorsException("Unrecognized parameter: " + dict.Keys.First());
+				throw new Exception("Unrecognized parameter: " + dict.Keys.First());
 		}
 
 		public static void CheckForInterface(Type type, Type interfaceType)
 		{
 			if (type == null || interfaceType == null) return;
 
-			if (Array.IndexOf<Type>(type.GetInterfaces(), interfaceType) == -1)
-				throw new System.Configuration.ConfigurationErrorsException("The type " + type.AssemblyQualifiedName + " must implement " + interfaceType.AssemblyQualifiedName);
+			//if (Array.IndexOf<Type>(type.GetInterfaces(), interfaceType) == -1)
+			//	throw new System.Configuration.ConfigurationErrorsException("The type " + type.AssemblyQualifiedName + " must implement " + interfaceType.AssemblyQualifiedName);
 		}
 
 		public static IPEndPoint ResolveToEndPoint(string value)
@@ -97,10 +97,10 @@ namespace Enyim.Caching.Configuration
 			// parse as an IP address
 			if (!IPAddress.TryParse(host, out address))
 			{
-				// not an ip, resolve from dns
-				// TODO we need to find a way to specify whihc ip should be used when the host has several
-				var entry = System.Net.Dns.GetHostEntry(host);
-				address = entry.AddressList.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+                //TODO: Change to async/await
+                var entry = System.Net.Dns.GetHostAddressesAsync(host).Result;//System.Net.Dns.GetHostEntry(host);
+
+                address = entry.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
 
 				if (address == null)
 					throw new ArgumentException(String.Format("Could not resolve host '{0}'.", host));

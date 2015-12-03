@@ -88,7 +88,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 				ms.WriteByte((byte)data);
 			}
 
-			string retval = Encoding.ASCII.GetString(ms.GetBuffer(), 0, (int)ms.Length);
+			string retval = Encoding.ASCII.GetString(ms.ToArray(), 0, (int)ms.Length);
 
 			if (log.IsDebugEnabled)
 				log.Debug("ReadLine: " + retval);
@@ -126,7 +126,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

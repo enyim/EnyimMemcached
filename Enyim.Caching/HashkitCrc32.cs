@@ -16,7 +16,6 @@ namespace Enyim
 
 		public HashkitCrc32()
 		{
-			this.HashSizeValue = 32;
 			this.shouldReset = true;
 		}
 

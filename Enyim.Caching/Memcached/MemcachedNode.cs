@@ -473,7 +473,7 @@ namespace Enyim.Caching.Memcached
                     }
 
                     this.ownerNode = null;
-                    this.semaphore.Close();
+                    this.semaphore.Dispose();
                     this.semaphore = null;
                     this.freeItems = null;
                 }

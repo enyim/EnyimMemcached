@@ -9,7 +9,7 @@ namespace Enyim.Caching.Memcached
 		public static void ThrowSocketWriteError(IPEndPoint endpoint, SocketError error)
 		{
 			// move the string into resource file
-			throw new System.IO.IOException(String.Format("Failed to write to the socket '{0}'. Error: {1}", endpoint, error));
+			throw new Exception(String.Format("Failed to write to the socket '{0}'. Error: {1}", endpoint, error));
 		}
 	}
 }
@@ -17,7 +17,7 @@ namespace Enyim.Caching.Memcached
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

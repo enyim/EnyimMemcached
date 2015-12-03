@@ -21,7 +21,7 @@ namespace Enyim.Caching.Memcached
         private Socket socket;
         private IPEndPoint endpoint;
 
-        private BufferedStream inputStream;
+        private Stream inputStream;
         private AsyncSocketHelper helper;
 
         public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
@@ -50,14 +50,23 @@ namespace Enyim.Caching.Memcached
             this.socket = socket;
             this.endpoint = endpoint;
 
-            this.inputStream = new BufferedStream(new BasicNetworkStream(socket));
+            this.inputStream = new BasicNetworkStream(socket);
         }
 
         private static void ConnectWithTimeout(Socket socket, IPEndPoint endpoint, int timeout)
         {
-            var mre = new ManualResetEvent(false);
+            var task = socket.ConnectAsync(endpoint);
+            if(!task.Wait(timeout))
+            {
+                using (socket)
+                {
+                    throw new TimeoutException("Could not connect to " + endpoint);
+                }
+            }
 
-            socket.BeginConnect(endpoint, iar =>
+            /*var mre = new ManualResetEvent(false);
+
+            socket.Connect(endpoint, iar =>
             {
                 try { using (iar.AsyncWaitHandle) socket.EndConnect(iar); }
                 catch { }
@@ -67,7 +76,7 @@ namespace Enyim.Caching.Memcached
 
             if (!mre.WaitOne(timeout) || !socket.Connected)
                 using (socket)
-                    throw new TimeoutException("Could not connect to " + endpoint);
+                    throw new TimeoutException("Could not connect to " + endpoint);*/
         }
 
         public Action<PooledSocket> CleanupCallback { get; set; }
@@ -137,7 +146,7 @@ namespace Enyim.Caching.Memcached
                 try
                 {
                     if (socket != null)
-                        try { this.socket.Close(); }
+                        try { this.socket.Dispose(); }
                         catch { }
 
                     if (this.inputStream != null)

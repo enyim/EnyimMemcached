@@ -54,30 +54,31 @@ namespace Enyim.Caching.Memcached
                 set { throw new NotSupportedException(); }
             }
 
-            public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-            {
-                SocketError errorCode;
 
-                var retval = this.socket.BeginReceive(buffer, offset, count, SocketFlags.None, out errorCode, callback, state);
+            //public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+            //{
+            //    SocketError errorCode;
 
-                if (errorCode == SocketError.Success)
-                    return retval;
+            //    var retval = this.socket.BeginReceive(buffer, offset, count, SocketFlags.None, out errorCode, callback, state);
 
-                throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode));
-            }
+            //    if (errorCode == SocketError.Success)
+            //        return retval;
 
-            public override int EndRead(IAsyncResult asyncResult)
-            {
-                SocketError errorCode;
+            //    throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode));
+            //}
 
-                var retval = this.socket.EndReceive(asyncResult, out errorCode);
+            //public override int EndRead(IAsyncResult asyncResult)
+            //{
+            //    SocketError errorCode;
 
-                // actually "0 bytes read" could mean an error as well
-                if (errorCode == SocketError.Success && retval > 0)
-                    return retval;
+            //    var retval = this.socket.EndReceive(asyncResult, out errorCode);
 
-                throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode));
-            }
+            //    // actually "0 bytes read" could mean an error as well
+            //    if (errorCode == SocketError.Success && retval > 0)
+            //        return retval;
+
+            //    throw new System.IO.IOException(String.Format("Failed to read from the socket '{0}'. Error: {1}", this.socket.RemoteEndPoint, errorCode));
+            //}
 
             public override int Read(byte[] buffer, int offset, int count)
             {

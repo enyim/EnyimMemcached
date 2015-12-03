@@ -19,7 +19,7 @@ namespace Enyim.Caching.Memcached.Results.Helpers
 				{
 					return message +
 						(! string.IsNullOrEmpty(message) ? ": " : "") +
-						Encoding.ASCII.GetString(data.Array, data.Offset, data.Count);
+						Encoding.UTF8.GetString(data.Array, data.Offset, data.Count);
 				}
 				catch (Exception ex)
 				{

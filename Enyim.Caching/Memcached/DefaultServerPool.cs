@@ -21,7 +21,7 @@ namespace Enyim.Caching.Memcached
 		private object DeadSync = new Object();
 		private System.Threading.Timer resurrectTimer;
 		private bool isTimerActive;
-		private long deadTimeoutMsec;
+		private int deadTimeoutMsec;
 		private bool isDisposed;
 		private event Action<IMemcachedNode> nodeFailed;
 
@@ -33,7 +33,7 @@ namespace Enyim.Caching.Memcached
 			this.configuration = configuration;
 			this.factory = opFactory;
 
-			this.deadTimeoutMsec = (long)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds;
+			this.deadTimeoutMsec = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds;
 		}
 
 		~DefaultServerPool()
