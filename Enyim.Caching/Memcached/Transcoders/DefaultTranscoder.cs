@@ -236,9 +236,8 @@ namespace Enyim.Caching.Memcached
                 {
                     JsonSerializer serializer = new JsonSerializer();
                     serializer.Serialize(writer, value);
-                }
-
-                return new ArraySegment<byte>(ms.ToArray(), 0, (int)ms.Length);
+                    return new ArraySegment<byte>(ms.ToArray(), 0, (int)ms.Length);
+                }                
             }
         }
 
