@@ -40,8 +40,7 @@ namespace Enyim.Caching
         protected IMemcachedKeyTransformer KeyTransformer { get { return this.keyTransformer; } }
         protected ITranscoder Transcoder { get { return this.transcoder; } }
 
-
-        protected MemcachedClient(ILoggerFactory logggerFactory)
+        public MemcachedClient(ILoggerFactory logggerFactory)
         {
             _loggger = logggerFactory.CreateLogger<MemcachedClient>();
             IMemcachedClientConfiguration configuration = new MemcachedClientConfiguration(_loggger); 
