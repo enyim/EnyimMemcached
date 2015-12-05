@@ -20,9 +20,7 @@ namespace Enyim.Caching.Memcached
 		/// <param name="item">The stream that contains the data to deserialize.</param>
 		/// <returns>The deserialized object</returns>
 		object Deserialize(CacheItem item);
-
-        T Deserialize<T>(CacheItem item);
-    }
+	}
 }
 
 #region [ License information          ]

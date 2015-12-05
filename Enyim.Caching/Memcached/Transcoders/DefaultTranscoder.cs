@@ -25,12 +25,7 @@ namespace Enyim.Caching.Memcached
 			return this.Deserialize(item);
 		}
 
-        T ITranscoder.Deserialize<T>(CacheItem item)
-        {
-            return this.Deserialize<T>(item);
-        }
-
-        protected virtual CacheItem Serialize(object value)
+		protected virtual CacheItem Serialize(object value)
 		{
 			// raw data is a special case when some1 passes in a buffer (byte[] or ArraySegment<byte>)
 			if (value is ArraySegment<byte>)
@@ -154,22 +149,11 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-        protected virtual T Deserialize<T>(CacheItem item)
-        {
-            var value = item.Data;
-            using (var ms = new MemoryStream(value.Array))
-            {
-                using (BsonReader reader = new BsonReader(ms))
-                {
-                    JsonSerializer serializer = new JsonSerializer();
-                    return serializer.Deserialize<T>(reader);
-                }
-            }
-        }
 
-        #region [ Typed serialization          ]
 
-        protected virtual ArraySegment<byte> SerializeNull()
+		#region [ Typed serialization          ]
+
+		protected virtual ArraySegment<byte> SerializeNull()
 		{
 			return NullArray;
 		}
