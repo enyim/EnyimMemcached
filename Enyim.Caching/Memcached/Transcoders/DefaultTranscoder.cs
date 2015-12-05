@@ -5,6 +5,8 @@ using System.Text;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Bson;
 using Newtonsoft.Json;
+using System.Collections;
+using System.Reflection;
 
 namespace Enyim.Caching.Memcached
 {
@@ -34,6 +36,10 @@ namespace Enyim.Caching.Memcached
             {
                 using (BsonReader reader = new BsonReader(ms))
                 {
+                    if(typeof(T).GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEnumerable)))
+                    {
+                        reader.ReadRootValueAsArray = true;
+                    }
                     JsonSerializer serializer = new JsonSerializer();
                     return serializer.Deserialize<T>(reader);
                 }
