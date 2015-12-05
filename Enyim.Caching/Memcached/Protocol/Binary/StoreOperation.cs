@@ -8,8 +8,6 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 {
 	public class StoreOperation : BinarySingleItemOperation, IStoreOperation
 	{
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StoreOperation));
-
 		private StoreMode mode;
 		private CacheItem value;
 		private uint expires;
@@ -53,15 +51,6 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 		{
 			var result = new BinaryOperationResult();
 
-#if EVEN_MORE_LOGGING
-			if (log.IsDebugEnabled)
-				if (response.StatusCode == 0)
-					log.DebugFormat("Store succeeded for key '{0}'.", this.Key);
-				else
-				{
-					log.DebugFormat("Store failed for key '{0}'. Reason: {1}", this.Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
-				}
-#endif
 			this.StatusCode = response.StatusCode;
 			if (response.StatusCode == 0)
 			{
@@ -89,7 +78,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
