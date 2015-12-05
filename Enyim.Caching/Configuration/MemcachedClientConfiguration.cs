@@ -4,6 +4,7 @@ using System.Net;
 using Enyim.Caching.Memcached;
 using Enyim.Reflection;
 using Enyim.Caching.Memcached.Protocol.Binary;
+using Microsoft.Extensions.Logging;
 
 namespace Enyim.Caching.Configuration
 {
@@ -16,30 +17,21 @@ namespace Enyim.Caching.Configuration
 		private Type nodeLocator;
 		private ITranscoder transcoder;
 		private IMemcachedKeyTransformer keyTransformer;
+        private ILogger _logger;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
 		/// </summary>
-		public MemcachedClientConfiguration()
+		public MemcachedClientConfiguration(ILogger logger, string host = "memcached", int port = 11211)
 		{
-			this.Servers = new List<IPEndPoint>();
-			this.SocketPool = new SocketPoolConfiguration();
+            _logger = logger;
+            this.Servers = new List<IPEndPoint>();
+
+            this.Servers.Add(ConfigurationHelper.ResolveToEndPoint(host, port));
+            this.SocketPool = new SocketPoolConfiguration();
 			//this.Authentication = new AuthenticationConfiguration();
-
 			this.Protocol = MemcachedProtocol.Binary;
-		}
-
-        public static IMemcachedClientConfiguration CreateDefault()
-        {
-            var config = new MemcachedClientConfiguration();
-            config.AddServer("memcached", 11211);
-            config.SocketPool.MinPoolSize = 20;
-            config.SocketPool.MaxPoolSize = 1000;
-            config.SocketPool.ConnectionTimeout = new TimeSpan(0, 0, 2);
-            config.SocketPool.ReceiveTimeout = new TimeSpan(0, 0, 2);
-            config.SocketPool.DeadTimeout = new TimeSpan(0, 0, 2);
-            return config;
-        }
+		}   
 
 		/// <summary>
 		/// Adds a new server to the pool.
@@ -159,8 +151,8 @@ namespace Enyim.Caching.Configuration
 		{
 			switch (this.Protocol)
 			{
-				case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory());
-				case MemcachedProtocol.Binary: return new BinaryPool(this);
+				case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory(), _logger);
+				case MemcachedProtocol.Binary: return new BinaryPool(this, _logger);
 			}
 
 			throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);

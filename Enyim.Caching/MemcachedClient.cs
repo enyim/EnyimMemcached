@@ -24,7 +24,7 @@ namespace Enyim.Caching
         /// </summary>
         public static readonly TimeSpan Infinite = TimeSpan.Zero;
         //internal static readonly MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
-        private ILogger<MemcachedClient> _loggger;
+        private ILogger _loggger;
 
         private IServerPool pool;
         private IMemcachedKeyTransformer keyTransformer;
@@ -35,28 +35,21 @@ namespace Enyim.Caching
         public IMutateOperationResultFactory MutateOperationResultFactory { get; set; }
         public IConcatOperationResultFactory ConcatOperationResultFactory { get; set; }
         public IRemoveOperationResultFactory RemoveOperationResultFactory { get; set; }
-
-        /// <summary>
-        /// Initializes a new MemcachedClient instance using the default configuration section (enyim/memcached).
-        /// </summary>
-        public MemcachedClient(ILogger<MemcachedClient> loggger)
-            : this(MemcachedClientConfiguration.CreateDefault())
-        {
-            _loggger = loggger;
-        }
-
+  
         protected IServerPool Pool { get { return this.pool; } }
         protected IMemcachedKeyTransformer KeyTransformer { get { return this.keyTransformer; } }
         protected ITranscoder Transcoder { get { return this.transcoder; } }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="T:MemcachedClient"/> using the specified configuration instance.
-        /// </summary>
-        /// <param name="configuration">The client configuration.</param>
-        protected MemcachedClient(IMemcachedClientConfiguration configuration)
+
+        protected MemcachedClient(ILoggerFactory logggerFactory)
         {
-            if (configuration == null)
-                throw new ArgumentNullException("configuration");
+            _loggger = logggerFactory.CreateLogger<MemcachedClient>();
+            IMemcachedClientConfiguration configuration = new MemcachedClientConfiguration(_loggger); 
+            configuration.SocketPool.MinPoolSize = 20;
+            configuration.SocketPool.MaxPoolSize = 1000;
+            configuration.SocketPool.ConnectionTimeout = new TimeSpan(0, 0, 3);
+            configuration.SocketPool.ReceiveTimeout = new TimeSpan(0, 0, 3);
+            configuration.SocketPool.DeadTimeout = new TimeSpan(0, 0, 3);
 
             this.keyTransformer = configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
             this.transcoder = configuration.CreateTranscoder() ?? new DefaultTranscoder();

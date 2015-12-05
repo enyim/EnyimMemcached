@@ -6,6 +6,7 @@ using System.Threading;
 using Enyim.Caching.Configuration;
 using Enyim.Collections;
 using System.Security;
+using Microsoft.Extensions.Logging;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -14,14 +15,19 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 	/// </summary>
 	public class BinaryNode : MemcachedNode
 	{
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(BinaryNode));
+        private readonly ILogger _logger;
 
 		ISaslAuthenticationProvider authenticationProvider;
 
-		public BinaryNode(IPEndPoint endpoint, ISocketPoolConfiguration config, ISaslAuthenticationProvider authenticationProvider)
-			: base(endpoint, config)
+		public BinaryNode(
+            IPEndPoint endpoint, 
+            ISocketPoolConfiguration config, 
+            ISaslAuthenticationProvider authenticationProvider,
+            ILogger logger)
+			: base(endpoint, config, logger)
 		{
 			this.authenticationProvider = authenticationProvider;
+            _logger = logger;
 		}
 
 		/// <summary>
@@ -33,7 +39,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
 			if (this.authenticationProvider != null && !this.Auth(retval))
 			{
-				if (log.IsErrorEnabled) log.Error("Authentication failed: " + this.EndPoint);
+				_logger.LogError("Authentication failed: " + this.EndPoint);
 
 				throw new SecurityException("auth failed: " + this.EndPoint);
 			}
@@ -62,8 +68,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 				}
 				else
 				{
-					if (log.IsWarnEnabled)
-						log.WarnFormat("Authentication failed, return code: 0x{0:x}", currentStep.StatusCode);
+				    _logger.LogWarning("Authentication failed, return code: 0x{0:x}", currentStep.StatusCode);
 
 					// invalid credentials or other error
 					return false;
