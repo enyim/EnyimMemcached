@@ -124,12 +124,20 @@ namespace Enyim.Caching
 
                 if (commandResult.Success)
                 {
-                    var tempResult = this.transcoder.Deserialize(command.Result);
-                    if (tempResult != null)
+                    if (typeof(T).GetTypeCode() == TypeCode.Object)
                     {
                         result.Success = true;
-                        result.Value = (T)tempResult;
+                        result.Value = this.transcoder.Deserialize<T>(command.Result);
                         return result;
+                    }
+                    else {
+                        var tempResult = this.transcoder.Deserialize(command.Result);
+                        if (tempResult != null)
+                        {
+                            result.Success = true;
+                            result.Value = (T)tempResult;
+                            return result;
+                        }
                     }
                 }
             }

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.IO;
 using System.Text;
 using System.Runtime.Serialization;
@@ -25,7 +26,21 @@ namespace Enyim.Caching.Memcached
 			return this.Deserialize(item);
 		}
 
-		protected virtual CacheItem Serialize(object value)
+        T ITranscoder.Deserialize<T>(CacheItem item)
+        {
+            if (item.Data == null || item.Data.Count == 0) return default(T);
+
+            using (var ms = new MemoryStream(item.Data.ToArray()))
+            {
+                using (BsonReader reader = new BsonReader(ms))
+                {
+                    JsonSerializer serializer = new JsonSerializer();
+                    return serializer.Deserialize<T>(reader);
+                }
+            }
+        }
+
+        protected virtual CacheItem Serialize(object value)
 		{
 			// raw data is a special case when some1 passes in a buffer (byte[] or ArraySegment<byte>)
 			if (value is ArraySegment<byte>)
@@ -144,16 +159,14 @@ namespace Enyim.Caching.Memcached
 				// earlier versions serialized decimals with TypeCode.Decimal
 				// even though they were saved by BinaryFormatter
 				case TypeCode.Decimal:
-				case TypeCode.Object: return this.DeserializeObject(data);
+				//case TypeCode.Object: return this.DeserializeObject(data);
 				default: throw new InvalidOperationException("Unknown TypeCode was returned: " + code);
 			}
-		}
+		}       
 
+        #region [ Typed serialization          ]
 
-
-		#region [ Typed serialization          ]
-
-		protected virtual ArraySegment<byte> SerializeNull()
+        protected virtual ArraySegment<byte> SerializeNull()
 		{
 			return NullArray;
 		}
