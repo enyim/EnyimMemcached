@@ -52,7 +52,9 @@ namespace Enyim.Caching
 
 		void FlushAll();
 
-		ServerStats Stats();
+        bool Touch(string key, TimeSpan validFor);
+
+        ServerStats Stats();
 		ServerStats Stats(string type);
 
 		event Action<IMemcachedNode> NodeFailed;
