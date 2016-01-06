@@ -52,6 +52,8 @@ namespace Enyim.Caching
 
 		void FlushAll();
 
+		bool Touch(string key, TimeSpan validFor);
+
 		ServerStats Stats();
 		ServerStats Stats(string type);
 

@@ -213,6 +213,7 @@
     </Compile>
     <Compile Include="Memcached\Protocol\Binary\StoreOperation.cs">
     </Compile>
+    <Compile Include="Memcached\Protocol\Binary\TouchOperation.cs" />
     <Compile Include="Memcached\Protocol\ItemOperation.cs">
     </Compile>
     <Compile Include="Memcached\Protocol\MultiItemOperation.cs">
@@ -244,9 +245,11 @@
     </Compile>
     <Compile Include="Memcached\Protocol\Text\TextSocketHelper.cs">
     </Compile>
+    <Compile Include="Memcached\Protocol\Text\TouchOperation.cs" />
     <Compile Include="Memcached\Results\BinaryOperationResult.cs" />
     <Compile Include="Memcached\Results\ConcatOperationResult.cs" />
     <Compile Include="Memcached\Results\Extensions\OperationResultExtensions.cs" />
+    <Compile Include="Memcached\Results\Factories\DefaultTouchOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\Factories\IGetOperationResultFactory`1.cs" />
     <Compile Include="Memcached\Results\Factories\DefaultConcatOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\Factories\DefaultGetOperationResultFactory.cs" />
@@ -258,12 +261,14 @@
     <Compile Include="Memcached\Results\Factories\IGetOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\Factories\IMutateOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\Factories\IRemoveOperationResultFactory.cs" />
+    <Compile Include="Memcached\Results\Factories\ITouchOperationResultFactory.cs" />
     <Compile Include="Memcached\Results\GetOperationResult`1.cs" />
     <Compile Include="Memcached\Results\Helpers\ResultHelper.cs" />
     <Compile Include="Memcached\Results\IGetOperationResult`1.cs" />
     <Compile Include="Memcached\Results\IPooledSocketResult.cs" />
     <Compile Include="Memcached\Results\IRemoveOperationResult.cs" />
     <Compile Include="Memcached\Results\Factories\IStoreOperationResultFactory.cs" />
+    <Compile Include="Memcached\Results\ITouchOperationResult.cs" />
     <Compile Include="Memcached\Results\PooledSocketResult.cs" />
     <Compile Include="Memcached\Results\RemoveOperationResult.cs" />
     <Compile Include="Memcached\Results\GetOperationResult.cs" />
@@ -280,6 +285,7 @@
     <Compile Include="Memcached\Results\StatusCodes\StatusCodeMessages.cs" />
     <Compile Include="Memcached\Results\StoreOperationResult.cs" />
     <Compile Include="Memcached\Results\TextOperationResult.cs" />
+    <Compile Include="Memcached\Results\TouchOperationResult.cs" />
     <Compile Include="Memcached\ServerStats.cs">
     </Compile>
     <Compile Include="Memcached\SlidingBuffer.cs" />
