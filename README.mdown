@@ -10,6 +10,7 @@ Features:
 * CheckAndSet operations
 * Persistent connections for more speed
 * SASL Authentication
+* Touch operations (After 1.4.8 version of memcached server, for extending items' TTLs)
 
 ## Requirements
 
