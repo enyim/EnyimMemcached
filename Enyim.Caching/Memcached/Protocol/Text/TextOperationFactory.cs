@@ -53,7 +53,12 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 		{
 			return new FlushOperation();
 		}
-	}
+
+        ITouchOperation IOperationFactory.Touch(string key, uint expires)
+        {
+            return new TouchOperation(key, expires);
+        }
+    }
 }
 
 #region [ License information          ]

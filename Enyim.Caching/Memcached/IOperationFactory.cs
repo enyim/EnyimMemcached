@@ -17,7 +17,9 @@ namespace Enyim.Caching.Memcached
 
 		IStatsOperation Stats(string type);
 		IFlushOperation Flush();
-	}
+
+        ITouchOperation Touch(string key, uint expires);
+    }
 }
 
 #region [ License information          ]
