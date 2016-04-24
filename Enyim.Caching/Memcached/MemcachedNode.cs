@@ -69,7 +69,7 @@ namespace Enyim.Caching.Memcached
 
 		/// <summary>
 		/// Gets a value indicating whether the server is working or not.
-		/// 
+		///
 		/// If the server is back online, we'll ercreate the internal socket pool and mark the server as alive so operations can target it.
 		/// </summary>
 		/// <returns>true if the server is alive; false otherwise.</returns>
@@ -282,7 +282,7 @@ namespace Enyim.Caching.Memcached
 				{
 					message = "Pool is dead or disposed, returning null. " + this.endPoint;
 					result.Fail(message);
-					
+
 					if (hasDebug) log.Debug(message);
 
 					return result;
@@ -342,7 +342,6 @@ namespace Enyim.Caching.Memcached
 				// free item pool is empty
 				message = "Could not get a socket from the pool, Creating a new item. " + this.endPoint;
 				if (hasDebug) log.Debug(message);
-				
 
 				try
 				{
@@ -432,12 +431,11 @@ namespace Enyim.Caching.Memcached
 				}
 				else
 				{
-					// one of our previous sockets has died, so probably all of them 
+					// one of our previous sockets has died, so probably all of them
 					// are dead. so, kill the socket (this will eventually clear the pool as well)
 					socket.Destroy();
 				}
 			}
-
 
 			~InternalPoolImpl()
 			{
@@ -621,20 +619,20 @@ namespace Enyim.Caching.Memcached
 
 #region [ License information          ]
 /* ************************************************************
- * 
+ *
  *    Copyright (c) 2010 Attila Kiskó, enyim.com
- *    
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- *    
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- *    
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
- *    
+ *
  * ************************************************************/
 #endregion
