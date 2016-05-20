@@ -10,6 +10,18 @@ function global:get-assembly-title
 	return $d.Title
 }
 
+function global:get-assembly-informal-version
+{
+	param([string] $Path)
+
+	$file = get-item $Path
+	$content = [io.file]::ReadAllBytes($file.fullname)
+	$a = [System.Reflection.Assembly]::Load($content)
+	$d = [System.Attribute]::GetCustomAttribute($a, [System.Reflection.AssemblyInformationalVersionAttribute])
+
+	return $d.InformationalVersion
+}
+
 function global:get-assembly-version
 {
 	param([string] $Path)

@@ -76,10 +76,10 @@ Task _Nuget -depends _Build -PreAction { create-output-dir } {
 
 		$package = $_
 
-		$version = (get-assembly-version -Path "$source_root\$package\bin\Release\$package.dll")
-		$version = "$( $version.Major ).$( $version.Minor )"
+		$version = (get-assembly-informal-version -Path "$source_root\$package\bin\Release\$package.dll")
+		$version = tag-to-version $version
 
-		Exec { ./tools/nuget pack "$source_root\$package\$package.nuspec" -Properties version=$version -OutputDirectory $output_root }
+		Exec { ./tools/nuget pack "$source_root\$package\$package.nuspec" -Version $version -OutputDirectory $output_root }
 	}
 }
 
@@ -146,8 +146,8 @@ Task _Zip -PreAction {
 		}
 
 		# we have to remove the tag from the version (emc2.3.4-9786545)
-		$version = get-assembly-title -Path "$proj_dest\$proj.dll"
-		$zipname = $output_root + "\" + $proj + "." + ($version -replace "^[^0-9]+", "") + ".zip"
+		$version = get-assembly-informal-version -Path "$proj_dest\$proj.dll"
+		$zipname = "$output_root\$proj.$(tag-to-version $version).zip"
 
 		del $zipname -ErrorAction SilentlyContinue | out-null
 
@@ -162,6 +162,11 @@ Task _Zip -PreAction {
 }
 
 #################### helpers ####################
+
+function tag-to-version($version)
+{
+	$version -replace "^[^0-9]+", ""
+}
 
 function create-output-dir
 {

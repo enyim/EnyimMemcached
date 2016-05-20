@@ -68,7 +68,7 @@
 		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Overwrite="true"
 						  Lines="
 [assembly: System.Reflection.AssemblyFileVersion(&quot;$(_AssemblyVersion)&quot;)]
-[assembly: System.Reflection.AssemblyTitle(&quot;$(_CurrentGitVersion)&quot;)]
+[assembly: System.Reflection.AssemblyInformationalVersion(&quot;$(_CurrentGitVersion)&quot;)]
 [assembly: System.Reflection.AssemblyVersion(&quot;$(_AssemblyVersion)&quot;)]" />
 		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Overwrite="false"
 						  Condition=" '$(PrivateKeyName)' != '' "
