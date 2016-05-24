@@ -9,3 +9,4 @@ packages/*/
 /publish/packages
 /Enyim.Caching/project.lock.json
 /publish/*.bat
+.vs/
