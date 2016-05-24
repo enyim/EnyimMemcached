@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Globalization;
 using System.Net;
+using System.Net.Sockets;
 
 namespace Enyim.Caching.Configuration
 {
@@ -41,10 +42,28 @@ namespace Enyim.Caching.Configuration
 			List<IPEndPoint> retval = new List<IPEndPoint>(this.Count);
 			foreach (EndPointElement e in this)
 			{
-				retval.Add(e.EndPoint);
+				try
+				{
+					retval.Add(e.EndPoint);
+				}
+				catch (SocketException)
+				{
+					if (false == SkipUnresolvedDns)
+					{
+						throw;
+					}
+				}
 			}
 
 			return retval.AsReadOnly();
+		}
+		
+		private const string SkipUnresolvedDnsKey = "skipUnresolvedDns";
+		[ConfigurationProperty(SkipUnresolvedDnsKey, IsRequired = false, DefaultValue = false)]
+		public bool SkipUnresolvedDns
+		{
+			get { return (bool)base[SkipUnresolvedDnsKey]; }
+			set { base[SkipUnresolvedDnsKey] = value; }
 		}
 	}
 }
@@ -52,7 +71,7 @@ namespace Enyim.Caching.Configuration
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila KiskÃ³, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
