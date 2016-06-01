@@ -44,8 +44,8 @@ namespace Enyim.Caching
         {
             _loggger = logggerFactory.CreateLogger<MemcachedClient>();
             IMemcachedClientConfiguration configuration = new MemcachedClientConfiguration(_loggger); 
-            configuration.SocketPool.MinPoolSize = 20;
-            configuration.SocketPool.MaxPoolSize = 1000;
+            configuration.SocketPool.MinPoolSize = 5;
+            configuration.SocketPool.MaxPoolSize = 300;
             configuration.SocketPool.ConnectionTimeout = new TimeSpan(0, 0, 3);
             configuration.SocketPool.ReceiveTimeout = new TimeSpan(0, 0, 3);
             configuration.SocketPool.DeadTimeout = new TimeSpan(0, 0, 3);
