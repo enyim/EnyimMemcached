@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Dawn.Net.Sockets;
 
 namespace Enyim.Caching.Memcached
 {
@@ -206,14 +207,11 @@ namespace Enyim.Caching.Memcached
 
         public async Task<byte[]> ReadBytesAsync(int count)
         {
-            using (var args = new SocketAsyncEventArgs())
+            using (var awaitable = new SocketAwaitable())
             {
-                args.SetBuffer(new byte[count], 0, count);
-                var awaitable = new SocketAwaitable(args);
+                awaitable.Buffer = new ArraySegment<byte>(new byte[count], 0, count);
                 await this.socket.ReceiveAsync(awaitable);
-                var receivedBytes = new Byte[args.BytesTransferred];
-                Buffer.BlockCopy(args.Buffer, 0, receivedBytes, 0, args.BytesTransferred);
-                return receivedBytes;
+                return awaitable.Transferred.Array;
             }
         }
 
@@ -294,10 +292,9 @@ namespace Enyim.Caching.Memcached
 
         public async Task WriteSync(IList<ArraySegment<byte>> buffers)
         {
-            using (var args = new SocketAsyncEventArgs())
+            using (var awaitable = new SocketAwaitable())
             {
-                args.BufferList = buffers;
-                var awaitable = new SocketAwaitable(args);
+                awaitable.Arguments.BufferList = buffers;
                 try
                 {
                     await this.socket.SendAsync(awaitable);
@@ -305,13 +302,13 @@ namespace Enyim.Caching.Memcached
                 catch
                 {
                     this.isAlive = false;
-                    ThrowHelper.ThrowSocketWriteError(this.endpoint, args.SocketError);
+                    ThrowHelper.ThrowSocketWriteError(this.endpoint, awaitable.Arguments.SocketError);
                 }
 
-                if (args.SocketError != SocketError.Success)
+                if (awaitable.Arguments.SocketError != SocketError.Success)
                 {
                     this.isAlive = false;
-                    ThrowHelper.ThrowSocketWriteError(this.endpoint, args.SocketError);
+                    ThrowHelper.ThrowSocketWriteError(this.endpoint, awaitable.Arguments.SocketError);
                 }
             }
         }
