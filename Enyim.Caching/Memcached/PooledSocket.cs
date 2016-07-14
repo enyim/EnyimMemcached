@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace Enyim.Caching.Memcached
 {
@@ -23,7 +24,7 @@ namespace Enyim.Caching.Memcached
 		private BufferedStream inputStream;
 		private AsyncSocketHelper helper;
 
-		public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
+		public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, uint keepAliveInterval, uint keepAliveStartFrom)
 		{
 			this.isAlive = true;
 
@@ -41,7 +42,16 @@ namespace Enyim.Caching.Memcached
 
 			socket.ReceiveTimeout = rcv;
 			socket.SendTimeout = rcv;
-			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+
+			// add here to control keep alive time interval.
+			{
+				uint dummy = 0;
+				byte[] inOptionValues = new byte[Marshal.SizeOf(dummy) * 3];
+				BitConverter.GetBytes((uint)(1)).CopyTo(inOptionValues, 0);
+				BitConverter.GetBytes(keepAliveInterval).CopyTo(inOptionValues, Marshal.SizeOf(dummy));
+				BitConverter.GetBytes(keepAliveStartFrom).CopyTo(inOptionValues, Marshal.SizeOf(dummy) * 2);
+				socket.IOControl(IOControlCode.KeepAliveValues, inOptionValues, null);
+			}
 
 			ConnectWithTimeout(socket, endpoint, timeout);
 
