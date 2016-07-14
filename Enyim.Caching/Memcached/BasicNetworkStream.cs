@@ -18,7 +18,6 @@ namespace Enyim.Caching.Memcached
 		private class BasicNetworkStream : Stream
 		{
 			private Socket socket;
-
 			public BasicNetworkStream(Socket socket)
 			{
 				this.socket = socket;

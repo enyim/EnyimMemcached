@@ -66,6 +66,26 @@ namespace Enyim.Caching.Configuration
 			set { base["receiveTimeout"] = value; }
 		}
 
+        /// <summary>
+        /// Gets or sets a value that specifies the amount of time interval would sent keepalive packet(ms).
+        /// </summary>
+        [ConfigurationProperty("keepAliveInterval", IsRequired = false, DefaultValue = 300000), IntegerValidator(MinValue = 0)]
+        public uint KeepAliveInterval
+        {
+            get { return (uint)base["keepAliveInterval"]; }
+            set { base["keepAliveInterval"] = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets a value that specifies the amount of time will client starts sent keepalive packet(ms).
+        /// </summary>
+        [ConfigurationProperty("keepAliveInterval", IsRequired = false, DefaultValue = 300000), IntegerValidator(MinValue = 0)]
+        public uint KeepAliveStartFrom
+        {
+            get { return (uint)base["keepAliveStartFrom"]; }
+            set { base["keepAliveStartFrom"] = value; }
+        }
+
 		/// <summary>
 		/// Gets or sets a value that specifies the amount of time after which an unresponsive (dead) server will be checked if it is working.
 		/// </summary>
@@ -139,8 +159,36 @@ namespace Enyim.Caching.Configuration
 			set { }
 		}
 
+
+
 		#endregion
-	}
+
+
+        public uint ISocketPoolConfiguration.KeepAliveInterval
+        {
+            get
+            {
+                return this.KeepAliveInterval;
+            }
+            set
+            {
+                this.KeepAliveInterval = value;
+            }
+        }
+
+        public uint ISocketPoolConfiguration.KeepAliveStartFrom
+        {
+            get
+            {
+                return this.KeepAliveStartFrom;
+            }
+            set
+            {
+                this.KeepAliveStartFrom = value;
+            }
+        }
+
+    }
 }
 
 #region [ License information          ]
