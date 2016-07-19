@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace Enyim.Caching.Memcached
 {
@@ -23,33 +24,42 @@ namespace Enyim.Caching.Memcached
 		private BufferedStream inputStream;
 		private AsyncSocketHelper helper;
 
-		public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
-		{
-			this.isAlive = true;
+		public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, uint keepAliveInterval, uint keepAliveStartFrom)
+        {
+            this.isAlive = true;
 
-			var socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-			// TODO test if we're better off using nagle
-			socket.NoDelay = true;
+            var socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            // TODO test if we're better off using nagle
+            socket.NoDelay = true;
 
-			var timeout = connectionTimeout == TimeSpan.MaxValue
-							? Timeout.Infinite
-							: (int)connectionTimeout.TotalMilliseconds;
+            var timeout = connectionTimeout == TimeSpan.MaxValue
+                            ? Timeout.Infinite
+                            : (int)connectionTimeout.TotalMilliseconds;
 
-			var rcv = receiveTimeout == TimeSpan.MaxValue
-				? Timeout.Infinite
-				: (int)receiveTimeout.TotalMilliseconds;
+            var rcv = receiveTimeout == TimeSpan.MaxValue
+                ? Timeout.Infinite
+                : (int)receiveTimeout.TotalMilliseconds;
 
-			socket.ReceiveTimeout = rcv;
-			socket.SendTimeout = rcv;
-			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+            socket.ReceiveTimeout = rcv;
+            socket.SendTimeout = rcv;
 
-			ConnectWithTimeout(socket, endpoint, timeout);
+            // add here to control keep alive time interval.
+            {
+                uint dummy = 0;
+                byte[] inOptionValues = new byte[Marshal.SizeOf(dummy) * 3];
+                BitConverter.GetBytes((uint)(1)).CopyTo(inOptionValues, 0);
+                BitConverter.GetBytes(keepAliveInterval).CopyTo(inOptionValues, Marshal.SizeOf(dummy));
+                BitConverter.GetBytes(keepAliveStartFrom).CopyTo(inOptionValues, Marshal.SizeOf(dummy) * 2);
+                socket.IOControl(IOControlCode.KeepAliveValues, inOptionValues, null);
+            }
 
-			this.socket = socket;
-			this.endpoint = endpoint;
+            ConnectWithTimeout(socket, endpoint, timeout);
 
-			this.inputStream = new BufferedStream(new BasicNetworkStream(socket));
-		}
+            this.socket = socket;
+            this.endpoint = endpoint;
+
+            this.inputStream = new BufferedStream(new BasicNetworkStream(socket));
+        }
 
 		private static void ConnectWithTimeout(Socket socket, IPEndPoint endpoint, int timeout)
 		{
