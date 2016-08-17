@@ -72,13 +72,13 @@ namespace MemcachedTest
 				Assert.AreEqual(r2.Result, "foo", "Invalid data returned; expected 'foo'.");
 				Assert.AreEqual(r1.Cas, r2.Cas, "Cas values do not match.");
 
-				var r3 = client.Cas(StoreMode.Set, "CasItem1", "bar", r1.Cas - 1);
+				var r3 = client.Cas(StoreMode.Set, "CasItem1", "bar", r1.Cas + 1001);
 
-				Assert.IsFalse(r3.Result, "foo", "Overwriting with 'bar' should have failed.");
+				Assert.IsFalse(r3.Result, "Overwriting with 'bar' should have failed.");
 
 				var r4 = client.Cas(StoreMode.Set, "CasItem1", "baz", r2.Cas);
 
-				Assert.IsTrue(r4.Result, "foo", "Overwriting with 'baz' should have succeeded.");
+				Assert.IsTrue(r4.Result, "Overwriting with 'baz' should have succeeded.");
 
 				var r5 = client.GetWithCas<string>("CasItem1");
 				Assert.AreEqual(r5.Result, "baz", "Invalid data returned; excpected 'baz'.");
@@ -136,25 +136,37 @@ namespace MemcachedTest
 				Assert.IsFalse(r4.Result, "Prepend with invalid CAS should have failed.");
 			}
 		}
+
+		[TestCase]
+		public void IncrementLongTest()
+		{
+			var initialValue = 56UL * (ulong)System.Math.Pow(10, 11) + 1234;
+
+			using (MemcachedClient client = GetClient())
+			{
+				Assert.AreEqual(initialValue, client.Increment("VALUE", initialValue, 2UL), "Non-existing value should be set to default");
+				Assert.AreEqual(initialValue + 24, client.Increment("VALUE", 10UL, 24UL));
+			}
+		}
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
- * 
+ *
  *    Copyright (c) 2010 Attila Kiskó, enyim.com
- *    
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- *    
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- *    
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
- *    
+ *
  * ************************************************************/
 #endregion

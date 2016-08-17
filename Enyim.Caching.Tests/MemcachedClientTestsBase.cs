@@ -9,11 +9,10 @@ using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Tests
 {
-
 	[TestFixture]
 	public abstract class MemcachedClientTestsBase
 	{
-
+		private Random random = new Random();
 		protected MemcachedClient _Client;
 
 		[SetUp]
@@ -25,16 +24,31 @@ namespace Enyim.Caching.Tests
 			_Client = new MemcachedClient(config);
 		}
 
+		[TestFixtureSetUp]
+		public void FixtureSetUp()
+		{
+			log4net.Config.XmlConfigurator.Configure();
+			MemcachedTest.TestSetup.Run();
+		}
+
+		[TestFixtureTearDown]
+		public void FixtureTearDown()
+		{
+			MemcachedTest.TestSetup.Cleanup();
+		}
+
 		protected string GetUniqueKey(string prefix = null)
 		{
-			return (!string.IsNullOrEmpty(prefix) ? prefix + "_" : "") +
-				"unit_test_" + DateTime.Now.Ticks;
+			return (String.IsNullOrEmpty(prefix) ? "" : prefix + "_")
+					+ "unit_test_"
+					+ DateTime.Now.Ticks
+					+ "_" + random.Next();
 		}
 
 		protected IEnumerable<string> GetUniqueKeys(string prefix = null, int max = 5)
 		{
-
 			var keys = new List<string>(max);
+
 			for (int i = 0; i < max; i++)
 			{
 				keys.Add(GetUniqueKey(prefix));
@@ -122,28 +136,28 @@ namespace Enyim.Caching.Tests
 			Assert.That(result.Success, Is.False, "Success was true");
 			Assert.That(result.Cas, Is.EqualTo(0), "Cas value was not 0");
 			Assert.That(result.StatusCode, Is.Null.Or.GreaterThan(0), "StatusCode not greater than 0");
-		}		
+		}
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
- * 
+ *
  *    @author Couchbase <info@couchbase.com>
  *    @copyright 2012 Couchbase, Inc.
  *    @copyright 2012 Attila Kiskó, enyim.com
- *    
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- *    
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- *    
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
- *    
+ *
  * ************************************************************/
 #endregion

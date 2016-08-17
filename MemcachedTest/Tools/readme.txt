@@ -1,0 +1,1 @@
+Compiled from f1285b7f4b2496 using MinGW GCC 4.8.1.

@@ -23,7 +23,7 @@ namespace MemcachedTest
 		public void TestIfCalled()
 		{
 			var config = new MemcachedClientConfiguration();
-			config.AddServer("nonexisting.enyim.com:2244");
+			config.AddServer("localhost", 12345);
 
 			config.SocketPool.FailurePolicyFactory = new FakePolicy();
 			config.SocketPool.ConnectionTimeout = TimeSpan.FromSeconds(4);
@@ -53,7 +53,7 @@ namespace MemcachedTest
 		public void TestThrottlingFailurePolicy()
 		{
 			var config = new MemcachedClientConfiguration();
-			config.AddServer("nonexisting.enyim.com:2244");
+			config.AddServer("localhost", 12345);
 
 			config.SocketPool.FailurePolicyFactory = new ThrottlingFailurePolicyFactory(4, TimeSpan.FromMilliseconds(2000));
 			config.SocketPool.ConnectionTimeout = TimeSpan.FromMilliseconds(10);
