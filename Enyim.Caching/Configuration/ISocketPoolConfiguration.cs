@@ -69,23 +69,22 @@ namespace Enyim.Caching.Configuration
 		}
 
 		/// <summary>
-		/// Gets or sets a value that specifices the amount of time interval that client will send keep-alive packet as heartbeats to avoid unexcepted disconnected from server.
+		/// Gets or sets a value that specifices the amount of time after which client will starts to send keep-alive packet.
 		/// </summary>
-		uint KeepAliveInterval
+		TimeSpan KeepAliveStartDelay
 		{
 			get;
 			set;
 		}
 
 		/// <summary>
-		/// Gets or sets a value that specifices the amount of time after which client will starts to send keep-alive packet.
+		/// Gets or sets a value that specifices the amount of time interval that client will send keep-alive packet as heartbeats to avoid unexcepted disconnected from server.
 		/// </summary>
-		uint KeepAliveStartFrom
+		TimeSpan KeepAliveInterval
 		{
 			get;
 			set;
 		}
-
 
 		INodeFailurePolicyFactory FailurePolicyFactory { get; set; }
 	}

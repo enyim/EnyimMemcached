@@ -67,9 +67,35 @@ namespace MemcachedTest
 		/// Tests if the client can initialize itself from a specific config
 		/// </summary>
 		[TestCase]
-		public void NamedConfigurationTest()
+		public void NamedConfigurationTestInConstructor()
 		{
-			using (new MemcachedClient("test/validConfig")) ;
+			Assert.DoesNotThrow(() =>
+			{
+				using (new MemcachedClient("test/validConfig"))
+				{
+				};
+			});
+		}
+
+		[TestCase]
+		public void TestLoadingNamedConfig()
+		{
+			var config = ConfigurationManager.GetSection("test/validConfig") as IMemcachedClientConfiguration;
+			Assert.NotNull(config);
+
+			var spc = config.SocketPool;
+			Assert.NotNull(spc);
+
+			var expected = new TimeSpan(0, 12, 34);
+
+			Assert.AreEqual(expected, spc.ConnectionTimeout);
+			Assert.AreEqual(expected, spc.DeadTimeout);
+			Assert.AreEqual(expected, spc.KeepAliveInterval);
+			Assert.AreEqual(expected, spc.KeepAliveStartDelay);
+			Assert.AreEqual(expected, spc.QueueTimeout);
+			Assert.AreEqual(expected, spc.ReceiveTimeout);
+			Assert.AreEqual(12, spc.MinPoolSize);
+			Assert.AreEqual(48, spc.MaxPoolSize);
 		}
 
 		/// <summary>
@@ -78,33 +104,25 @@ namespace MemcachedTest
 		[TestCase]
 		public void InvalidSectionTest()
 		{
-			try
+			Assert.Throws<ConfigurationErrorsException>(() =>
 			{
 				using (var client = new MemcachedClient("test/invalidConfig"))
 				{
 					Assert.IsFalse(false, ".ctor should have failed.");
 				}
-			}
-			catch
-			{
-				Assert.IsTrue(true);
-			}
+			});
 		}
 
 		[TestCase]
 		public void NullConfigurationTest()
 		{
-			try
+			Assert.Throws<ArgumentNullException>(() =>
 			{
 				using (var client = new MemcachedClient((IMemcachedClientConfiguration)null))
 				{
 					Assert.IsFalse(false, ".ctor should have failed.");
 				}
-			}
-			catch
-			{
-				Assert.IsTrue(true);
-			}
+			});
 		}
 
 		/// <summary>

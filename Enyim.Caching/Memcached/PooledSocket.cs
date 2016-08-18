@@ -24,7 +24,7 @@ namespace Enyim.Caching.Memcached
 		private BufferedStream inputStream;
 		private AsyncSocketHelper helper;
 
-		public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, uint keepAliveInterval, uint keepAliveStartFrom)
+		public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, TimeSpan keepAliveStartDelay, TimeSpan keepAliveInterval)
 		{
 			this.isAlive = true;
 
@@ -43,22 +43,26 @@ namespace Enyim.Caching.Memcached
 			socket.ReceiveTimeout = rcv;
 			socket.SendTimeout = rcv;
 
-			// add here to control keep alive time interval.
-			{
-				uint dummy = 0;
-				byte[] inOptionValues = new byte[Marshal.SizeOf(dummy) * 3];
-				BitConverter.GetBytes((uint)(1)).CopyTo(inOptionValues, 0);
-				BitConverter.GetBytes(keepAliveInterval).CopyTo(inOptionValues, Marshal.SizeOf(dummy));
-				BitConverter.GetBytes(keepAliveStartFrom).CopyTo(inOptionValues, Marshal.SizeOf(dummy) * 2);
-				socket.IOControl(IOControlCode.KeepAliveValues, inOptionValues, null);
-			}
-
+			ConfigureKeepAlive(socket, keepAliveStartDelay, keepAliveInterval);
 			ConnectWithTimeout(socket, endpoint, timeout);
 
 			this.socket = socket;
 			this.endpoint = endpoint;
 
 			this.inputStream = new BufferedStream(new BasicNetworkStream(socket));
+		}
+
+		private static void ConfigureKeepAlive(Socket socket, TimeSpan keepAliveStartFrom, TimeSpan keepAliveInterval)
+		{
+			var SizeOfUint = Marshal.SizeOf((uint)0);
+			var inOptionValues = new byte[SizeOfUint * 3];
+			var isEnabled = keepAliveStartFrom > TimeSpan.Zero || keepAliveInterval > TimeSpan.Zero;
+
+			BitConverter.GetBytes((uint)(isEnabled ? 1 : 0)).CopyTo(inOptionValues, 0);
+			BitConverter.GetBytes((uint)keepAliveInterval.TotalMilliseconds).CopyTo(inOptionValues, SizeOfUint);
+			BitConverter.GetBytes((uint)keepAliveStartFrom.TotalMilliseconds).CopyTo(inOptionValues, SizeOfUint * 2);
+
+			socket.IOControl(IOControlCode.KeepAliveValues, inOptionValues, null);
 		}
 
 		private static void ConnectWithTimeout(Socket socket, IPEndPoint endpoint, int timeout)

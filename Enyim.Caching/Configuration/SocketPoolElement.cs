@@ -69,20 +69,20 @@ namespace Enyim.Caching.Configuration
 		/// <summary>
 		/// Gets or sets a value that specifies the amount of time interval would sent keepalive packet(ms).
 		/// </summary>
-		[ConfigurationProperty("keepAliveInterval", IsRequired = false, DefaultValue = 300000), IntegerValidator(MinValue = 0)]
-		public uint KeepAliveInterval
+		[ConfigurationProperty("keepAliveInterval", IsRequired = false, DefaultValue = "00:05:00"), PositiveTimeSpanValidator, TypeConverter(typeof(InfiniteTimeSpanConverter))]
+		public TimeSpan KeepAliveInterval
 		{
-			get { return (uint)base["keepAliveInterval"]; }
+			get { return (TimeSpan)base["keepAliveInterval"]; }
 			set { base["keepAliveInterval"] = value; }
 		}
 
 		/// <summary>
 		/// Gets or sets a value that specifies the amount of time will client starts sent keepalive packet(ms).
 		/// </summary>
-		[ConfigurationProperty("keepAliveInterval", IsRequired = false, DefaultValue = 300000), IntegerValidator(MinValue = 0)]
-		public uint KeepAliveStartFrom
+		[ConfigurationProperty("keepAliveStartFrom", IsRequired = false, DefaultValue = "00:05:00"), PositiveTimeSpanValidator, TypeConverter(typeof(InfiniteTimeSpanConverter))]
+		public TimeSpan KeepAliveStartDelay
 		{
-			get { return (uint)base["keepAliveStartFrom"]; }
+			get { return (TimeSpan)base["keepAliveStartFrom"]; }
 			set { base["keepAliveStartFrom"] = value; }
 		}
 
@@ -153,41 +153,25 @@ namespace Enyim.Caching.Configuration
 			set { this.ReceiveTimeout = value; }
 		}
 
+		TimeSpan ISocketPoolConfiguration.KeepAliveStartDelay
+		{
+			get { return this.KeepAliveStartDelay; }
+			set { this.KeepAliveStartDelay = value; }
+		}
+
+		TimeSpan ISocketPoolConfiguration.KeepAliveInterval
+		{
+			get { return this.KeepAliveInterval; }
+			set { this.KeepAliveInterval = value; }
+		}
+
 		INodeFailurePolicyFactory ISocketPoolConfiguration.FailurePolicyFactory
 		{
 			get { return this.FailurePolicyFactory.CreateInstance() ?? new FailImmediatelyPolicyFactory(); }
 			set { }
 		}
 
-
-
 		#endregion
-
-
-		public uint ISocketPoolConfiguration.KeepAliveInterval
-		{
-			get
-			{
-				return this.KeepAliveInterval;
-			}
-			set
-			{
-				this.KeepAliveInterval = value;
-			}
-		}
-
-		public uint ISocketPoolConfiguration.KeepAliveStartFrom
-		{
-			get
-			{
-				return this.KeepAliveStartFrom;
-			}
-			set
-			{
-				this.KeepAliveStartFrom = value;
-			}
-		}
-
 	}
 }
 
