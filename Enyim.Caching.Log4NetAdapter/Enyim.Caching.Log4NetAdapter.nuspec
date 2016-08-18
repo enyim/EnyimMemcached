@@ -11,11 +11,13 @@
 		<description>log4net based logging adapter for the Enyim Memcached library.</description>
 		<tags>memcached enyim cache caching log4net</tags>
 		<dependencies>
-			<dependency id="log4net" />
+			<dependency id="log4net" version="[2,3)"/>
+			<dependency id="EnyimMemcached" version="[2.15,3)"/>
 		</dependencies>
 	</metadata>
 	<files>
 		<file src="bin\Release\Enyim.Caching.Log4NetAdapter.*" target="lib\net35" />
 		<file src="config.transform" target="content\app.config.transform" />
+		<file src="**\*.cs" exclude="**\obj\**\*.cs" target="src" />
 	</files>
 </package>

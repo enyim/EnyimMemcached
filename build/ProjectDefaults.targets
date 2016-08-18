@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>full</DebugType>
+		<Optimize>false</Optimize>
+		<DefineConstants>DEBUG;TRACE</DefineConstants>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>4</WarningLevel>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+		<DebugType>pdbonly</DebugType>
+		<Optimize>true</Optimize>
+		<DefineConstants>TRACE</DefineConstants>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>4</WarningLevel>
+	</PropertyGroup>
+	<PropertyGroup>
+		<OutputPath>bin\$(Configuration)\</OutputPath>
+		<DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<FrameworkVersions>NETFX_$(TargetFrameworkVersion.SubString(1).Replace(".", ""))</FrameworkVersions>
+
+		<_FWK_V>$([System.Version]::Parse($(TargetFrameworkVersion.SubString(1))))</_FWK_V>
+		<FrameworkVersions Condition=" $(_FWK_V) > 2.0 "  >$(FrameworkVersions);NETFX_20_UP</FrameworkVersions>
+		<FrameworkVersions Condition=" $(_FWK_V) > 3.0 "  >$(FrameworkVersions);NETFX_30_UP</FrameworkVersions>
+		<FrameworkVersions Condition=" $(_FWK_V) > 3.5 "  >$(FrameworkVersions);NETFX_35_UP</FrameworkVersions>
+		<FrameworkVersions Condition=" $(_FWK_V) > 4.0 "  >$(FrameworkVersions);NETFX_40_UP</FrameworkVersions>
+		<FrameworkVersions Condition=" $(_FWK_V) > 4.5 "  >$(FrameworkVersions);NETFX_45_UP</FrameworkVersions>
+		<FrameworkVersions Condition=" $(_FWK_V) > 4.5.1 ">$(FrameworkVersions);NETFX_451_UP</FrameworkVersions>
+		<FrameworkVersions Condition=" $(_FWK_V) > 4.5.2 ">$(FrameworkVersions);NETFX_452_UP</FrameworkVersions>
+		<FrameworkVersions Condition=" $(_FWK_V) > 4.6 "  >$(FrameworkVersions);NETFX_46_UP</FrameworkVersions>
+	</PropertyGroup>
+
+	<PropertyGroup >
+		<DefineConstants>$(DefineConstants);$(FrameworkVersions)</DefineConstants>
+	</PropertyGroup>
+
+	<!--
+		The Core project is merged into Memcached, so exclude from all others.
+		Easier than editing all csprojs to add the AlreadyMerged metadata to the reference.
+	-->
+	<ItemGroup>
+		<HintOnlyReferences Include="Core" />
+	</ItemGroup>
+</Project>
+
+<!--
+
+	Copyright (c) Attila Kiskó, enyim.com
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+
+-->

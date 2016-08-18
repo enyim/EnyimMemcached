@@ -11,8 +11,9 @@
     <RootNamespace>Enyim.Caching</RootNamespace>
     <AssemblyName>Enyim.Caching</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
   </PropertyGroup>
-  <Import Project="..\build\CommonProperties.targets" />
+  <Import Project="$(SolutionDir)\build\ProjectDefaults.targets" />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>1591</NoWarn>
@@ -20,7 +21,6 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>1591</NoWarn>
-    <DocumentationFile>bin\Release\Enyim.Caching.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -42,6 +42,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\AssemblyInfo.cs">
+      <Link>Properties\AssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="Configuration\FactoryElement.cs" />
     <Compile Include="Memcached\FailurePolicy\FailImmediatelyPolicy.cs" />
     <Compile Include="Memcached\FailurePolicy\ThrottlingFailurePolicy.cs" />
@@ -304,8 +307,5 @@
     <None Include="Enyim.Caching.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <GitTagMatch>emc*</GitTagMatch>
-  </PropertyGroup>
-  <Import Project="..\build\VersionInfo.targets" />
+  <Import Project="$(SolutionDir)\build\Tasks.targets" />
 </Project>

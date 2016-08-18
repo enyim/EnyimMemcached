@@ -12,9 +12,8 @@
 		<tags>memcached enyim cache caching</tags>
 	</metadata>
 	<files>
-		<file src="bin\Release\*.dll" target="lib\net35" />
-		<file src="bin\Release\*.pdb" target="lib\net35" />
-		<file src="bin\Release\*.xml" target="lib\net35" />
+		<file src="bin\Release\Enyim.Caching.*" target="lib\net35" />
 		<file src="bin\Release\*.transform" target="content" />
+		<file src="**\*.cs" exclude="**\obj\**\*.cs" target="src" />
 	</files>
 </package>

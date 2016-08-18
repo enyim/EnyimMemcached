@@ -1,16 +1,25 @@
-﻿using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+﻿using System;
+using System.Reflection;
 
-[assembly: AssemblyProduct("Enyim.Caching.Log4NetAdapter")]
-[assembly: AssemblyTitle("Enyim.Caching.Log4NetAdapter")]
-[assembly: ComVisible(false)]
-[assembly: Guid("0b1d407e-1abf-4635-a4ec-4b5f2d3a2346")]
+[assembly: AssemblyCompany("enyim.com")]
+[assembly: AssemblyCopyright("Copyright © enyim.com, Attila Kiskó")]
+
+#if DEBUG
+[assembly: AssemblyConfiguration("DEBUG")]
+#endif
+
+#if RELEASE
+[assembly: AssemblyConfiguration("RELEASE")]
+#endif
+
+// AssemblyFileVersion & AssemblyInformationalVersion
+// is provided by the VersionInfo.targets
 
 #region [ License information          ]
+
 /* ************************************************************
  *
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) Attila Kiskó, enyim.com
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -25,4 +34,5 @@ using System.Runtime.InteropServices;
  *    limitations under the License.
  *
  * ************************************************************/
+
 #endregion

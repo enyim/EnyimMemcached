@@ -12,9 +12,9 @@
     <AssemblyName>Enyim.Caching.NLogAdapter</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
   </PropertyGroup>
-  <Import Project="..\build\CommonProperties.targets" />
+  <Import Project="$(SolutionDir)\build\ProjectDefaults.targets" />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>1591</NoWarn>
@@ -24,8 +24,9 @@
     <NoWarn>1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NLog">
-      <HintPath>..\binaries\NLog2\NLog.dll</HintPath>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.3.0\lib\net35\NLog.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -35,6 +36,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\AssemblyInfo.cs">
+      <Link>Properties\AssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="NLogFactory.cs" />
     <Compile Include="NLogWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -51,10 +55,8 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="Enyim.Caching.NLogAdapter.nuspec" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <GitTagMatch>emc*</GitTagMatch>
-  </PropertyGroup>
-  <Import Project="..\build\VersionInfo.targets" />
+  <Import Project="$(SolutionDir)\build\Tasks.targets" />
 </Project>

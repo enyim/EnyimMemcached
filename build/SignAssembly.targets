@@ -1,0 +1,39 @@
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<!--
+			if no key is set externally, try to guess one
+			(it's for developer convenience)
+	-->
+	<Choose>
+		<When Condition=" '$(BuildingInsideVisualStudio)' == 'True' ">
+			<PropertyGroup Condition=" '$(AssemblyOriginatorKeyFile)' == '' ">
+				<_AbsoluteSolutionDir>$([System.IO.Path]::GetFullPath("$(SolutionDir)"))</_AbsoluteSolutionDir>
+				<AssemblyOriginatorKeyFile Condition=" Exists('$(_AbsoluteSolutionDir)\private_key.snk') ">$(_AbsoluteSolutionDir)\private_key.snk</AssemblyOriginatorKeyFile>
+				<AssemblyOriginatorKeyFile Condition=" Exists('$(_AbsoluteSolutionDir)\enyim.snk') ">$(_AbsoluteSolutionDir)\enyim.snk</AssemblyOriginatorKeyFile>
+				<AssemblyOriginatorKeyFile Condition=" Exists('$(_AbsoluteSolutionDir)\..\enyim.snk') ">$(_AbsoluteSolutionDir)\..\enyim.snk</AssemblyOriginatorKeyFile>
+			</PropertyGroup>
+
+			<PropertyGroup Condition=" '$(AssemblyOriginatorKeyFile)' != '' ">
+				<SignAssembly>True</SignAssembly>
+				<DelaySign>False</DelaySign>
+			</PropertyGroup>
+		</When>
+	</Choose>
+</Project>
+
+<!--
+
+	Copyright (c) Attila Kiskó, enyim.com
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+
+-->
