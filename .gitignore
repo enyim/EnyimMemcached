@@ -10,3 +10,4 @@ obj/
 Tester/
 TestResults/
 output/
+TestResult*.xml
