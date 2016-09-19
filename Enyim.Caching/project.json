@@ -1,5 +1,5 @@
 {
-  "version": "4.0.1",
+  "version": "4.0.2",
   "packOptions": {
     "summary": "EnyimMemcachedCore"
   },
@@ -16,24 +16,11 @@
     }
   },
   "frameworks": {
-    "netcoreapp1.0": { }
+    "netcoreapp1.0.1": { }
   },
   "dependencies": {
-    "Microsoft.Extensions.Logging.Abstractions": "1.0.0-rc2-final",
-    "Newtonsoft.Json": "8.0.4-beta1",
-    "System.Linq.Expressions": "4.0.11-rc2-24027",
-    "System.Net.Primitives": "4.0.11-rc2-24027",
-    "System.Net.Sockets": "4.1.0-rc2-24027",
-    "System.Runtime.Serialization.Json": "4.0.2-rc2-24027",
-    "System.Runtime.Serialization.Primitives": "4.1.1-rc2-24027",
-    "System.Security.Cryptography.Algorithms": "4.1.0-rc2-24027",
-    "System.Threading.Timer": "4.0.1-rc2-24027",
-    "System.Net.NameResolution": "4.0.0-rc2-24027",
-    "System.Console": "4.0.0-rc2-24027",
-    "System.IO": "4.1.0-rc2-24027",
-    "System.IO.FileSystem": "4.0.1-rc2-24027",
-    "System.Threading.Thread": "4.0.0-rc2-24027",
-    "System.Text.Encoding": "4.0.11-rc2-24027",
-    "System.Diagnostics.Tools": "4.0.1-rc2-24027"
+    "Microsoft.NETCore.App": "1.0.1",
+    "Microsoft.Extensions.Logging.Abstractions": "1.0.0",
+    "Newtonsoft.Json": "9.0.1"
   }
 }
