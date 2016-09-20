@@ -24,7 +24,7 @@ namespace Enyim.Caching
         /// </summary>
         public static readonly TimeSpan Infinite = TimeSpan.Zero;
         //internal static readonly MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
-        private ILogger _loggger;
+        private ILogger<MemcachedClient> _logger;
 
         private IServerPool pool;
         private IMemcachedKeyTransformer keyTransformer;
@@ -40,10 +40,10 @@ namespace Enyim.Caching
         protected IMemcachedKeyTransformer KeyTransformer { get { return this.keyTransformer; } }
         protected ITranscoder Transcoder { get { return this.transcoder; } }
 
-        public MemcachedClient(ILoggerFactory logggerFactory)
+        public MemcachedClient(ILogger<MemcachedClient> logger)
         {
-            _loggger = logggerFactory.CreateLogger<MemcachedClient>();
-            IMemcachedClientConfiguration configuration = new MemcachedClientConfiguration(_loggger); 
+            _logger = logger;
+            IMemcachedClientConfiguration configuration = new MemcachedClientConfiguration(_logger); 
             configuration.SocketPool.MinPoolSize = 5;
             configuration.SocketPool.MaxPoolSize = 300;
             configuration.SocketPool.ConnectionTimeout = new TimeSpan(0, 0, 3);
@@ -143,7 +143,7 @@ namespace Enyim.Caching
             }
             else
             {
-                _loggger.LogError($"Unable to locate memcached node");
+                _logger.LogError($"Unable to locate memcached node");
             }
 
             result.Success = false;
@@ -382,7 +382,7 @@ namespace Enyim.Caching
                 try { item = this.transcoder.Serialize(value); }
                 catch (Exception e)
                 {
-                    _loggger.LogError("PerformStore", e);
+                    _logger.LogError("PerformStore", e);
 
                     result.Fail("PerformStore failed", e);
                     return result;
@@ -430,7 +430,7 @@ namespace Enyim.Caching
                 try { item = this.transcoder.Serialize(value); }
                 catch (Exception e)
                 {
-                    _loggger.LogError("PerformStoreAsync", e);
+                    _logger.LogError("PerformStoreAsync", e);
 
                     result.Fail("PerformStore failed", e);
                     return result;
@@ -923,7 +923,7 @@ namespace Enyim.Caching
                     }
                     catch (Exception e)
                     {
-                        _loggger.LogError("PerformMultiGet", e);
+                        _logger.LogError("PerformMultiGet", e);
                     }
                     finally
                     {

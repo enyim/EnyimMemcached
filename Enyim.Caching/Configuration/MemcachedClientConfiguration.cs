@@ -17,12 +17,12 @@ namespace Enyim.Caching.Configuration
 		private Type nodeLocator;
 		private ITranscoder transcoder;
 		private IMemcachedKeyTransformer keyTransformer;
-        private ILogger _logger;
+        private ILogger<MemcachedClient> _logger;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
 		/// </summary>
-		public MemcachedClientConfiguration(ILogger logger, string host = "memcached", int port = 11211)
+		public MemcachedClientConfiguration(ILogger<MemcachedClient> logger, string host = "memcached", int port = 11211)
 		{
             _logger = logger;
             this.Servers = new List<IPEndPoint>();
