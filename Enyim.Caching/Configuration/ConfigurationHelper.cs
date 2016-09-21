@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching.Configuration
 {
@@ -97,8 +98,9 @@ namespace Enyim.Caching.Configuration
 			// parse as an IP address
 			if (!IPAddress.TryParse(host, out address))
 			{
-                //TODO: Change to async/await
-                var addresses = System.Net.Dns.GetHostAddressesAsync(host).Result;
+                Task<IPAddress[]> task = System.Net.Dns.GetHostAddressesAsync(host);
+                task.Wait();
+                var addresses = task.Result;
 
                 address = addresses.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
 
