@@ -5,6 +5,7 @@ using Enyim.Caching.Memcached;
 using Enyim.Reflection;
 using Enyim.Caching.Memcached.Protocol.Binary;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Enyim.Caching.Configuration
 {
@@ -22,10 +23,27 @@ namespace Enyim.Caching.Configuration
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
 		/// </summary>
-		public MemcachedClientConfiguration()
-		{
-           
-		}   
+		public MemcachedClientConfiguration(
+            ILogger<MemcachedClient> logger,
+            IOptions<MemcachedClientOptions> optionsAccessor)
+        {
+            if (optionsAccessor == null)
+            {
+                throw new ArgumentNullException(nameof(optionsAccessor));
+            }
+
+            _logger = logger;
+
+            var options = optionsAccessor.Value;
+            Servers = new List<IPEndPoint>();
+            foreach (var server in options.Servers)
+            {
+                Servers.Add(ConfigurationHelper.ResolveToEndPoint(server.Addess, server.Port));
+            }
+            SocketPool = options.SocketPool;
+            Protocol = options.Protocol;
+            //this.Authentication = new AuthenticationConfiguration();
+        }   
 
 		/// <summary>
 		/// Adds a new server to the pool.
@@ -119,9 +137,9 @@ namespace Enyim.Caching.Configuration
 		IAuthenticationConfiguration IMemcachedClientConfiguration.Authentication
 		{
 			get { return this.Authentication; }
-		}
+		} 
 
-		IMemcachedKeyTransformer IMemcachedClientConfiguration.CreateKeyTransformer()
+        IMemcachedKeyTransformer IMemcachedClientConfiguration.CreateKeyTransformer()
 		{
 			return this.KeyTransformer;
 		}

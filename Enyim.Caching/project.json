@@ -1,5 +1,5 @@
 {
-  "version": "4.0.2",
+  "version": "4.0.23",
   "packOptions": {
     "summary": "EnyimMemcachedCore"
   },
@@ -21,6 +21,7 @@
   "dependencies": {
     "Microsoft.NETCore.App": "1.0.1",
     "Microsoft.Extensions.Logging.Abstractions": "1.0.0",
-    "Newtonsoft.Json": "9.0.1"
+    "Newtonsoft.Json": "9.0.1",
+    "Microsoft.Extensions.Options": "1.0.0"
   }
 }
