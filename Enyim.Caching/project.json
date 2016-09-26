@@ -29,6 +29,6 @@
     "Microsoft.Extensions.Logging.Abstractions": "1.0.0",
     "Newtonsoft.Json": "9.0.1",
     "Microsoft.Extensions.Options": "1.0.0",
-    "Microsoft.Extensions.Caching.Abstractions": "1.1.0-alpha1-22148"
+    "Microsoft.Extensions.Caching.Abstractions": "1.0.0"
   }
 }
