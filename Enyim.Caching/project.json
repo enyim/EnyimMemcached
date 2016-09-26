@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0.1",
+  "version": "1.0.0.2",
   "name": "EnyimMemcachedCore",
   "description": "EnyimMemcachedCore is .NET Core client library for memcached. Usage: services.AddEnyimMemcached(options => options.AddServer(serverNameOrIP, 11211)); Then add IMemcachedClient into constructor.",
   "packOptions": {
