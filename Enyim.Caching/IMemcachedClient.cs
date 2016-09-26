@@ -8,6 +8,9 @@ namespace Enyim.Caching
 {
 	public interface IMemcachedClient : IDisposable
 	{
+        void Add(string key, object value, int cacheSeconds);
+        Task AddAsync(string key, object value, int cacheSeconds);
+
         Task<IGetOperationResult<T>> GetAsync<T>(string key);
         object Get(string key);
 		T Get<T>(string key);

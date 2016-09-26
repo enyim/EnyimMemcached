@@ -88,6 +88,16 @@ namespace Enyim.Caching
 
         public event Action<IMemcachedNode> NodeFailed;
 
+        public void Add(string key, object value, int cacheSeconds)
+        {
+            Store(StoreMode.Add, key, value, new TimeSpan(0, 0, cacheSeconds));
+        }
+
+        public async Task AddAsync(string key, object value, int cacheSeconds)
+        {
+            await StoreAsync(StoreMode.Add, key, value, new TimeSpan(0, 0, cacheSeconds));
+        }
+
         /// <summary>
         /// Retrieves the specified item from the cache.
         /// </summary>
