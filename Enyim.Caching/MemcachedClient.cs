@@ -12,13 +12,14 @@ using Enyim.Caching.Memcached.Results.Extensions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace Enyim.Caching
 {
     /// <summary>
     /// Memcached client.
     /// </summary>
-    public partial class MemcachedClient : IMemcachedClient, IMemcachedResultsClient
+    public partial class MemcachedClient : IMemcachedClient, IMemcachedResultsClient, IDistributedCache
     {
         /// <summary>
         /// Represents a value which indicates that an item should never expire.
@@ -1045,6 +1046,128 @@ namespace Enyim.Caching
                 finally { this.pool = null; }
             }            
         }
+
+        #region Implement IDistributedCache
+
+        byte[] IDistributedCache.Get(string key)
+        {
+            var node = this.pool.Locate(key);
+            if (node != null)
+            {
+                var command = this.pool.OperationFactory.Get(key);
+                var commandResult = node.Execute(command);
+                if (commandResult.Success)
+                {
+                    return command.Result.Data.ToArray();
+                }
+            }
+            else
+            {
+                _logger.LogError($"Unable to locate memcached node");
+            }
+            return null;
+        }
+
+        async Task<byte[]> IDistributedCache.GetAsync(string key)
+        {
+            var node = this.pool.Locate(key);
+            if (node != null)
+            {
+                var command = this.pool.OperationFactory.Get(key);
+                var commandResult = await node.ExecuteAsync(command);
+                if (commandResult.Success)
+                {
+                    return command.Result.Data.ToArray();
+                }
+            }
+            else
+            {
+                _logger.LogError($"Unable to locate memcached node");
+            }
+            return null;
+        }
+
+        void IDistributedCache.Set(string key, byte[] value, DistributedCacheEntryOptions options)
+        {
+            var node = this.pool.Locate(key);
+            if (node != null)
+            {
+                var item = new CacheItem
+                {
+                    Data = new ArraySegment<byte>(value, 0, value.Length)
+                };
+
+                ulong cas = 0;
+                var expires = MemcachedClient.GetExpiration(options.SlidingExpiration.Value, null);
+                var command = this.pool.OperationFactory.Store(StoreMode.Set, key, item, expires, cas);
+                node.Execute(command);
+            }
+            else
+            {
+                _logger.LogError("Unable to locate node");
+            }
+        }
+
+        async Task IDistributedCache.SetAsync(string key, byte[] value, DistributedCacheEntryOptions options)
+        {
+            var node = this.pool.Locate(key);
+            if (node != null)
+            {
+                var item = new CacheItem
+                {
+                    Data = new ArraySegment<byte>(value, 0, value.Length)
+                };
+
+                ulong cas = 0;
+                var expires = MemcachedClient.GetExpiration(options.SlidingExpiration.Value, null);
+                var command = this.pool.OperationFactory.Store(StoreMode.Set, key, item, expires, cas);
+                await node.ExecuteAsync(command);
+            }
+            else
+            {
+                _logger.LogError("Unable to locate node");
+            }
+        }
+
+        void IDistributedCache.Refresh(string key)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task IDistributedCache.RefreshAsync(string key)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IDistributedCache.Remove(string key)
+        {
+            var node = this.pool.Locate(key);
+            if (node != null)
+            {
+                var command = this.pool.OperationFactory.Delete(key, 0);
+                node.Execute(command);
+            }
+            else
+            {
+                _logger.LogError("Unable to locate node");
+            }
+        }
+
+        async Task IDistributedCache.RemoveAsync(string key)
+        {
+            var node = this.pool.Locate(key);
+            if (node != null)
+            {
+                var command = this.pool.OperationFactory.Delete(key, 0);
+                await node.ExecuteAsync(command);
+            }
+            else
+            {
+                _logger.LogError("Unable to locate node");
+            }
+        }
+
+        #endregion
 
         #endregion
     }
