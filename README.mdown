@@ -1,35 +1,92 @@
 # Enyim Memcached Client
 
-This is a .NET client library for [memcached](http://memcached.org) written in C#. There is also a client for [Membase](http://membase.com)'s persistent memcached server.
+This is a .NET Core client library for [memcached](http://memcached.org) migrated from [EnyimMemcached](https://github.com/enyim/EnyimMemcached).
 
-Features:
+## How to use
+* Configure in Startup.cs
+```cs
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddEnyimMemcached(options => options.AddServer(serverNameOrIp, 11211));
+    }
+}
+```
+* Use IMemcachedClient
+```cs
+public class TabNavService : ITabNavService
+{
+    private ITabNavRepository _tabNavRepository;
+    private IMemcachedClient _memcachedClient;
 
-* Understands both the binary and text protocols
-* Highly configurable and extendable (custom configuration, serialization)
-* Supports consistent hashing
-* CheckAndSet operations
-* Persistent connections for more speed
-* SASL Authentication
+    public TabNavService(
+        ITabNavRepository tabNavRepository,
+        IMemcachedClient memcachedClient)
+    {
+        _tabNavRepository = tabNavRepository;
+        _memcachedClient = memcachedClient;
+    }
 
-## Requirements
+    public async Task<IEnumerable<TabNav>> GetAll()
+    {
+		var cacheKey = "aboutus_tabnavs_all";
+        var result = await _memcachedClient.GetAsync<IEnumerable<TabNav>>(cacheKey);
+        if (!result.Success)
+        {
+            var tabNavs = await _tabNavRepository.GetAll();
+            await _memcachedClient.AddAsync(cacheKey, tabNavs, 300);
+            return tabNavs;
+        }
+        else
+        {
+            return result.Value;
+        }
+    }
+}
+```
+* Use IDistributedCache
+```cs
+public class CreativeService : ICreativeService
+{
+    private ICreativeRepository _creativeRepository;
+    private IDistributedCache _cache;
 
-You'll need .NET Framework 3.5 or later to use the precompiled binaries. To build client, you'll need Visual Studio 2010.
+    public CreativeService(
+        ICreativeRepository creativeRepository,
+        IDistributedCache cache)
+    {
+        _creativeRepository = creativeRepository;
+        _cache = cache;
+    }
 
-## Bugs and features
+    public async Task<IList<CreativeDTO>> GetCreatives(string unitName)
+    {
+        var cacheKey = $"creatives_{unitName}";
+        IList<CreativeDTO> creatives = null;
 
-If you found any issues with the client, please submit a bug report at the [Issue Tracker](http://github.com/enyim/EnyimMemcached/issues). Please include the following:
+        var creativesJson = await _cache.GetStringAsync(cacheKey);
+        if (creativesJson == null)
+        {
+            creatives = await _creativeRepository.GetCreatives(unitName)
+                    .ProjectTo<CreativeDTO>().ToListAsync();
 
-- The version of the client you are using
-- The relevant configuration section from your app/web.config
-- How to reproduce the issue (either a step-by-step description or a small test application)
-- Expected result
+            var json = string.Empty;
+            if (creatives != null && creatives.Count() > 0)
+            {
+                json = JsonConvert.SerializeObject(creatives);
+            }
+            await _cache.SetStringAsync(
+                cacheKey, 
+                json, 
+                new DistributedCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromMinutes(5)));
+        }
+        else
+        {
+            creatives = JsonConvert.DeserializeObject<List<CreativeDTO>>(creativesJson);
+        }
 
-If you'd like to add a feature request please add some details how it is supposed to work.
-
-## Patches
-
-The best bug reports come with a patch: fork the code on GitHub, then send a pull request so the fixes can be included in the next version.
-
-## Questions?
-
-First, have a look at the [wiki](http://github.com/enyim/EnyimMemcached/wiki). If you still have questions, please feel free to ask them on the mailing list, which can be found at: [http://groups.google.com/group/enyim-memcached/](http://groups.google.com/group/enyim-memcached/)
+        return creatives;
+    }
+}
+```
