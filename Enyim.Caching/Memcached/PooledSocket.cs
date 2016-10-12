@@ -57,10 +57,24 @@ namespace Enyim.Caching.Memcached
             _logger = logger;
         }
 
-        private static void ConnectWithTimeout(Socket socket, IPEndPoint endpoint, int timeout)
+        private void ConnectWithTimeout(Socket socket, IPEndPoint endpoint, int timeout)
         {
-            var task = socket.ConnectAsync(endpoint);
-            if(!task.Wait(timeout))
+            //var task = socket.ConnectAsync(endpoint);
+            //if(!task.Wait(timeout))
+            //{
+            //    using (socket)
+            //    {
+            //        throw new TimeoutException("Could not connect to " + endpoint);
+            //    }
+            //}          
+
+            var completed = new AutoResetEvent(false);
+            var args = new SocketAsyncEventArgs();
+            args.RemoteEndPoint = endpoint;
+            args.Completed += OnConnectCompleted;
+            args.UserToken = completed;
+            socket.ConnectAsync(args);
+            if (!completed.WaitOne(timeout) || !socket.Connected)
             {
                 using (socket)
                 {
@@ -68,8 +82,8 @@ namespace Enyim.Caching.Memcached
                 }
             }
 
-            /*var mre = new ManualResetEvent(false);
-
+            /*
+            var mre = new ManualResetEvent(false);
             socket.Connect(endpoint, iar =>
             {
                 try { using (iar.AsyncWaitHandle) socket.EndConnect(iar); }
@@ -80,7 +94,14 @@ namespace Enyim.Caching.Memcached
 
             if (!mre.WaitOne(timeout) || !socket.Connected)
                 using (socket)
-                    throw new TimeoutException("Could not connect to " + endpoint);*/
+                    throw new TimeoutException("Could not connect to " + endpoint);
+           */
+        }
+
+        private void OnConnectCompleted(object sender, SocketAsyncEventArgs args)
+        {
+            EventWaitHandle handle = (EventWaitHandle)args.UserToken;
+            handle.Set();
         }
 
         public Action<PooledSocket> CleanupCallback { get; set; }
