@@ -45,7 +45,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Configuration\FactoryElement.cs" />
     <Compile Include="Memcached\FailurePolicy\FailImmediatelyPolicy.cs" />
     <Compile Include="Memcached\FailurePolicy\ThrottlingFailurePolicy.cs" />
     <Compile Include="Memcached\FailurePolicy\INodeFailurePolicy.cs" />
@@ -55,41 +54,18 @@
     </Compile>
     <Compile Include="Logging\DiagnosticsLog.cs" />
     <Compile Include="Logging\LogManager.cs" />
-    <Compile Include="Configuration\AuthenticationConfiguration.cs">
-    </Compile>
-    <Compile Include="Configuration\AuthenticationElement.cs">
-    </Compile>
-    <Compile Include="Configuration\LoggerSection.cs" />
-    <Compile Include="Configuration\ConfigurationElementException.cs">
-    </Compile>
     <Compile Include="Configuration\ConfigurationHelper.cs">
-    </Compile>
-    <Compile Include="Configuration\EndPointElement.cs">
-    </Compile>
-    <Compile Include="Configuration\EndPointElementCollection.cs">
     </Compile>
     <Compile Include="Configuration\IAuthenticationConfiguration.cs">
     </Compile>
     <Compile Include="Configuration\IMemcachedClientConfiguration.cs">
     </Compile>
-    <Compile Include="Configuration\InterfaceValidator.cs">
-    </Compile>
     <Compile Include="Configuration\ISocketPoolConfiguration.cs">
-    </Compile>
-    <Compile Include="Configuration\IVBucketConfiguration.cs">
     </Compile>
     <Compile Include="Configuration\JsonVBucketConfig.cs" />
     <Compile Include="Configuration\MemcachedClientConfiguration.cs">
     </Compile>
-    <Compile Include="Configuration\MemcachedClientSection.cs">
-    </Compile>
-    <Compile Include="Configuration\ProviderElement.cs">
-    </Compile>
     <Compile Include="Configuration\SocketPoolConfiguration.cs">
-    </Compile>
-    <Compile Include="Configuration\SocketPoolElement.cs">
-    </Compile>
-    <Compile Include="Configuration\TextElement.cs">
     </Compile>
     <Compile Include="HashkitCrc32.cs" />
     <Compile Include="HashkitMurmur.cs" />
@@ -127,11 +103,6 @@
     <Compile Include="Memcached\IOperationFactory.cs">
     </Compile>
     <Compile Include="MemcachedClient.Results.cs" />
-    <Compile Include="Memcached\PerformanceMonitor\DefaultPerformanceMonitorFactory.cs" />
-    <Compile Include="Memcached\PerformanceMonitor\IPerformanceMonitor.cs" />
-    <Compile Include="Memcached\PerformanceMonitor\PerformanceCounterInstaller.cs" />
-    <Compile Include="Memcached\PerformanceMonitor\DefaultPerformanceMonitor.cs">
-    </Compile>
     <Compile Include="Memcached\IProviderFactory.cs">
     </Compile>
     <Compile Include="Memcached\ISaslAuthenticationProvider.cs">
@@ -148,16 +119,9 @@
     </Compile>
     <Compile Include="Memcached\KeyTransformers\TigerHashKeyTransformer.cs">
     </Compile>
-    <Compile Include="Memcached\Locators\KetamaNodeLocatorFactory.cs" />
     <Compile Include="Memcached\Locators\DefaultNodeLocator.cs">
     </Compile>
-    <Compile Include="Memcached\Locators\KetamaNodeLocator.cs">
-    </Compile>
     <Compile Include="Memcached\Locators\SingleNodeLocator.cs">
-    </Compile>
-    <Compile Include="Memcached\Locators\VBucketNodeLocator.cs">
-    </Compile>
-    <Compile Include="Memcached\Locators\VBucketNodeLocatorFactory.cs">
     </Compile>
     <Compile Include="Memcached\MemcachedClientException.cs">
     </Compile>
@@ -282,7 +246,6 @@
     </Compile>
     <Compile Include="Memcached\SlidingBuffer.cs" />
     <Compile Include="Memcached\Socket\SocketAwaitable.cs" />
-    <Compile Include="Memcached\Socket\SocketExtensions.cs" />
     <Compile Include="Memcached\StatItem.cs">
     </Compile>
     <Compile Include="Memcached\StoreMode.cs">

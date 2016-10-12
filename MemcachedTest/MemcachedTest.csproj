@@ -52,10 +52,6 @@
     <Compile Include="VBucketTest.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Enyim.Caching.Log4NetAdapter\Enyim.Caching.Log4NetAdapter.csproj">
-      <Project>{9D3F12E6-6BDD-4DED-8B25-D877780640B4}</Project>
-      <Name>Enyim.Caching.Log4NetAdapter</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Enyim.Caching\Enyim.Caching.csproj">
       <Project>{D438C0B3-A168-40B8-BDDD-61F0939DFF35}</Project>
       <Name>Enyim.Caching</Name>
