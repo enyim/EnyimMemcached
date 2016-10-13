@@ -16,7 +16,7 @@ namespace Enyim.Caching.Memcached
 		/// <summary>
 		/// Defines a value which indicates that the statstics should be retrieved for all servers in the pool.
 		/// </summary>
-		public static readonly IPEndPoint All = new IPEndPoint(IPAddress.Any, 0);
+		public static readonly EndPoint All = new IPEndPoint(IPAddress.Any, 0);
 		#region [ readonly int[] Optable       ]
 		// defines which values can be summed and which not
 		private static readonly int[] Optable = 
@@ -47,9 +47,9 @@ namespace Enyim.Caching.Memcached
 		};
 		#endregion
 
-		private Dictionary<IPEndPoint, Dictionary<string, string>> results;
+		private Dictionary<EndPoint, Dictionary<string, string>> results;
 
-		internal ServerStats(Dictionary<IPEndPoint, Dictionary<string, string>> results)
+		internal ServerStats(Dictionary<EndPoint, Dictionary<string, string>> results)
 		{
 			this.results = results;
 		}
@@ -167,11 +167,11 @@ namespace Enyim.Caching.Memcached
 			throw new ArgumentOutOfRangeException("item");
 		}
 
-		public IEnumerable<KeyValuePair<IPEndPoint, string>> GetRaw(string key)
+		public IEnumerable<KeyValuePair<EndPoint, string>> GetRaw(string key)
 		{
 			string tmp;
 
-			return this.results.Select(kvp => new KeyValuePair<IPEndPoint, string>(kvp.Key, kvp.Value.TryGetValue(key, out tmp) ? tmp : null)).ToList();
+			return this.results.Select(kvp => new KeyValuePair<EndPoint, string>(kvp.Key, kvp.Value.TryGetValue(key, out tmp) ? tmp : null)).ToList();
 		}
 	}
 }

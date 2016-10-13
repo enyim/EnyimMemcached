@@ -21,12 +21,12 @@ namespace Enyim.Caching.Memcached
 
         private bool isAlive;
         private Socket socket;
-        private IPEndPoint endpoint;
+        private EndPoint endpoint;
 
         private Stream inputStream;
         private AsyncSocketHelper helper;
 
-        public PooledSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger)
+        public PooledSocket(EndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger)
         {
             this.isAlive = true;
 
@@ -57,7 +57,7 @@ namespace Enyim.Caching.Memcached
             _logger = logger;
         }
 
-        private void ConnectWithTimeout(Socket socket, IPEndPoint endpoint, int timeout)
+        private void ConnectWithTimeout(Socket socket, EndPoint endpoint, int timeout)
         {
             //var task = socket.ConnectAsync(endpoint);
             //if(!task.Wait(timeout))

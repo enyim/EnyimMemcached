@@ -27,13 +27,13 @@ namespace Enyim.Caching.Memcached
 
         private bool isDisposed;
 
-        private IPEndPoint endPoint;
+        private EndPoint endPoint;
         private ISocketPoolConfiguration config;
         private InternalPoolImpl internalPoolImpl;
         private bool isInitialized;
 
         public MemcachedNode(
-            IPEndPoint endpoint, 
+            EndPoint endpoint, 
             ISocketPoolConfiguration socketPoolConfig,
             ILogger logger
             )
@@ -59,7 +59,7 @@ namespace Enyim.Caching.Memcached
         /// <summary>
         /// Gets the <see cref="T:IPEndPoint"/> of this instance
         /// </summary>
-        public IPEndPoint EndPoint
+        public EndPoint EndPoint
         {
             get { return this.endPoint; }
         }
@@ -202,7 +202,7 @@ namespace Enyim.Caching.Memcached
             private int maxItems;
 
             private MemcachedNode ownerNode;
-            private IPEndPoint endPoint;
+            private EndPoint endPoint;
             private TimeSpan queueTimeout;
             private Semaphore semaphore;
 
@@ -257,7 +257,7 @@ namespace Enyim.Caching.Memcached
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError("Could not init pool.", e);
+                    _logger.LogError("Could not init pool.", new EventId(0), e);
 
                     this.MarkAsDead();
                 }
@@ -659,7 +659,7 @@ namespace Enyim.Caching.Memcached
 
         #region [ IMemcachedNode               ]
 
-        IPEndPoint IMemcachedNode.EndPoint
+        EndPoint IMemcachedNode.EndPoint
         {
             get { return this.EndPoint; }
         }

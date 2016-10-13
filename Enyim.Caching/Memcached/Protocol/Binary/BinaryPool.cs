@@ -27,7 +27,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             _logger = logger;
         }
 
-		protected override IMemcachedNode CreateNode(IPEndPoint endpoint)
+		protected override IMemcachedNode CreateNode(EndPoint endpoint)
 		{
 			return new BinaryNode(endpoint, this.configuration.SocketPool, this.authenticationProvider, _logger);
 		}

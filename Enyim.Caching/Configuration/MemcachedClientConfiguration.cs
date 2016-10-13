@@ -35,7 +35,7 @@ namespace Enyim.Caching.Configuration
             _logger = logger;
 
             var options = optionsAccessor.Value;
-            Servers = new List<IPEndPoint>();
+            Servers = new List<EndPoint>();
             foreach (var server in options.Servers)
             {
                 Servers.Add(ConfigurationHelper.ResolveToEndPoint(server.Addess, server.Port));
@@ -67,7 +67,7 @@ namespace Enyim.Caching.Configuration
 		/// <summary>
 		/// Gets a list of <see cref="T:IPEndPoint"/> each representing a Memcached server in the pool.
 		/// </summary>
-		public IList<IPEndPoint> Servers { get; private set; }
+		public IList<EndPoint> Servers { get; private set; }
 
 		/// <summary>
 		/// Gets the configuration of the socket pool.
@@ -124,7 +124,7 @@ namespace Enyim.Caching.Configuration
 
 		#region [ interface                     ]
 
-		IList<System.Net.IPEndPoint> IMemcachedClientConfiguration.Servers
+		IList<System.Net.EndPoint> IMemcachedClientConfiguration.Servers
 		{
 			get { return this.Servers; }
 		}

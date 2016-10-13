@@ -6,7 +6,7 @@ namespace Enyim.Caching.Memcached
 {
 	internal static class ThrowHelper
 	{
-		public static void ThrowSocketWriteError(IPEndPoint endpoint, SocketError error)
+		public static void ThrowSocketWriteError(EndPoint endpoint, SocketError error)
 		{
 			// move the string into resource file
 			throw new Exception(String.Format("Failed to write to the socket '{0}'. Error: {1}", endpoint, error));

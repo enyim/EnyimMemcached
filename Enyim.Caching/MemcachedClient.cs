@@ -819,7 +819,7 @@ namespace Enyim.Caching
 
         public ServerStats Stats(string type)
         {
-            var results = new Dictionary<IPEndPoint, Dictionary<string, string>>();
+            var results = new Dictionary<EndPoint, Dictionary<string, string>>();
             var handles = new List<WaitHandle>();
 
             foreach (var node in this.pool.GetWorkingNodes())
