@@ -30,7 +30,7 @@ namespace Enyim.Caching.Memcached
         {
             this.isAlive = true;
 
-            var socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             // TODO test if we're better off using nagle
             //PHP: OPT_TCP_NODELAY
             //socket.NoDelay = true;

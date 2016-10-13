@@ -10,3 +10,4 @@ packages/*/
 /Enyim.Caching/project.lock.json
 /publish/*.bat
 .vs/
+/DemoConsoleApp/project.lock.json
