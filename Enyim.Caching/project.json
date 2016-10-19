@@ -1,34 +1,27 @@
 {
-  "version": "1.0.0.4",
-  "name": "EnyimMemcachedCore",
-  "description": "EnyimMemcachedCore is .NET Core client library for memcached. Usage: services.AddEnyimMemcached(options => options.AddServer(serverNameOrIP, 11211)); Then add IMemcachedClient into constructor.",
-  "packOptions": {
-    "repository": {
-      "type": "git",
-      "url": "https://github.com/cnblogs/EnyimMemcachedCore"
+    "version": "1.0.0.4",
+    "name": "EnyimMemcachedCore",
+    "description": "EnyimMemcachedCore is .NET Core client library for memcached. Usage: services.AddEnyimMemcached(options => options.AddServer(serverNameOrIP, 11211)); Then add IMemcachedClient into constructor.",
+    "packOptions": {
+        "repository": {
+            "type": "git",
+            "url": "https://github.com/cnblogs/EnyimMemcachedCore"
+        },
+        "tags": [ "memcached", "cache" ]
     },
-    "tags": [ "memcached", "cache" ]
-  },
-  "configurations": {
-    "Debug": {
-      "buildOptions": {
+    "buildOptions": {
         "allowUnsafe": true
-      }
     },
-    "Release": {
-      "buildOptions": {
-        "allowUnsafe": true
-      }
+    "frameworks": {
+        "netstandard1.3": {}
+    },
+    "dependencies": {
+        "NETStandard.Library": "1.6.0",
+        "System.Net.NameResolution": "4.0.0",
+        "System.Threading.Thread": "4.0.0" ,
+        "Microsoft.Extensions.Logging.Abstractions": "1.0.0",
+        "Newtonsoft.Json": "9.0.1",
+        "Microsoft.Extensions.Options": "1.0.0",
+        "Microsoft.Extensions.Caching.Abstractions": "1.0.0"
     }
-  },
-  "frameworks": {
-    "netcoreapp1.0.1": {}
-  },
-  "dependencies": {
-    "Microsoft.NETCore.App": "1.0.1",
-    "Microsoft.Extensions.Logging.Abstractions": "1.0.0",
-    "Newtonsoft.Json": "9.0.1",
-    "Microsoft.Extensions.Options": "1.0.0",
-    "Microsoft.Extensions.Caching.Abstractions": "1.0.0"
-  }
 }
