@@ -4,19 +4,19 @@
     "emitEntryPoint": true
   },
 
-  "dependencies": {
-    "EnyimMemcachedCore": "1.0.0.3",
-    "Microsoft.Extensions.DependencyInjection": "1.0.0",
-    "Microsoft.Extensions.Logging": "1.0.0",
-    "Microsoft.Extensions.Logging.Console": "1.0.0",
-    "Microsoft.NETCore.App": {
-      "type": "platform",
-      "version": "1.0.1"
-    }
-  },
+    "dependencies": {
+        "Enyim.Caching": "1.0.0.7-preview1",
+        "Microsoft.Extensions.DependencyInjection": "1.1.0-preview1-*",
+        "Microsoft.Extensions.Logging": "1.1.0-preview1-*",
+        "Microsoft.Extensions.Logging.Console": "1.1.0-preview1-*",
+        "Microsoft.NETCore.App": {
+            "type": "platform",
+            "version": "1.1.0-preview1-*"
+        }
+    },
 
   "frameworks": {
-    "netcoreapp1.0.1": {
+    "netcoreapp1.1": {
       "imports": "dnxcore50"
     }
   }
