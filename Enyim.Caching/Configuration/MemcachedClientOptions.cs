@@ -17,7 +17,7 @@ namespace Enyim.Caching.Configuration
 
         public void AddServer(string address, int port)
         {
-            Servers.Add(new Server { Addess = "memcached", Port = 11211 });
+            Servers.Add(new Server { Addess = address, Port = port });
         }
 
         public MemcachedClientOptions Value
