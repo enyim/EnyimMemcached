@@ -28,6 +28,8 @@ namespace Enyim.Caching.Memcached
 
         public PooledSocket(EndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger)
         {
+            _logger = logger;
+
             this.isAlive = true;
 
             var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -52,9 +54,7 @@ namespace Enyim.Caching.Memcached
             this.socket = socket;
             this.endpoint = endpoint;
 
-            this.inputStream = new BasicNetworkStream(socket);
-
-            _logger = logger;
+            this.inputStream = new BasicNetworkStream(socket);            
         }
 
         private void ConnectWithTimeout(Socket socket, EndPoint endpoint, int timeout)
