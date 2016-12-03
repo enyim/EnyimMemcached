@@ -5,13 +5,13 @@
   },
 
     "dependencies": {
-        "Enyim.Caching": "1.0.0.7-preview1",
-        "Microsoft.Extensions.DependencyInjection": "1.1.0-preview1-*",
-        "Microsoft.Extensions.Logging": "1.1.0-preview1-*",
-        "Microsoft.Extensions.Logging.Console": "1.1.0-preview1-*",
+        "Enyim.Caching": "1.0.0.9",
+        "Microsoft.Extensions.DependencyInjection": "1.1.0",
+        "Microsoft.Extensions.Logging": "1.1.0",
+        "Microsoft.Extensions.Logging.Console": "1.1.0",
         "Microsoft.NETCore.App": {
             "type": "platform",
-            "version": "1.1.0-preview1-*"
+            "version": "1.1.0"
         }
     },
 
