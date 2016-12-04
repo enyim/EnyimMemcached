@@ -3,110 +3,111 @@ using System.Linq;
 using System.Net;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Reflection;
 
 namespace Enyim.Caching.Configuration
 {
-	public static class ConfigurationHelper
-	{
-		internal static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out int value, bool required)
-		{
-			string tmp;
-			if (TryGetAndRemove(dict, name, out tmp, required)
-				&& Int32.TryParse(tmp, out value))
-			{
-				return true;
-			}
+    public static class ConfigurationHelper
+    {
+        internal static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out int value, bool required)
+        {
+            string tmp;
+            if (TryGetAndRemove(dict, name, out tmp, required)
+                && Int32.TryParse(tmp, out value))
+            {
+                return true;
+            }
 
-			if (required)
-				throw new Exception("Missing or invalid parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
+            if (required)
+                throw new Exception("Missing or invalid parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
 
-			value = 0;
+            value = 0;
 
-			return false;
-		}
+            return false;
+        }
 
-		internal static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out TimeSpan value, bool required)
-		{
-			string tmp;
-			if (TryGetAndRemove(dict, name, out tmp, required)
-				&& TimeSpan.TryParse(tmp, out value))
-			{
-				return true;
-			}
+        internal static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out TimeSpan value, bool required)
+        {
+            string tmp;
+            if (TryGetAndRemove(dict, name, out tmp, required)
+                && TimeSpan.TryParse(tmp, out value))
+            {
+                return true;
+            }
 
-			if (required)
-				throw new Exception("Missing or invalid parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
+            if (required)
+                throw new Exception("Missing or invalid parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
 
-			value = TimeSpan.Zero;
+            value = TimeSpan.Zero;
 
-			return false;
-		}
+            return false;
+        }
 
-		internal static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out string value, bool required)
-		{
-			if (dict.TryGetValue(name, out value))
-			{
-				dict.Remove(name);
+        internal static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out string value, bool required)
+        {
+            if (dict.TryGetValue(name, out value))
+            {
+                dict.Remove(name);
 
-				if (!String.IsNullOrEmpty(value))
-					return true;
-			}
+                if (!String.IsNullOrEmpty(value))
+                    return true;
+            }
 
-			if (required)
-				throw new Exception("Missing parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
+            if (required)
+                throw new Exception("Missing parameter: " + (String.IsNullOrEmpty(name) ? "element content" : name));
 
-			return false;
-		}
+            return false;
+        }
 
-		internal static void CheckForUnknownAttributes(Dictionary<string, string> dict)
-		{
-			if (dict.Count > 0)
-				throw new Exception("Unrecognized parameter: " + dict.Keys.First());
-		}
+        internal static void CheckForUnknownAttributes(Dictionary<string, string> dict)
+        {
+            if (dict.Count > 0)
+                throw new Exception("Unrecognized parameter: " + dict.Keys.First());
+        }
 
-		public static void CheckForInterface(Type type, Type interfaceType)
-		{
-			if (type == null || interfaceType == null) return;
+        public static void CheckForInterface(Type type, Type interfaceType)
+        {
+            if (type == null || interfaceType == null) return;
 
-			//if (Array.IndexOf<Type>(type.GetInterfaces(), interfaceType) == -1)
-			//	throw new System.Configuration.ConfigurationErrorsException("The type " + type.AssemblyQualifiedName + " must implement " + interfaceType.AssemblyQualifiedName);
-		}
+            //if (Array.IndexOf<Type>(type.GetInterfaces(), interfaceType) == -1)
+            //	throw new System.Configuration.ConfigurationErrorsException("The type " + type.AssemblyQualifiedName + " must implement " + interfaceType.AssemblyQualifiedName);
+        }
 
-		public static EndPoint ResolveToEndPoint(string value)
-		{
-			if (String.IsNullOrEmpty(value))
-				throw new ArgumentNullException("value");
+        public static EndPoint ResolveToEndPoint(string value)
+        {
+            if (String.IsNullOrEmpty(value))
+                throw new ArgumentNullException("value");
 
-			var parts = value.Split(':');
-			if (parts.Length != 2)
-				throw new ArgumentException("host:port is expected", "value");
+            var parts = value.Split(':');
+            if (parts.Length != 2)
+                throw new ArgumentException("host:port is expected", "value");
 
-			int port;
-			if (!Int32.TryParse(parts[1], out port))
-				throw new ArgumentException("Cannot parse port: " + parts[1], "value");
+            int port;
+            if (!Int32.TryParse(parts[1], out port))
+                throw new ArgumentException("Cannot parse port: " + parts[1], "value");
 
-			return ResolveToEndPoint(parts[0], port);
-		}
+            return ResolveToEndPoint(parts[0], port);
+        }
 
-		public static EndPoint ResolveToEndPoint(string host, int port)
-		{
-			if (String.IsNullOrEmpty(host))
-				throw new ArgumentNullException("host");
+        public static EndPoint ResolveToEndPoint(string host, int port)
+        {
+            if (String.IsNullOrEmpty(host))
+                throw new ArgumentNullException("host");
 
             IPAddress address;
             // parse as an IP address
             if (!IPAddress.TryParse(host, out address))
             {
-                Task<IPAddress[]> task = System.Net.Dns.GetHostAddressesAsync(host);
-                task.Wait(5000);
-                var addresses = task.Result;
+                //Call System.Net.Dns.GetHostEntry(string hostNameOrAddress) that implements for netstandard 2.0
+                var method = typeof(System.Net.Dns).GetMethod("GetHostEntry", BindingFlags.Public | BindingFlags.Static);
+                var addresses = ((IPHostEntry)method.Invoke(null, new object[] { host })).AddressList;
                 address = addresses.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
                 if (address == null)
                     throw new ArgumentException(String.Format("Could not resolve host '{0}'.", host));
             }
             return new IPEndPoint(address, port);
-		}
-	}
+        }
+    }
 }
 
 #region [ License information          ]
