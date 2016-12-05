@@ -279,6 +279,11 @@ namespace Enyim.Caching
             return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), ref tmp, out status).Success;
         }
 
+        public async Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt)
+        {
+            return (await this.PerformStoreAsync(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt))).Success;
+        }
+
         public async Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor)
         {
             return (await this.PerformStoreAsync(mode, key, value, MemcachedClient.GetExpiration(validFor, null))).Success;
