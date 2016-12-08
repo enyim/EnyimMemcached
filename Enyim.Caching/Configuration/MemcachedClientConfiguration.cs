@@ -9,21 +9,21 @@ using Microsoft.Extensions.Options;
 
 namespace Enyim.Caching.Configuration
 {
-	/// <summary>
-	/// Configuration class
-	/// </summary>
-	public class MemcachedClientConfiguration : IMemcachedClientConfiguration
-	{
-		// these are lazy initialized in the getters
-		private Type nodeLocator;
-		private ITranscoder transcoder;
-		private IMemcachedKeyTransformer keyTransformer;
+    /// <summary>
+    /// Configuration class
+    /// </summary>
+    public class MemcachedClientConfiguration : IMemcachedClientConfiguration
+    {
+        // these are lazy initialized in the getters
+        private Type nodeLocator;
+        private ITranscoder transcoder;
+        private IMemcachedKeyTransformer keyTransformer;
         private ILogger<MemcachedClient> _logger;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
-		/// </summary>
-		public MemcachedClientConfiguration(
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
+        /// </summary>
+        public MemcachedClientConfiguration(
             ILogger<MemcachedClient> logger,
             IOptions<MemcachedClientOptions> optionsAccessor)
         {
@@ -38,11 +38,11 @@ namespace Enyim.Caching.Configuration
             Servers = new List<EndPoint>();
             foreach (var server in options.Servers)
             {
-                var methodInfo = $"Call ResolveToEndPoint(\"{server.Addess}\", {server.Port})";
+                var methodInfo = $"Call ResolveToEndPoint(\"{server.Address}\", {server.Port})";
                 try
                 {
                     _logger.LogDebug(methodInfo);
-                    var endpoint = ConfigurationHelper.ResolveToEndPoint(server.Addess, server.Port);
+                    var endpoint = ConfigurationHelper.ResolveToEndPoint(server.Address, server.Port);
                     _logger.LogDebug($"Result of ResolveToEndPoint(): {endpoint}");
                     Servers.Add(endpoint);
                 }
@@ -53,7 +53,31 @@ namespace Enyim.Caching.Configuration
             }
             SocketPool = options.SocketPool;
             Protocol = options.Protocol;
-            //this.Authentication = new AuthenticationConfiguration();
+
+            if (options.Authentication != null)
+            {
+                try
+                {
+                    var authenticationType = Type.GetType(options.Authentication.Type);
+                    if (authenticationType != null)
+                    {
+                        Authentication = new AuthenticationConfiguration();
+                        Authentication.Type = authenticationType;
+                        foreach (var parameter in options.Authentication.Parameters)
+                        {
+                            Authentication.Parameters[parameter.Key] = parameter.Value;
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogError($"Unable to load authentication type {options.Authentication.Type}.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(new EventId(), ex, $"Unable to load authentication type {options.Authentication.Type}.");
+                }
+            }
         }   
 
 		/// <summary>

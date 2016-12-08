@@ -98,9 +98,8 @@ namespace Enyim.Caching.Configuration
             // parse as an IP address
             if (!IPAddress.TryParse(host, out address))
             {
-                //Call System.Net.Dns.GetHostEntry(string hostNameOrAddress) that implements for netstandard 2.0
-                var method = typeof(System.Net.Dns).GetMethod("GetHostEntry", BindingFlags.Public | BindingFlags.Static);
-                var addresses = ((IPHostEntry)method.Invoke(null, new object[] { host })).AddressList;
+                var hostEntry = Dns.GetHostEntryAsync(host).Result;
+                var addresses = hostEntry.AddressList;
                 address = addresses.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
                 if (address == null)
                     throw new ArgumentException(String.Format("Could not resolve host '{0}'.", host));
