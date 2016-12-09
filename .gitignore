@@ -7,7 +7,6 @@ build/output/*
 _ReSharper*
 packages/*/
 /publish/packages
-/Enyim.Caching/project.lock.json
+project.lock.json
 /publish/*.bat
 .vs/
-/DemoConsoleApp/project.lock.json
