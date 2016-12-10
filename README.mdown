@@ -1,37 +1,54 @@
 # Enyim Memcached Client
 
-This is a .NET Core client library for [memcached](http://memcached.org) migrated from [EnyimMemcached](https://github.com/enyim/EnyimMemcached).
+This is a .NET Core client library for Memcached migrated from [EnyimMemcached](https://github.com/enyim/EnyimMemcached). Available on Nuget https://www.nuget.org/packages/EnyimMemcachedCore
 
 ## Configure
-### Hard code
-```cs
-public class Startup
-{
-    public void ConfigureServices(IServiceCollection services)
-    {
-        services.AddEnyimMemcached(options => options.AddServer(serverNameOrIp, 11211));
-    }
-}
-```
-### Put in appsettings.json
+### The appsettings.json Without Authentication
 ```json
 {
   "enyimMemcached": {
     "Servers": [
       {
-        "Addess": "memcached",
+        "Address": "memcached",
         "Port": 11211
       }
     ]
   }
 }
 ```
+#### The appsettings.json With Authentication
+```json
+{
+  "enyimMemcached": {
+    "Servers": [
+      {
+        "Address": "memcached",
+        "Port": 11211
+      }
+    ],
+    "Authentication": {
+      "Type": "Enyim.Caching.Memcached.PlainTextAuthenticator",
+      "Parameters": {
+        "zone": "",
+        "userName": "username",
+        "password": "password"
+      }
+    }
+  }
+}
+```
+### Startup.cs
 ```cs
 public class Startup
 {
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddEnyimMemcached(options => Configuration.GetSection("enyimMemcached").Bind(options));
+    }
+    
+    public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+    { 
+        app.UseEnyimMemcached();
     }
 }
 ```
