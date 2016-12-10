@@ -21,31 +21,32 @@ namespace SampleWebApp
                 .AddJsonFile("appsettings.json")
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
-            Configuration = builder.Build();            
+            Configuration = builder.Build();
+            IsDevelopment = env.IsDevelopment();
         }
 
         public IConfigurationRoot Configuration { get; set; }
 
+        public bool IsDevelopment { get; set; }
+
         public void ConfigureServices(IServiceCollection services)
         {
-            var memcachedConfig = Configuration.GetSection("enyimMemcached");
-            if (string.IsNullOrEmpty(memcachedConfig.Value))
+            if (IsDevelopment)
             {
                 services.AddEnyimMemcached(options =>
                 {
                     options.AddServer("memcached", 11211);
+                    //options.AddPlainTextAuthenticator("", "usename", "password");
                 });
             }
             else
             {
                 services.AddEnyimMemcached(options =>
                 {
-                    memcachedConfig.Bind(options);
+                    Configuration.GetSection("enyimMemcached").Bind(options);
                 });
             }
-        }
-
-        
+        }        
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {

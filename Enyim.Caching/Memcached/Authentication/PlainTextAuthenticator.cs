@@ -28,13 +28,24 @@ namespace Enyim.Caching.Memcached
 		{
 			if (parameters != null)
 			{
-				string zone = (string)parameters["zone"];
-				string userName = (string)parameters["userName"];
-				string password = (string)parameters["password"];
-
-				this.authData = CreateAuthData(zone, userName, password);
-			}
+				this.authData = CreateAuthData(
+                    GetParameter(parameters, "zone"), 
+                    GetParameter(parameters, "userName"), 
+                    GetParameter(parameters, "password"));
+            }
 		}
+
+        private string GetParameter(Dictionary<string, object> parameters, string key)
+        {
+            if (parameters.ContainsKey(key))
+            {
+                return (string)parameters[key];
+            }
+            else
+            {
+                throw new MemcachedClientException($"Unable to find '{key}' authentication parameter for {nameof(PlainTextAuthenticator)}");
+            }
+        }
 
 		byte[] ISaslAuthenticationProvider.Authenticate()
 		{

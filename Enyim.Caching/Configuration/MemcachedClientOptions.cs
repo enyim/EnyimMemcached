@@ -21,6 +21,20 @@ namespace Enyim.Caching.Configuration
         {
             Servers.Add(new Server { Address = address, Port = port });
         }
+
+        public void AddPlainTextAuthenticator(string zone, string userName, string password)
+        {
+            Authentication = new Authentication
+            {
+                Type = typeof(PlainTextAuthenticator).ToString(),
+                Parameters = new Dictionary<string, string>
+                {
+                    { $"{nameof(zone)}", zone },
+                    { $"{nameof(userName)}", userName},
+                    { $"{nameof(password)}", password}
+                }
+            };
+        }
     }
 
     public class Server
