@@ -38,18 +38,15 @@ namespace Enyim.Caching.Configuration
             Servers = new List<EndPoint>();
             foreach (var server in options.Servers)
             {
-                var methodInfo = $"Call ResolveToEndPoint(\"{server.Address}\", {server.Port})";
-                try
+                IPAddress address;
+                if (IPAddress.TryParse(server.Address, out address))
                 {
-                    _logger.LogDebug(methodInfo);
-                    var endpoint = ConfigurationHelper.ResolveToEndPoint(server.Address, server.Port);
-                    _logger.LogDebug($"Result of ResolveToEndPoint(): {endpoint}");
-                    Servers.Add(endpoint);
+                    Servers.Add(new IPEndPoint(address, server.Port));
                 }
-                catch (Exception ex)
+                else
                 {
-                    _logger.LogError(new EventId(), ex, methodInfo);
-                }
+                    Servers.Add(new DnsEndPoint(server.Address, server.Port));
+                }                
             }
             SocketPool = options.SocketPool;
             Protocol = options.Protocol;
