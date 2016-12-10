@@ -3,8 +3,7 @@
 This is a .NET Core client library for Memcached migrated from [EnyimMemcached](https://github.com/enyim/EnyimMemcached). Available on Nuget https://www.nuget.org/packages/EnyimMemcachedCore
 
 ## Configure
-### appsettings.json
-#### Without Authentication
+### The appsettings.json Without Authentication
 ```json
 {
   "enyimMemcached": {
@@ -17,7 +16,7 @@ This is a .NET Core client library for Memcached migrated from [EnyimMemcached](
   }
 }
 ```
-#### With Authentication
+#### The appsettings.json With Authentication
 ```json
 {
   "enyimMemcached": {
