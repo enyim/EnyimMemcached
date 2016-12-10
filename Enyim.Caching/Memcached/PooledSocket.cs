@@ -11,6 +11,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Dawn.Net.Sockets;
+using System.Runtime.InteropServices;
+using System.Reflection;
 
 namespace Enyim.Caching.Memcached
 {
@@ -66,7 +68,35 @@ namespace Enyim.Caching.Memcached
             //    {
             //        throw new TimeoutException("Could not connect to " + endpoint);
             //    }
-            //}          
+            //}  
+
+            if (endpoint is DnsEndPoint && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                IPAddress[] addresses;
+                var dnsEndPoint = ((DnsEndPoint)endpoint);
+                var host = dnsEndPoint.Host;
+                var method = typeof(System.Net.Dns).GetTypeInfo().GetMethod("InternalGetHostByName", BindingFlags.NonPublic | BindingFlags.Static);
+                if (method != null)
+                {
+                    _logger.LogDebug($"Resolving '{host}' by InternalGetHostByName()");
+                    addresses = ((IPHostEntry)method.Invoke(null, new object[] { host, false })).AddressList;                   
+                }
+                else
+                {
+                    _logger.LogDebug("Resolving host by GetHostAddressesAsync()");
+                    Task<IPAddress[]> task = Dns.GetHostAddressesAsync(host);
+                    task.Wait(timeout);
+                    addresses = task.Result;
+                }
+
+                var address = addresses.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+                if (address == null)
+                {
+                    throw new ArgumentException(String.Format("Could not resolve host '{0}'.", host));
+                }
+                _logger.LogDebug($"Resolved '{host}' to '{address}'");
+                endpoint = new IPEndPoint(address, dnsEndPoint.Port);
+            }
 
             var completed = new AutoResetEvent(false);
             var args = new SocketAsyncEventArgs();
