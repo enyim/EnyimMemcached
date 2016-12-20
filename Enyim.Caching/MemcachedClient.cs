@@ -128,7 +128,7 @@ namespace Enyim.Caching
         {
             var result = new DefaultGetOperationResultFactory<T>().Create();
 
-            //var hashedKey = this.keyTransformer.Transform(key);
+            var hashedKey = this.keyTransformer.Transform(key);
             var node = this.pool.Locate(key);
 
             if (node != null)
@@ -381,7 +381,7 @@ namespace Enyim.Caching
 
         protected virtual IStoreOperationResult PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas, out int statusCode)
         {
-            //var hashedKey = this.keyTransformer.Transform(key);
+            var hashedKey = this.keyTransformer.Transform(key);
             var node = this.pool.Locate(key);
             var result = StoreOperationResultFactory.Create();           
 

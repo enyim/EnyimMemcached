@@ -17,6 +17,8 @@ namespace Enyim.Caching.Configuration
 
         public Authentication Authentication { get; set; }
 
+        public string KeyTransformer { get; set; }
+
         public void AddServer(string address, int port)
         {
             Servers.Add(new Server { Address = address, Port = port });

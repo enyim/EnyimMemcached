@@ -78,6 +78,23 @@ namespace Enyim.Caching.Configuration
                     _logger.LogError(new EventId(), ex, $"Unable to load authentication type {options.Authentication.Type}.");
                 }
             }
+
+            if(!string.IsNullOrEmpty(options.KeyTransformer))
+            {
+                try
+                {
+                    var keyTransformerType = Type.GetType(options.KeyTransformer);
+                    if (keyTransformerType != null)
+                    {
+                        KeyTransformer = Activator.CreateInstance(keyTransformerType) as IMemcachedKeyTransformer;
+                        _logger.LogDebug($"Use '{options.KeyTransformer}' KeyTransformer");
+                    }
+                }
+                catch(Exception ex)
+                {
+                    _logger.LogError(new EventId(), ex, $"Unable to load '{options.KeyTransformer}' KeyTransformer");
+                }                
+            }
         }   
 
 		/// <summary>
