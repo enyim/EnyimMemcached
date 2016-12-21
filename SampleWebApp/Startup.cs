@@ -52,6 +52,8 @@ namespace SampleWebApp
         {
             loggerFactory.AddConsole(LogLevel.Debug);
 
+            app.UseEnyimMemcached();
+
             var memcachedClient = app.ApplicationServices.GetService<IMemcachedClient>();
             var logger = loggerFactory.CreateLogger<MemcachedClient>();
 
