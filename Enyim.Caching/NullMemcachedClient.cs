@@ -106,6 +106,11 @@ namespace Enyim.Caching
             return result;
         }
 
+        public async Task<T> GetValueAsync<T>(string key)
+        {
+            return default(T);
+        }
+
         public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
         {
             throw new NotImplementedException();

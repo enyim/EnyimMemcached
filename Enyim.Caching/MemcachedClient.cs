@@ -165,6 +165,12 @@ namespace Enyim.Caching
             return result;
         }
 
+        public async Task<T> GetValueAsync<T>(string key)
+        {
+            var result = await GetAsync<T>(key);
+            return result.Success ? result.Value : default(T);
+        }
+
         /// <summary>
         /// Tries to get an item from the cache.
         /// </summary>
