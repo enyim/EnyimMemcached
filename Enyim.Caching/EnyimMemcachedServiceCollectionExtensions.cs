@@ -27,6 +27,25 @@ namespace Microsoft.Extensions.DependencyInjection
             services.Configure(setupAction);
             services.Add(ServiceDescriptor.Transient<IMemcachedClientConfiguration, MemcachedClientConfiguration>());
             services.Add(ServiceDescriptor.Singleton<IMemcachedClient, MemcachedClient>());
+
+            return services;
+        }
+
+        public static IServiceCollection AddDistributedEnyimMemcached(this IServiceCollection services, Action<MemcachedClientOptions> setupAction)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (setupAction == null)
+            {
+                throw new ArgumentNullException(nameof(setupAction));
+            }
+
+            services.AddOptions();
+            services.Configure(setupAction);
+            services.Add(ServiceDescriptor.Transient<IMemcachedClientConfiguration, MemcachedClientConfiguration>());
             services.Add(ServiceDescriptor.Singleton<IDistributedCache, MemcachedClient>());
 
             return services;
