@@ -20,7 +20,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 			if (cas == 0)
 				return new StoreOperation(mode, key, value, expires);
 
-			return new CasOperation(key, value, expires, (uint)cas);
+			return new CasOperation(key, value, expires, cas);
 		}
 
 		IDeleteOperation IOperationFactory.Delete(string key, ulong cas)
