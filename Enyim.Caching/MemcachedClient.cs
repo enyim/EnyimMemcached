@@ -464,7 +464,7 @@ namespace Enyim.Caching
                 try { item = this.transcoder.Serialize(value); }
                 catch (Exception e)
                 {
-                    _logger.LogError("PerformStoreAsync", e);
+                    _logger.LogError(new EventId(), e, $"{nameof(PerformStoreAsync)} for '{key}' key");
 
                     result.Fail("PerformStore failed", e);
                     return result;
