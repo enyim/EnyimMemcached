@@ -73,7 +73,7 @@ namespace Enyim.Caching.Memcached
             switch (code)
             {
                 //case TypeCode.DBNull: data = this.SerializeNull(); break;
-                case TypeCode.String: data = this.SerializeString((String)value); break;
+                case TypeCode.String: data = this.SerializeString(value.ToString()); break;
                 case TypeCode.Boolean: data = this.SerializeBoolean((Boolean)value); break;
                 case TypeCode.SByte: data = this.SerializeSByte((SByte)value); break;
                 case TypeCode.Byte: data = this.SerializeByte((Byte)value); break;

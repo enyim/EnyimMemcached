@@ -73,6 +73,10 @@ namespace System
             {
                 return TypeCode.String;
             }
+            else if (type == typeof(Guid))
+            {
+                return TypeCode.String;
+            }
             else
             {
                 return TypeCode.Object;
