@@ -949,19 +949,39 @@ namespace Enyim.Caching
 				return GetExpiration(DateTime.Now.Add(validFor));
 
 			return seconds;
-		}
+        }
 
-		protected static uint GetExpiration(DateTime expiresAt)
-		{
-			if (expiresAt < UnixEpoch) throw new ArgumentOutOfRangeException("expiresAt", "expiresAt must be >= 1970/1/1");
+        //this method has a bug  - why use UnixEpoch?
+        //protected static uint GetExpiration(DateTime expiresAt)
+        //{
+        //	if (expiresAt < UnixEpoch) throw new ArgumentOutOfRangeException("expiresAt", "expiresAt must be >= 1970/1/1");
 
-			// accept MaxValue as infinite
-			if (expiresAt == DateTime.MaxValue) return 0;
+        //	// accept MaxValue as infinite
+        //	if (expiresAt == DateTime.MaxValue) return 0;
 
-			uint retval = (uint)(expiresAt.ToUniversalTime() - UnixEpoch).TotalSeconds;
+        //	uint retval = (uint)(expiresAt.ToUniversalTime() - UnixEpoch).TotalSeconds;
 
-			return retval;
-		}
+        //	return retval;
+        //}
+
+
+        /// <summary>
+        /// add by dylan  to fix method GetExpiration bug
+        /// </summary>
+        /// <param name="expiresAt"></param>
+        /// <returns></returns>
+        protected static uint GetExpiration(DateTime expiresAt)
+	    {
+            if (expiresAt <= DateTime.Now || expiresAt == DateTime.MaxValue)
+                return 0;
+
+            TimeSpan thirtyDays = new TimeSpan(29, 23, 59, 59);
+            if (expiresAt.Subtract(DateTime.Now) > thirtyDays)
+                return (uint)thirtyDays.TotalSeconds;
+
+            return (uint)expiresAt.Subtract(DateTime.Now).TotalSeconds;
+        }
+	   
 
 		#endregion
 		#region [ IDisposable                  ]
@@ -1005,7 +1025,7 @@ namespace Enyim.Caching
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
