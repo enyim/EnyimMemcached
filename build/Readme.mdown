@@ -1,3 +1,0 @@
-See "get-help .\build.ps1" from the Windows PowerShell 2.0 prompt.
-
-Build parameters should be adjusted in the 'parameters.ps1' first.
