@@ -1,15 +1,13 @@
 language: csharp
 sudo: required
 dist: trusty
-addons:
-  apt:
-    packages:
-    - memcached
 matrix:
   include:
     - dotnet: 1.0.1
       mono: none
-      env: DOTNETCORE=1    
+      env: DOTNETCORE=1
+services:
+  - memcached        
 env:
   global:
     - DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
