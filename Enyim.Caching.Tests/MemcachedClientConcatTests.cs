@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	[TestFixture]
 	public class MemcachedClientConcatTests : MemcachedClientTestsBase
 	{
-		[Test]
+		[Fact]
 		public void When_Appending_To_Existing_Value_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("concat");
@@ -20,30 +19,30 @@ namespace Enyim.Caching.Tests
 
 			var toAppend = "The End";
 			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(toAppend));
-			var concatResult = _Client.ExecuteAppend(key, data);
+			var concatResult = _client.ExecuteAppend(key, data);
 			ConcatAssertPass(concatResult);
 
-			var getResult = _Client.ExecuteGet(key);
+			var getResult = _client.ExecuteGet(key);
 			GetAssertPass(getResult, value + toAppend);
 
 		}
 
-		[Test]
+		[Fact]
 		public void When_Appending_To_Invalid_Key_Result_Is_Not_Successful()
 		{
 			var key = GetUniqueKey("concat");
 
 			var toAppend = "The End";
 			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(toAppend));
-			var concatResult = _Client.ExecuteAppend(key, data);
+			var concatResult = _client.ExecuteAppend(key, data);
 			ConcatAssertFail(concatResult);
 
-			var getResult = _Client.ExecuteGet(key);
+			var getResult = _client.ExecuteGet(key);
 			GetAssertFail(getResult);
 
 		}
 
-		[Test]
+		[Fact]
 		public void When_Prepending_To_Existing_Value_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("concat");
@@ -54,30 +53,30 @@ namespace Enyim.Caching.Tests
 
 			var toPrepend = "The Beginning";
 			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(toPrepend));
-			var concatResult = _Client.ExecutePrepend(key, data);
+			var concatResult = _client.ExecutePrepend(key, data);
 			ConcatAssertPass(concatResult);
 
-			var getResult = _Client.ExecuteGet(key);
+			var getResult = _client.ExecuteGet(key);
 			GetAssertPass(getResult, toPrepend + value);
 
 		}
 
-		[Test]
+		[Fact]
 		public void When_Prepending_To_Invalid_Key_Result_Is_Not_Successful()
 		{
 			var key = GetUniqueKey("concat");
 
 			var toPrepend = "The End";
 			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(toPrepend));
-			var concatResult = _Client.ExecutePrepend(key, data);
+			var concatResult = _client.ExecutePrepend(key, data);
 			ConcatAssertFail(concatResult);
 
-			var getResult = _Client.ExecuteGet(key);
+			var getResult = _client.ExecuteGet(key);
 			GetAssertFail(getResult);
 
 		}
 
-		[Test]
+		[Fact]
 		public void When_Appending_To_Existing_Value_Result_Is_Successful_With_Valid_Cas()
 		{
 			var key = GetUniqueKey("concat");
@@ -88,15 +87,15 @@ namespace Enyim.Caching.Tests
 
 			var toAppend = "The End";
 			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(toAppend));
-			var concatResult = _Client.ExecuteAppend(key, storeResult.Cas, data);
+			var concatResult = _client.ExecuteAppend(key, storeResult.Cas, data);
 			ConcatAssertPass(concatResult);
 
-			var getResult = _Client.ExecuteGet(key);
+			var getResult = _client.ExecuteGet(key);
 			GetAssertPass(getResult, value + toAppend);
 
 		}
 
-		[Test]
+		[Fact]
 		public void When_Appending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
 		{
 			var key = GetUniqueKey("concat");
@@ -107,11 +106,11 @@ namespace Enyim.Caching.Tests
 
 			var toAppend = "The End";
 			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(toAppend));
-			var concatResult = _Client.ExecuteAppend(key, storeResult.Cas - 1, data);
+			var concatResult = _client.ExecuteAppend(key, storeResult.Cas - 1, data);
 			ConcatAssertFail(concatResult);
 		}
 
-		[Test]
+		[Fact]
 		public void When_Prepending_To_Existing_Value_Result_Is_Successful_With_Valid_Cas()
 		{
 			var key = GetUniqueKey("concat");
@@ -122,15 +121,15 @@ namespace Enyim.Caching.Tests
 
 			var tpPrepend = "The Beginning";
 			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(tpPrepend));
-			var concatResult = _Client.ExecuteAppend(key, storeResult.Cas, data);
+			var concatResult = _client.ExecuteAppend(key, storeResult.Cas, data);
 			ConcatAssertPass(concatResult);
 
-			var getResult = _Client.ExecuteGet(key);
+			var getResult = _client.ExecuteGet(key);
 			GetAssertPass(getResult, value + tpPrepend);
 
 		}
 
-		[Test]
+		[Fact]
 		public void When_Prepending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
 		{
 			var key = GetUniqueKey("concat");
@@ -141,7 +140,7 @@ namespace Enyim.Caching.Tests
 
 			var tpPrepend = "The Beginning";
 			var data = new ArraySegment<byte>(Encoding.ASCII.GetBytes(tpPrepend));
-			var concatResult = _Client.ExecuteAppend(key, storeResult.Cas - 1, data);
+			var concatResult = _client.ExecuteAppend(key, storeResult.Cas - 1, data);
 			ConcatAssertFail(concatResult);
 
 		}
