@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 dotnet restore
-dotnet build
+dotnet build -c Release
