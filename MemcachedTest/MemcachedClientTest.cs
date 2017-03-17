@@ -4,27 +4,32 @@ using System.Threading;
 using Enyim.Caching;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
-using NUnit.Framework;
 using System.Collections.Generic;
 using System.Text;
+using Xunit;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace MemcachedTest
 {
-	[TestFixture]
 	public abstract class MemcachedClientTest
 	{
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MemcachedClientTest));
 		public const string TestObjectKey = "Hello_World";
 
-		protected abstract MemcachedClient GetClient();
+		protected virtual MemcachedClient GetClient()
+        {
+            IServiceCollection services = new ServiceCollection();
+            services.AddEnyimMemcached(options => options.AddServer("localhost", 11211));
+            services.AddLogging();
+            IServiceProvider serviceProvider = services.BuildServiceProvider();
+            var client =  serviceProvider.GetService<IMemcachedClient>() as MemcachedClient;
+            client.Remove("VALUE");
+            client.FlushAll();
+            return client;
+        }
 
-		[TestFixtureSetUp]
-		public void Setup()
-		{
-			log4net.Config.XmlConfigurator.Configure();
-		}
-
-		[global::System.Serializable]
 		public class TestData
 		{
 			public TestData() { }
@@ -38,8 +43,8 @@ namespace MemcachedTest
 		/// <summary>
 		///A test for Store (StoreMode, string, byte[], int, int)
 		///</summary>
-		[TestCase]
-		public void StoreObjectTest()
+		[Fact]
+		public async Task StoreObjectTest()
 		{
 			TestData td = new TestData();
 			td.FieldA = "Hello";
@@ -49,11 +54,11 @@ namespace MemcachedTest
 
 			using (MemcachedClient client = GetClient())
 			{
-				Assert.IsTrue(client.Store(StoreMode.Set, TestObjectKey, td));
+				Assert.True(await client.StoreAsync(StoreMode.Set, TestObjectKey, td, DateTime.Now.AddSeconds(5)));
 			}
 		}
 
-		[TestCase]
+		[Fact]
 		public void GetObjectTest()
 		{
 			TestData td = new TestData();
@@ -64,70 +69,55 @@ namespace MemcachedTest
 
 			using (MemcachedClient client = GetClient())
 			{
-				Assert.IsTrue(client.Store(StoreMode.Set, TestObjectKey, td), "Initialization failed.");
+				Assert.True(client.Store(StoreMode.Set, TestObjectKey, td), "Initialization failed.");
 
 				TestData td2 = client.Get<TestData>(TestObjectKey);
 
-				Assert.IsNotNull(td2, "Get returned null.");
-				Assert.AreEqual(td2.FieldA, "Hello", "Object was corrupted.");
-				Assert.AreEqual(td2.FieldB, "World", "Object was corrupted.");
-				Assert.AreEqual(td2.FieldC, 19810619, "Object was corrupted.");
-				Assert.AreEqual(td2.FieldD, true, "Object was corrupted.");
-				Assert.Catch(() => client.Get((string)null));
-				Assert.Catch(() => client.Get(String.Empty));
+				Assert.NotNull(td2);
+				Assert.Equal(td2.FieldA, "Hello");
+				Assert.Equal(td2.FieldB, "World");
+				Assert.Equal(td2.FieldC, 19810619);
+				Assert.True(td2.FieldD, "Object was corrupted.");
 			}
 		}
 
-		[TestCase]
+		[Fact]
 		public void DeleteObjectTest()
 		{
 			using (MemcachedClient client = GetClient())
 			{
 				TestData td = new TestData();
-				Assert.IsTrue(client.Store(StoreMode.Set, TestObjectKey, td), "Initialization failed.");
+				Assert.True(client.Store(StoreMode.Set, TestObjectKey, td), "Initialization failed.");
 
-				Assert.IsTrue(client.Remove(TestObjectKey), "Remove failed.");
-				Assert.IsNull(client.Get(TestObjectKey), "Remove failed.");
+				Assert.True(client.Remove(TestObjectKey), "Remove failed.");
+				Assert.Null(client.Get(TestObjectKey));
 			}
 		}
 
-		[TestCase]
-		public void StoreStringTest()
+		[Fact]
+		public async Task StoreStringTest()
 		{
 			using (MemcachedClient client = GetClient())
 			{
-				Assert.IsTrue(client.Store(StoreMode.Set, "TestString", "Hello world!"), "StoreString failed.");
+				Assert.True(await client.StoreAsync(StoreMode.Set, "TestString", "Hello world!", DateTime.Now.AddSeconds(10)), "StoreString failed.");
 
-				Assert.AreEqual("Hello world!", client.Get<string>("TestString"));
+				Assert.Equal("Hello world!", await client.GetValueAsync<string>("TestString"));
 			}
 		}
+		
 
-		[TestCase]
-		public void StoreNullTest()
-		{
-			using (MemcachedClient client = GetClient())
-			{
-				Assert.IsTrue(client.Store(StoreMode.Set, "TestNull", null), "StoreNull failed.");
-
-				object retval;
-
-				Assert.IsTrue(client.TryGet("TestNull", out retval), "Failed to retrieve TestNull");
-				Assert.IsNull(retval, "Retval should be null");
-			}
-		}
-
-		[TestCase]
+		[Fact]
 		public void StoreLongTest()
 		{
 			using (MemcachedClient client = GetClient())
 			{
-				Assert.IsTrue(client.Store(StoreMode.Set, "TestLong", 65432123456L), "StoreLong failed.");
+				Assert.True(client.Store(StoreMode.Set, "TestLong", 65432123456L), "StoreLong failed.");
 
-				Assert.AreEqual(65432123456L, client.Get<long>("TestLong"));
+				Assert.Equal(65432123456L, client.Get<long>("TestLong"));
 			}
 		}
 
-		[TestCase]
+		[Fact]
 		public void StoreArrayTest()
 		{
 			byte[] bigBuffer = new byte[200 * 1024];
@@ -142,7 +132,7 @@ namespace MemcachedTest
 
 			using (MemcachedClient client = GetClient())
 			{
-				Assert.IsTrue(client.Store(StoreMode.Set, "BigBuffer", bigBuffer), "StoreArray failed");
+				Assert.True(client.Store(StoreMode.Set, "BigBuffer", bigBuffer), "StoreArray failed");
 
 				byte[] bigBuffer2 = client.Get<byte[]>("BigBuffer");
 
@@ -152,7 +142,7 @@ namespace MemcachedTest
 					{
 						if (bigBuffer2[i * 256 + j] != (byte)j)
 						{
-							Assert.AreEqual(j, bigBuffer[i * 256 + j], "Data should be {0} but its {1}");
+							Assert.Equal(j, bigBuffer[i * 256 + j]);
 							break;
 						}
 					}
@@ -160,92 +150,79 @@ namespace MemcachedTest
 			}
 		}
 
-		[TestCase]
-		public void ExpirationTestTimeSpan()
+		[Fact]
+		public async Task ExpirationTestTimeSpan()
 		{
 			using (MemcachedClient client = GetClient())
 			{
-				Assert.IsTrue(client.Store(StoreMode.Set, "ExpirationTest:TimeSpan", "ExpirationTest:TimeSpan", new TimeSpan(0, 0, 5)), "Expires:Timespan failed");
-				Assert.AreEqual("ExpirationTest:TimeSpan", client.Get("ExpirationTest:TimeSpan"), "Expires:Timespan store failed");
+                await client.RemoveAsync("ExpirationTest:TimeSpan");
+				Assert.True(await client.StoreAsync(StoreMode.Set, "ExpirationTest:TimeSpan", "ExpirationTest:TimeSpan", new TimeSpan(0, 0, 5)), "Expires:Timespan failed");
+				Assert.Equal("ExpirationTest:TimeSpan", await client.GetValueAsync<string>("ExpirationTest:TimeSpan"));
 
 				Thread.Sleep(8000);
-				Assert.IsNull(client.Get("ExpirationTest:TimeSpan"), "ExpirationTest:TimeSpan item did not expire");
+				Assert.Null(await client.GetValueAsync<string>("ExpirationTest:TimeSpan"));
 			}
 		}
 
-		[TestCase]
+		[Fact]
 		public void ExpirationTestDateTime()
 		{
 			using (MemcachedClient client = GetClient())
 			{
 				DateTime expiresAt = DateTime.Now.AddSeconds(5);
 
-				Assert.IsTrue(client.Store(StoreMode.Set, "Expires:DateTime", "Expires:DateTime", expiresAt), "Expires:DateTime failed");
-				Assert.AreEqual("Expires:DateTime", client.Get("Expires:DateTime"), "Expires:DateTime store failed");
+				Assert.True(client.Store(StoreMode.Set, "Expires:DateTime", "Expires:DateTime", expiresAt), "Expires:DateTime failed");
+				Assert.Equal("Expires:DateTime", client.Get("Expires:DateTime"));
 
 				Thread.Sleep(8000);
 
-				Assert.IsNull(client.Get("Expires:DateTime"), "Expires:DateTime item did not expire");
+				Assert.Null(client.Get("Expires:DateTime"));
 			}
 		}
 
-		[TestCase]
+		[Fact]
 		public void AddSetReplaceTest()
 		{
 			using (MemcachedClient client = GetClient())
 			{
 				log.Debug("Cache should be empty.");
 
-				Assert.IsTrue(client.Store(StoreMode.Set, "VALUE", "1"), "Initialization failed");
+				Assert.True(client.Store(StoreMode.Set, "VALUE", "1"), "Initialization failed");
 
 				log.Debug("Setting VALUE to 1.");
 
-				Assert.AreEqual("1", client.Get("VALUE"), "Store failed");
+				Assert.Equal("1", client.Get("VALUE"));
 
 				log.Debug("Adding VALUE; this should return false.");
-				Assert.IsFalse(client.Store(StoreMode.Add, "VALUE", "2"), "Add should have failed");
+				Assert.False(client.Store(StoreMode.Add, "VALUE", "2"), "Add should have failed");
 
 				log.Debug("Checking if VALUE is still '1'.");
-				Assert.AreEqual("1", client.Get("VALUE"), "Item should not have been Added");
+				Assert.Equal("1", client.Get("VALUE"));
 
 				log.Debug("Replacing VALUE; this should return true.");
-				Assert.IsTrue(client.Store(StoreMode.Replace, "VALUE", "4"), "Replace failed");
+				Assert.True(client.Store(StoreMode.Replace, "VALUE", "4"), "Replace failed");
 
 				log.Debug("Checking if VALUE is '4' so it got replaced.");
-				Assert.AreEqual("4", client.Get("VALUE"), "Item should have been replaced");
+				Assert.Equal("4", client.Get("VALUE"));
 
 				log.Debug("Removing VALUE.");
-				Assert.IsTrue(client.Remove("VALUE"), "Remove failed");
+				Assert.True(client.Remove("VALUE"), "Remove failed");
 
 				log.Debug("Replacing VALUE; this should return false.");
-				Assert.IsFalse(client.Store(StoreMode.Replace, "VALUE", "8"), "Replace should not have succeeded");
+				Assert.False(client.Store(StoreMode.Replace, "VALUE", "8"), "Replace should not have succeeded");
 
 				log.Debug("Checking if VALUE is 'null' so it was not replaced.");
-				Assert.IsNull(client.Get("VALUE"), "Item should not have been Replaced");
+				Assert.Null(client.Get("VALUE"));
 
 				log.Debug("Adding VALUE; this should return true.");
-				Assert.IsTrue(client.Store(StoreMode.Add, "VALUE", "16"), "Item should have been Added");
+				Assert.True(client.Store(StoreMode.Add, "VALUE", "16"), "Item should have been Added");
 
 				log.Debug("Checking if VALUE is '16' so it was added.");
-				Assert.AreEqual("16", client.Get("VALUE"), "Add failed");
+				Assert.Equal("16", client.Get("VALUE"));
 
 				log.Debug("Passed AddSetReplaceTest.");
 			}
-		}
-
-		class NonSerializableObject
-		{
-			public string Value;
-		}
-
-		[TestCase]
-		public void NonSerializableTest()
-		{
-			using (MemcachedClient client = GetClient())
-			{
-				Assert.IsFalse(client.Store(StoreMode.Set, "VALUE", new NonSerializableObject()), "Storing a non serializable object should have failed");
-			}
-		}
+		}		
 
 		private string[] keyParts = { "multi", "get", "test", "key", "parts", "test", "values" };
 
@@ -264,7 +241,7 @@ namespace MemcachedTest
 			return sb.ToString();
 		}
 
-		[TestCase]
+		[Fact]
 		public virtual void MultiGetTest()
 		{
 			var prefix = new Random().Next(300) + ":";
@@ -278,14 +255,14 @@ namespace MemcachedTest
 					string k = prefix + "_Hello_Multi_Get_" + i;
 					keys.Add(k);
 
-					Assert.IsTrue(client.Store(StoreMode.Set, k, i), "Store of " + k + " failed");
+					Assert.True(client.Store(StoreMode.Set, k, i), "Store of " + k + " failed");
 				}
 
 				//Thread.Sleep(5000);
 
 				//for (var i = 0; i < 100; i++)
 				//{
-				//    Assert.AreEqual(client.Get(keys[i]), i, "Store of " + keys[i] + " failed");
+				//    Assert.Equal(client.Get(keys[i]), i, "Store of " + keys[i] + " failed");
 				//}
 
 				IDictionary<string, object> retvals = client.Get(keys);
@@ -300,19 +277,19 @@ namespace MemcachedTest
 						Console.WriteLine("missing key: " + key);
 				}
 
-				Assert.AreEqual(keys.Count, retvals.Count, "MultiGet should have returned " + keys.Count + " items.");
+				Assert.Equal(keys.Count, retvals.Count);
 
 				for (int i = 0; i < keys.Count; i++)
 				{
 					string key = keys[i];
 
-					Assert.IsTrue(retvals.TryGetValue(key, out value), "missing key: " + key);
-					Assert.AreEqual(value, i, "Invalid value returned: " + value);
+					Assert.True(retvals.TryGetValue(key, out value), "missing key: " + key);
+					Assert.Equal(value, i);
 				}
 			}
 		}
 
-		[TestCase]
+		[Fact]
 		public virtual void MultiGetWithCasTest()
 		{
 			var prefix = new Random().Next(300) + ":";
@@ -326,7 +303,7 @@ namespace MemcachedTest
 					string k = prefix + "_Cas_Multi_Get_" + i;
 					keys.Add(k);
 
-					Assert.IsTrue(client.Store(StoreMode.Set, k, i), "Store of " + k + " failed");
+					Assert.True(client.Store(StoreMode.Set, k, i), "Store of " + k + " failed");
 				}
 
 				var retvals = client.GetWithCas(keys);
@@ -341,54 +318,29 @@ namespace MemcachedTest
 						Console.WriteLine("missing key: " + key);
 				}
 
-				Assert.AreEqual(keys.Count, retvals.Count, "MultiGet should have returned " + keys.Count + " items.");
+				Assert.Equal(keys.Count, retvals.Count);
 
 				for (int i = 0; i < keys.Count; i++)
 				{
 					string key = keys[i];
 
-					Assert.IsTrue(retvals.TryGetValue(key, out value), "missing key: " + key);
-					Assert.AreEqual(value.Result, i, "Invalid value returned: " + value);
-					Assert.AreNotEqual(value.Cas, 0, key + " key has no cas");
+					Assert.True(retvals.TryGetValue(key, out value), "missing key: " + key);
+					Assert.Equal(value.Result, i);
+					Assert.NotEqual(value.Cas, (ulong)0);
 				}
 			}
 		}
 
-		[TestCase]
-		public void FlushTest()
-		{
-			using (MemcachedClient client = GetClient())
-			{
-				Assert.IsTrue(client.Store(StoreMode.Set, "qwer", "1"), "Initialization failed");
-				Assert.IsTrue(client.Store(StoreMode.Set, "tyui", "1"), "Initialization failed");
-				Assert.IsTrue(client.Store(StoreMode.Set, "polk", "1"), "Initialization failed");
-				Assert.IsTrue(client.Store(StoreMode.Set, "mnbv", "1"), "Initialization failed");
-				Assert.IsTrue(client.Store(StoreMode.Set, "zxcv", "1"), "Initialization failed");
-				Assert.IsTrue(client.Store(StoreMode.Set, "gfsd", "1"), "Initialization failed");
-
-				Assert.AreEqual("1", client.Get("mnbv"), "Setup for FlushAll() failed");
-
-				client.FlushAll();
-
-				Assert.IsNull(client.Get("qwer"), "FlushAll() failed.");
-				Assert.IsNull(client.Get("tyui"), "FlushAll() failed.");
-				Assert.IsNull(client.Get("polk"), "FlushAll() failed.");
-				Assert.IsNull(client.Get("mnbv"), "FlushAll() failed.");
-				Assert.IsNull(client.Get("zxcv"), "FlushAll() failed.");
-				Assert.IsNull(client.Get("gfsd"), "FlushAll() failed.");
-			}
-		}
-
-		[TestCase]
+		[Fact]
 		public void IncrementLongTest()
 		{
 			var initialValue = 56UL * (ulong)System.Math.Pow(10, 11) + 1234;
 
 			using (MemcachedClient client = GetClient())
 			{
-				Assert.AreEqual(initialValue, client.Increment("VALUE", initialValue, 2UL), "Non-existing value should be set to default");
-				Assert.AreEqual(initialValue + 24, client.Increment("VALUE", 10UL, 24UL));
-			}
+                Assert.Equal(initialValue, client.Increment("VALUE", initialValue, 2UL));
+                Assert.Equal(initialValue + 24, client.Increment("VALUE", 10UL, 24UL));
+            }
 		}
 	}
 }
