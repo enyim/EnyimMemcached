@@ -26,7 +26,7 @@ namespace Enyim.Caching.Tests
         protected string GetUniqueKey(string prefix = null)
         {
             return (!string.IsNullOrEmpty(prefix) ? prefix + "_" : "") +
-                "unit_test_" + DateTime.Now.Ticks;
+                "unit_test_" + DateTime.Now.Ticks + "_" + Guid.NewGuid();
         }
 
         protected IEnumerable<string> GetUniqueKeys(string prefix = null, int max = 5)

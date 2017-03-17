@@ -14,7 +14,7 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("concat");
 			var value = GetRandomString();
 
-			var storeResult = Store(key: key);
+			var storeResult = Store(key: key, value: value);
 			StoreAssertPass(storeResult);
 
 			var toAppend = "The End";
@@ -48,7 +48,7 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("concat");
 			var value = GetRandomString();
 
-			var storeResult = Store(key: key);
+			var storeResult = Store(key: key, value: value);
 			StoreAssertPass(storeResult);
 
 			var toPrepend = "The Beginning";
@@ -82,7 +82,7 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("concat");
 			var value = GetRandomString();
 
-			var storeResult = Store(key: key);
+			var storeResult = Store(key: key, value: value);
 			StoreAssertPass(storeResult);
 
 			var toAppend = "The End";
@@ -101,7 +101,7 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("concat");
 			var value = GetRandomString();
 
-			var storeResult = Store(key: key);
+			var storeResult = Store(key: key, value: value);
 			StoreAssertPass(storeResult);
 
 			var toAppend = "The End";
@@ -116,7 +116,7 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("concat");
 			var value = GetRandomString();
 
-			var storeResult = Store(key: key);
+			var storeResult = Store(key: key, value: value);
 			StoreAssertPass(storeResult);
 
 			var tpPrepend = "The Beginning";
@@ -135,7 +135,7 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("concat");
 			var value = GetRandomString();
 
-			var storeResult = Store(key: key);
+			var storeResult = Store(key: key, value: value);
 			StoreAssertPass(storeResult);
 
 			var tpPrepend = "The Beginning";
