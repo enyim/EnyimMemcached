@@ -21,12 +21,11 @@ namespace MemcachedTest
 		protected virtual MemcachedClient GetClient()
         {
             IServiceCollection services = new ServiceCollection();
-            services.AddEnyimMemcached(options => options.AddServer("localhost", 11211));
+            services.AddEnyimMemcached(options => options.AddServer("memcached", 11211));
             services.AddLogging();
             IServiceProvider serviceProvider = services.BuildServiceProvider();
             var client =  serviceProvider.GetService<IMemcachedClient>() as MemcachedClient;
             client.Remove("VALUE");
-            client.FlushAll();
             return client;
         }
 
@@ -242,47 +241,30 @@ namespace MemcachedTest
 		}
 
 		[Fact]
-		public virtual void MultiGetTest()
+		public async Task MultiGetTest()
 		{
-			var prefix = new Random().Next(300) + ":";
-			// note, this test will fail, if memcached version is < 1.2.4
 			using (var client = GetClient())
 			{
 				var keys = new List<string>();
 
-				for (int i = 0; i < 1000; i++)
+				for (int i = 0; i < 100; i++)
 				{
-					string k = prefix + "_Hello_Multi_Get_" + i;
+					string k = $"Hello_Multi_Get_{Guid.NewGuid()}_" + i;
 					keys.Add(k);
 
-					Assert.True(client.Store(StoreMode.Set, k, i), "Store of " + k + " failed");
+					Assert.True(await client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(300)), "Store of " + k + " failed");
 				}
-
-				//Thread.Sleep(5000);
-
-				//for (var i = 0; i < 100; i++)
-				//{
-				//    Assert.Equal(client.Get(keys[i]), i, "Store of " + keys[i] + " failed");
-				//}
 
 				IDictionary<string, object> retvals = client.Get(keys);
 
-				object value;
-
-				for (int i = 0; i < keys.Count; i++)
-				{
-					string key = keys[i];
-
-					if (!retvals.TryGetValue(key, out value))
-						Console.WriteLine("missing key: " + key);
-				}
-
+                Assert.NotEmpty(retvals);
 				Assert.Equal(keys.Count, retvals.Count);
 
-				for (int i = 0; i < keys.Count; i++)
+                object value = 0;
+                for (int i = 0; i < keys.Count; i++)
 				{
 					string key = keys[i];
-
+                    
 					Assert.True(retvals.TryGetValue(key, out value), "missing key: " + key);
 					Assert.Equal(value, i);
 				}
@@ -290,33 +272,23 @@ namespace MemcachedTest
 		}
 
 		[Fact]
-		public virtual void MultiGetWithCasTest()
+		public virtual async Task MultiGetWithCasTest()
 		{
-			var prefix = new Random().Next(300) + ":";
-			// note, this test will fail, if memcached version is < 1.2.4
 			using (var client = GetClient())
 			{
 				var keys = new List<string>();
 
-				for (int i = 0; i < 1000; i++)
+				for (int i = 0; i < 100; i++)
 				{
-					string k = prefix + "_Cas_Multi_Get_" + i;
+					string k = $"Hello_Multi_Get_{Guid.NewGuid()}_" + i;
 					keys.Add(k);
 
-					Assert.True(client.Store(StoreMode.Set, k, i), "Store of " + k + " failed");
+					Assert.True(await client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(300)), "Store of " + k + " failed");
 				}
 
 				var retvals = client.GetWithCas(keys);
 
 				CasResult<object> value;
-
-				for (int i = 0; i < keys.Count; i++)
-				{
-					string key = keys[i];
-
-					if (!retvals.TryGetValue(key, out value))
-						Console.WriteLine("missing key: " + key);
-				}
 
 				Assert.Equal(keys.Count, retvals.Count);
 

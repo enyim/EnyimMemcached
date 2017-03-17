@@ -18,7 +18,7 @@ namespace MemcachedTest
 		public void TestIfCalled()
 		{
             IServiceCollection services = new ServiceCollection();
-            services.AddEnyimMemcached(options => options.AddServer("localhost", 11212));
+            services.AddEnyimMemcached(options => options.AddServer("memcached", 11212));
             services.AddLogging();
             IServiceProvider serviceProvider = services.BuildServiceProvider();
 

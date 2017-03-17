@@ -1,5 +1,6 @@
 using Enyim.Caching;
 using Enyim.Caching.Memcached;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace MemcachedTest
@@ -33,16 +34,15 @@ namespace MemcachedTest
         }
 
         [Fact]
-        public void IncrementNoDefaultTest()
+        public async Task IncrementNoDefaultTest()
         {
             using (MemcachedClient client = GetClient())
             {
-                Assert.Null(client.Get("VALUE"));
-
                 Assert.Equal((ulong)2, client.Increment("VALUE", 2, 2));
+                Assert.Equal((ulong)4, client.Increment("VALUE", 2, 2));
 
-                var value = client.Get("VALUE");
-                Assert.Equal("2", value);
+                var value = await client.GetValueAsync<string>("VALUE");
+                Assert.Equal("4", value);
             }
         }
 

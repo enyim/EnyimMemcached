@@ -17,7 +17,7 @@ namespace Enyim.Caching.Tests
         public MemcachedClientTestsBase()
         {
             IServiceCollection services = new ServiceCollection();
-            services.AddEnyimMemcached(options => options.AddServer("localhost", 11211));
+            services.AddEnyimMemcached(options => options.AddServer("memcached", 11211));
             services.AddLogging();
             IServiceProvider serviceProvider = services.BuildServiceProvider();
             _client = serviceProvider.GetService<IMemcachedClient>() as MemcachedClient;

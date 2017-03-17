@@ -7,7 +7,10 @@ matrix:
       mono: none
       env: DOTNETCORE=1
 services:
-  - memcached        
+  - memcached  
+addons:
+  hosts:
+    - memcached      
 env:
   global:
     - DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -24,9 +27,3 @@ branches:
 script:
   - ./build.sh
   - ./run-test.sh
-#notifications:
-#  webhooks:
-#    secure: ""
-#  on_success: always
-#  on_failure: always
-#  on_start: always
