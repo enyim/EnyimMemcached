@@ -1,0 +1,25 @@
+language: csharp
+mono: none
+dotnet: 1.0.1
+sudo: required
+dist: trusty
+services:
+  - memcached  
+addons:
+  hosts:
+    - memcached      
+env:
+  global:
+    - DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+    - DOTNET_CLI_TELEMETRY_OPTOUT: 1
+os:
+  - linux
+branches:
+  only:
+    - master
+    - release
+    - dev
+    - migrate-tests-to-core
+script:
+  - ./build.sh
+  - ./run-test.sh

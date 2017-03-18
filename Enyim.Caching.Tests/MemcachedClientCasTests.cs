@@ -1,19 +1,17 @@
-﻿using System;
+﻿using Enyim.Caching.Memcached;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NUnit.Framework;
-using Enyim.Caching.Memcached;
-using Enyim.Caching.Memcached.Results;
+using Xunit;
 
 namespace Enyim.Caching.Tests
 {
 
-	[TestFixture(Description = "MemcachedClient Store Tests")]
 	public class MemcachedClientCasTests : MemcachedClientTestsBase
 	{
 
-		[Test]
+		[Fact]
 		public void When_Storing_Item_With_Valid_Cas_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("cas");
@@ -21,11 +19,11 @@ namespace Enyim.Caching.Tests
 			var storeResult = Store(StoreMode.Add, key, value);
 			StoreAssertPass(storeResult);
 
-			var casResult = _Client.ExecuteCas(StoreMode.Set, key, value, storeResult.Cas);
+			var casResult = _client.ExecuteCas(StoreMode.Set, key, value, storeResult.Cas);
 			StoreAssertPass(casResult);
 		}
 
-		[Test]
+		[Fact]
 		public void When_Storing_Item_With_Invalid_Cas_Result_Is_Not_Successful()
 		{
 			var key = GetUniqueKey("cas");
@@ -33,7 +31,7 @@ namespace Enyim.Caching.Tests
 			var storeResult = Store(StoreMode.Add, key, value);
 			StoreAssertPass(storeResult);
 
-			var casResult = _Client.ExecuteCas(StoreMode.Set, key, value, storeResult.Cas - 1);
+			var casResult = _client.ExecuteCas(StoreMode.Set, key, value, storeResult.Cas - 1);
 			StoreAssertFail(casResult);
 		}
 

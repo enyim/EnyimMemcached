@@ -119,9 +119,51 @@ namespace Enyim.Caching
         [Obsolete]
         public T Get<T>(string key)
         {
-            object tmp;
+            var hashedKey = this.keyTransformer.Transform(key);
+            var node = this.pool.Locate(key);
 
-            return TryGet(key, out tmp) ? (T)tmp : default(T);
+            if (node != null)
+            {
+                try
+                {
+                    var command = this.pool.OperationFactory.Get(key);
+                    var commandResult = node.Execute(command);
+
+                    if (commandResult.Success)
+                    {
+                        if (typeof(T).GetTypeCode() == TypeCode.Object && typeof(T) != typeof(Byte[]))
+                        {
+                            return this.transcoder.Deserialize<T>(command.Result);
+                        }
+                        else
+                        {
+                            var tempResult = this.transcoder.Deserialize(command.Result);
+                            if (tempResult != null)
+                            {
+                                if (typeof(T) == typeof(Guid))
+                                {
+                                    return (T)(object)new Guid((string)tempResult);
+                                }
+                                else
+                                {
+                                    return (T)tempResult;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(0, ex, $"{nameof(GetAsync)}(\"{key}\")");
+                    throw ex;
+                }
+            }
+            else
+            {
+                _logger.LogError($"Unable to locate memcached node");
+            }
+
+            return default(T);
         }
 
         public async Task<IGetOperationResult<T>> GetAsync<T>(string key)

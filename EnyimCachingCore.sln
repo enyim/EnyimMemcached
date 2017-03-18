@@ -1,11 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.4
+VisualStudioVersion = 15.0.26228.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Enyim.Caching", "Enyim.Caching\Enyim.Caching.csproj", "{0EC50FBB-03B7-4B76-9D72-AADCB8BB3A8B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWebApp", "SampleWebApp\SampleWebApp.csproj", "{7F795CB9-6058-4137-B069-12C1B8D4132B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Enyim.Caching.Tests", "Enyim.Caching.Tests\Enyim.Caching.Tests.csproj", "{FAF5E655-9ED4-4934-94F9-F0EDB77143AC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MemcachedTest", "MemcachedTest\MemcachedTest.csproj", "{3DDAC26F-8B56-4F69-8C69-A3CB6CF6B12B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +25,14 @@ Global
 		{7F795CB9-6058-4137-B069-12C1B8D4132B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7F795CB9-6058-4137-B069-12C1B8D4132B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7F795CB9-6058-4137-B069-12C1B8D4132B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FAF5E655-9ED4-4934-94F9-F0EDB77143AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAF5E655-9ED4-4934-94F9-F0EDB77143AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAF5E655-9ED4-4934-94F9-F0EDB77143AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAF5E655-9ED4-4934-94F9-F0EDB77143AC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DDAC26F-8B56-4F69-8C69-A3CB6CF6B12B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DDAC26F-8B56-4F69-8C69-A3CB6CF6B12B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DDAC26F-8B56-4F69-8C69-A3CB6CF6B12B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DDAC26F-8B56-4F69-8C69-A3CB6CF6B12B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
