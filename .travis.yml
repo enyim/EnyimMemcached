@@ -20,4 +20,4 @@ branches:
     - dotnetcore
 script:
   - ./build.sh
-  - ./run-test.sh
+  - ./test.sh
