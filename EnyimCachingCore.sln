@@ -11,6 +11,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Enyim.Caching.Tests", "Enyi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MemcachedTest", "MemcachedTest\MemcachedTest.csproj", "{3DDAC26F-8B56-4F69-8C69-A3CB6CF6B12B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{597372A2-9EE1-4A10-96FE-9D4E3AC85676}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{46CD2BBA-9846-42FA-823B-D03F68F81647}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sample", "sample", "{9954C92E-50E2-477C-AC47-31C857C46370}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +42,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0EC50FBB-03B7-4B76-9D72-AADCB8BB3A8B} = {597372A2-9EE1-4A10-96FE-9D4E3AC85676}
+		{7F795CB9-6058-4137-B069-12C1B8D4132B} = {9954C92E-50E2-477C-AC47-31C857C46370}
+		{FAF5E655-9ED4-4934-94F9-F0EDB77143AC} = {46CD2BBA-9846-42FA-823B-D03F68F81647}
+		{3DDAC26F-8B56-4F69-8C69-A3CB6CF6B12B} = {46CD2BBA-9846-42FA-823B-D03F68F81647}
 	EndGlobalSection
 EndGlobal
