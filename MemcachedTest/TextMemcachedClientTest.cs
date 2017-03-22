@@ -1,5 +1,6 @@
 using Enyim.Caching;
 using Enyim.Caching.Memcached;
+using System;
 using Xunit;
 
 namespace MemcachedTest
@@ -60,6 +61,20 @@ namespace MemcachedTest
 				Assert.Equal(r5.Result, "baz");
 			}
 		}
+
+
+        [Fact]
+        public void StoreWithTimeSpan()
+        {
+            using (MemcachedClient client = GetClient(MemcachedProtocol.Text))
+            {
+                var key = "abc";
+                var value = "core memcache write";
+                bool success = client.Store(Enyim.Caching.Memcached.StoreMode.Set, key, value, new TimeSpan(0, 10, 0));
+                Assert.True(success);
+                Assert.Equal(value, client.Get<string>(key));
+            }
+        }
     }
 }
 
