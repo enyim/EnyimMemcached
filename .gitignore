@@ -11,3 +11,6 @@ Tester/
 TestResults/
 output/
 TestResult*.xml
+*.lock.json
+*.nuget.props
+*.nuget.targets

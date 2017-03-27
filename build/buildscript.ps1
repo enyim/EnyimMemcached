@@ -4,8 +4,8 @@ $solution_dir = Resolve-Path "$build_dir\.."
 $out_dir = (md "$solution_dir\output\" -force)
 $solution_file = Resolve-Path "$solution_dir\Enyim.Caching.sln"
 
-$package_push_urls = @{ "myget"="https://www.myget.org/F/enyimmemcached/api/v2/package"; "nuget"=""; }
-$symbol_push_urls = @{ "myget"="https://www.myget.org/F/enyimmemcached/symbols/api/v2/package"; "nuget"="https://nuget.gw.symbolsource.org/Public/NuGet"; }
+$package_push_urls = @{ "myget"="https://www.myget.org/F/enyimmemcached/api/v2/package"; "nuget"="https://www.nuget.org/api/v2/package"; }
+$symbol_push_urls = @{ "myget"="https://www.myget.org/F/enyimmemcached/symbols/api/v2/package"; "nuget"=""; }
 
 #
 # build script
@@ -109,29 +109,28 @@ Task Pack -description "Build the nuget packages" -Depends Test {
 
 Task Push -description "Push the Nuget packages to `$push_target" -depends Pack {
 
-	$target = $package_push_urls[$push_target]
-	assert (![String]::IsNullOrWhiteSpace($target)) "Invalid package host: $push_target"
+	assert ($package_push_urls.ContainsKey($push_target)) "Invalid package host: $push_target"
 	assert (![String]::IsNullOrWhiteSpace($push_key)) "Invalid or missing API key."
 
+	$target = $package_push_urls[$push_target]
 	$v = Get-ProjectVersion $solution_dir
 
 	(gci $out_dir "*$( $v.NuGet ).nupkg") | % {
 
 		$package = $_.FullName
 
-		Write-Host -ForegroundColor Green "`nPushing package $($_.Name) to $target"
+		Write-Host -ForegroundColor Green "`nPushing package $($_.Name) to '$push_target'"
 
 		Exec { Nuget-Push $package -apikey $push_key -target $target }
 
 		$symbols = [System.IO.Path]::ChangeExtension($_.FullName, ".symbols.nupkg")
 		$symbol_target = $symbol_push_urls[$push_target]
 
-		if ($symbol_target) {
-			Write-Host "  Pushing symbol package $( [System.IO.Path]::GetFileName($symbols) ) to $target"
-			Exec { Nuget-Push $symbols -apikey $push_key -target $target }
-
-			Write-Host "  Pushing symbol package $( [System.IO.Path]::GetFileName($symbols) ) to $symbol_target"
-			Exec { Nuget-Push $symbols  -apikey $push_key -target $symbol_target }
+		# empty symbol url means the target we are using do not support/need symbol packages
+		# (e.g. nugetpushes symbols automatically)
+		if ($symbol_target -and (test-path $symbols)) {
+			Write-Host "  Pushing symbol package $( [System.IO.Path]::GetFileName($symbols) ) to '$push_target'"
+			Exec { Nuget-Push $symbols -apikey $push_key -target ($symbol_push_urls[$push_target]) }
 		}
 	}
 }
@@ -154,9 +153,11 @@ function bootstrap {
 
 	set-location $solution_dir
 
+	# install all tools we are using (x/nunit, etc)
 	[string] $packages_dir = (md "$solution_dir\packages" -force)
 	Exec { & "$build_dir\nuget" restore "$build_dir\packages.config" -PackagesDirectory $packages_dir }
 
+	# add all tools to PATH
 	$packages_config = [xml](gc "$build_dir\packages.config")
 	$extras = $packages_config.packages.package | % { resolve-path "$packages_dir\$( $_.id ).$( $_.version )\tools" }
 	$extras = $extras -join ";"
@@ -174,6 +175,11 @@ function do-build($target, $project, $properties) {
 									-Properties $properties
 	}
 }
+
+#
+# install tools, configure search path
+#
+#
 
 bootstrap
 

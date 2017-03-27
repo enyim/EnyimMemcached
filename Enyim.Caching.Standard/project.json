@@ -1,0 +1,40 @@
+{
+	"version": "1.0.0-*",
+	"buildOptions": {
+		"optimize": true,
+		"debugType": "portable",
+		"emitEntryPoint": false,
+		"allowUnsafe": true,
+		"compile": {
+			"include": "../Enyim.Caching.Shared/**/*.cs"
+		}
+	},
+	"dependencies": {
+		"System.Runtime.Analyzers": {
+			"type": "build",
+			"version": "1.1.0"
+		}
+	},
+	"frameworks": {
+		"netstandard1.5": {
+			"buildOptions": { "define": [ "NETSTANDARD", "NETSTANDARD53" ] },
+			"dependencies": {
+				"NETStandard.Library": {
+					"type": "platform",
+					"version": "1.6.0"
+				},
+				"System.Net.NameResolution": "4.0.0",
+				"System.Threading.Thread": "4.0.0"
+			}
+		},
+		"net45": {
+			"buildOptions": { "define": [ "NETFX", "NET45" ] },
+			"frameworkAssemblies": {
+				"System.Runtime.Serialization": "",
+				"System.Configuration": "",
+				"System.Configuration.Install": "",
+				"System.Xml": ""
+			}
+		}
+	}
+}

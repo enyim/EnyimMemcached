@@ -47,13 +47,6 @@ namespace MemcachedTest
 			Assert.IsInstanceOf(typeof(TestTranscoder), config.CreateTranscoder());
 		}
 
-		[TestCase]
-		public void TestVBucketConfig()
-		{
-			IMemcachedClientConfiguration config = ConfigurationManager.GetSection("test/vbucket") as IMemcachedClientConfiguration;
-			var loc = config.CreateNodeLocator();
-		}
-
 		/// <summary>
 		/// Tests if the client can initialize itself from enyim.com/memcached
 		/// </summary>
