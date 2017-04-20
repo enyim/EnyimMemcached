@@ -19,6 +19,8 @@ namespace Enyim.Caching.Configuration
 
         public string KeyTransformer { get; set; }
 
+        public ITranscoder Transcoder { get; set; }
+
         public void AddServer(string address, int port)
         {
             Servers.Add(new Server { Address = address, Port = port });
