@@ -27,7 +27,7 @@ namespace MemcachedTest
             config.SocketPool.ConnectionTimeout = TimeSpan.FromSeconds(1);
             config.SocketPool.ReceiveTimeout = TimeSpan.FromSeconds(1);
 
-            var logger = serviceProvider.GetService<ILogger<MemcachedClient>>();
+            var logger = serviceProvider.GetService<ILoggerFactory>();
 
             var client = new MemcachedClient(logger, config);            
 
@@ -64,7 +64,7 @@ namespace MemcachedTest
 			config.SocketPool.MinPoolSize = 1;
 			config.SocketPool.MaxPoolSize = 1;
 
-            var logger = serviceProvider.GetService<ILogger<MemcachedClient>>();
+            var logger = serviceProvider.GetService<ILoggerFactory>();
             var client = new MemcachedClient(logger, config);
             var canFail = false;
 			var didFail = false;
