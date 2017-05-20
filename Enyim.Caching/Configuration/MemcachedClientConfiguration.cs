@@ -18,13 +18,13 @@ namespace Enyim.Caching.Configuration
         private Type nodeLocator;
         private ITranscoder _transcoder;
         private IMemcachedKeyTransformer keyTransformer;
-        private ILogger<MemcachedClient> _logger;
+        private ILogger<MemcachedClientConfiguration> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
         /// </summary>
         public MemcachedClientConfiguration(
-            ILogger<MemcachedClient> logger,
+            ILoggerFactory loggerFactory,
             IOptions<MemcachedClientOptions> optionsAccessor)
         {
             if (optionsAccessor == null)
@@ -32,7 +32,7 @@ namespace Enyim.Caching.Configuration
                 throw new ArgumentNullException(nameof(optionsAccessor));
             }
 
-            _logger = logger;
+            _logger = loggerFactory.CreateLogger<MemcachedClientConfiguration>();
 
             var options = optionsAccessor.Value;
             Servers = new List<EndPoint>();
