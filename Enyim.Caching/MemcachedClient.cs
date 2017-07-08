@@ -446,7 +446,7 @@ namespace Enyim.Caching
         protected virtual IStoreOperationResult PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas, out int statusCode)
         {
             var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(key);
+            var node = this.pool.Locate(hashedKey);
             var result = StoreOperationResultFactory.Create();
 
             statusCode = -1;
@@ -471,7 +471,7 @@ namespace Enyim.Caching
                     return result;
                 }
 
-                var command = this.pool.OperationFactory.Store(mode, key, item, expires, cas);
+                var command = this.pool.OperationFactory.Store(mode, hashedKey, item, expires, cas);
                 var commandResult = node.Execute(command);
 
                 result.Cas = cas = command.CasValue;
@@ -495,7 +495,8 @@ namespace Enyim.Caching
 
         protected async virtual Task<IStoreOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, uint expires)
         {
-            var node = this.pool.Locate(key);
+            var hashedKey = this.keyTransformer.Transform(key);
+            var node = this.pool.Locate(hashedKey);
             var result = StoreOperationResultFactory.Create();
 
             int statusCode = -1;
@@ -519,7 +520,7 @@ namespace Enyim.Caching
                     return result;
                 }
 
-                var command = this.pool.OperationFactory.Store(mode, key, item, expires, cas);
+                var command = this.pool.OperationFactory.Store(mode, hashedKey, item, expires, cas);
                 var commandResult = await node.ExecuteAsync(command);
 
                 result.Cas = cas = command.CasValue;
