@@ -120,13 +120,13 @@ namespace Enyim.Caching
         public T Get<T>(string key)
         {
             var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(key);
+            var node = this.pool.Locate(hashedKey);
 
             if (node != null)
             {
                 try
                 {
-                    var command = this.pool.OperationFactory.Get(key);
+                    var command = this.pool.OperationFactory.Get(hashedKey);
                     var commandResult = node.Execute(command);
 
                     if (commandResult.Success)
@@ -171,13 +171,13 @@ namespace Enyim.Caching
             var result = new DefaultGetOperationResultFactory<T>().Create();
 
             var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(key);
+            var node = this.pool.Locate(hashedKey);
 
             if (node != null)
             {
                 try
                 {
-                    var command = this.pool.OperationFactory.Get(key);
+                    var command = this.pool.OperationFactory.Get(hashedKey);
                     var commandResult = await node.ExecuteAsync(command);
 
                     if (commandResult.Success)
