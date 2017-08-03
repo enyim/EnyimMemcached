@@ -10,7 +10,7 @@ namespace Enyim.Caching.Tests
 	public class SingleNodeLocatorTest
 	{
 		[TestCase]
-		public void TestIfCalled()
+		public void TestInitializationWithEmptyList()
 		{
 			var locator = (IMemcachedNodeLocator)new SingleNodeLocator();
 			locator.Initialize(new List<IMemcachedNode>());
