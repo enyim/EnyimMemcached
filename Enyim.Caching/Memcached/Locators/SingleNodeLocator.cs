@@ -36,14 +36,14 @@ namespace Enyim.Caching.Memcached
 			if (!this.isInitialized)
 				throw new InvalidOperationException("You must call Initialize first");
 
-			return this.node.IsAlive
+			return this.node != null && this.node.IsAlive
 					? this.node
 					: null;
 		}
 
 		IEnumerable<IMemcachedNode> IMemcachedNodeLocator.GetWorkingNodes()
 		{
-			return this.node.IsAlive
+			return this.node != null && this.node.IsAlive
 					? new IMemcachedNode[] { this.node }
 					: Enumerable.Empty<IMemcachedNode>();
 		}
