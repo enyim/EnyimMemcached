@@ -158,28 +158,29 @@ namespace MemcachedTest
         {
             using (MemcachedClient client = GetClient())
             {
-                await client.RemoveAsync("ExpirationTest:TimeSpan");
-                Assert.True(await client.StoreAsync(StoreMode.Set, "ExpirationTest:TimeSpan", "ExpirationTest:TimeSpan", new TimeSpan(0, 0, 5)), "Expires:Timespan failed");
-                Assert.Equal("ExpirationTest:TimeSpan", await client.GetValueAsync<string>("ExpirationTest:TimeSpan"));
+                var cacheKey = $"ExpirationTest-TimeSpan-{new Random().Next()}";
+                Assert.True(await client.StoreAsync(StoreMode.Set, cacheKey, "ExpirationTest:TimeSpan", new TimeSpan(0, 0, 3)), "Expires:Timespan failed");
+                Assert.Equal("ExpirationTest:TimeSpan", await client.GetValueAsync<string>(cacheKey));
 
-                Thread.Sleep(8000);
-                Assert.Null(await client.GetValueAsync<string>("ExpirationTest:TimeSpan"));
+                await Task.Delay(TimeSpan.FromSeconds(4));
+
+                Assert.Null(await client.GetValueAsync<string>(cacheKey));
             }
         }
 
         [Fact]
-        public void ExpirationTestDateTime()
+        public async Task ExpirationTestDateTime()
         {
             using (MemcachedClient client = GetClient())
             {
-                DateTime expiresAt = DateTime.Now.AddSeconds(5);
+                var cacheKey = $"Expires-DateTime-{new Random().Next()}";
+                DateTime expiresAt = DateTime.Now.AddSeconds(3);
+                Assert.True(await client.StoreAsync(StoreMode.Set, cacheKey, "Expires:DateTime", expiresAt), "Expires:DateTime failed");
+                Assert.Equal("Expires:DateTime", await client.GetValueAsync<string>(cacheKey));
 
-                Assert.True(client.Store(StoreMode.Set, "Expires:DateTime", "Expires:DateTime", expiresAt), "Expires:DateTime failed");
-                Assert.Equal("Expires:DateTime", client.Get("Expires:DateTime"));
+                await Task.Delay(TimeSpan.FromSeconds(4));
 
-                Thread.Sleep(8000);
-
-                Assert.Null(client.Get("Expires:DateTime"));
+                Assert.Null(await client.GetValueAsync<string>(cacheKey));
             }
         }
 
