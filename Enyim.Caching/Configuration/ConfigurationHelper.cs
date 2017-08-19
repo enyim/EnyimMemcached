@@ -98,8 +98,7 @@ namespace Enyim.Caching.Configuration
             // parse as an IP address
             if (!IPAddress.TryParse(host, out address))
             {
-                var hostEntry = Dns.GetHostEntryAsync(host).Result;
-                var addresses = hostEntry.AddressList;
+                var addresses = Dns.GetHostAddresses(host);
                 address = addresses.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
                 if (address == null)
                     throw new ArgumentException(String.Format("Could not resolve host '{0}'.", host));
