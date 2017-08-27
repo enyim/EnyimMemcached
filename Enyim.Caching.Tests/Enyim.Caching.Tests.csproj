@@ -72,6 +72,7 @@
     <Compile Include="MemcachedClientTestsBase.cs" />
     <Compile Include="MemcachedServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SingleNodeLocatorTest.cs" />
     <Compile Include="TestSetup.cs" />
     <Compile Include="TextMemcachedClientTest.cs" />
     <Compile Include="VBucketTest.cs" />
