@@ -470,6 +470,13 @@ namespace Enyim.Caching
 		}
 
 		#endregion
+
+		#region [ Touch			]
+		public ITouchOperationResult ExecuteTouch(string key, TimeSpan validFor)
+		{
+			return this.PerformTouch(key, MemcachedClient.GetExpiration(validFor));
+		}
+		#endregion [ Touch			]
 	}
 }
 

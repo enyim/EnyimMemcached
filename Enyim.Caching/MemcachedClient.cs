@@ -35,6 +35,7 @@ namespace Enyim.Caching
 		public IMutateOperationResultFactory MutateOperationResultFactory { get; set; }
 		public IConcatOperationResultFactory ConcatOperationResultFactory { get; set; }
 		public IRemoveOperationResultFactory RemoveOperationResultFactory { get; set; }
+		public ITouchOperationResultFactory TouchOperationResultFactory { get; set; }
 
 		/// <summary>
 		/// Initializes a new MemcachedClient instance using the default configuration section (enyim/memcached).
@@ -79,6 +80,7 @@ namespace Enyim.Caching
 			MutateOperationResultFactory = new DefaultMutateOperationResultFactory();
 			ConcatOperationResultFactory = new DefaultConcatOperationResultFactory();
 			RemoveOperationResultFactory = new DefaultRemoveOperationResultFactory();
+			TouchOperationResultFactory = new DefaultTouchOperationResultFactory();
 		}
 
 		public MemcachedClient(IServerPool pool, IMemcachedKeyTransformer keyTransformer, ITranscoder transcoder)
@@ -719,6 +721,50 @@ namespace Enyim.Caching
 
 			if (this.performanceMonitor != null) this.performanceMonitor.Concatenate(mode, 1, false);
 
+			result.Fail("Unable to locate node");
+			return result;
+		}
+
+		#endregion
+		#region [ Touch                ]
+
+		public bool Touch(string key, TimeSpan validFor)
+		{
+			return this.PerformTouch(key, (uint)validFor.TotalSeconds).Success;
+		}
+
+		protected virtual ITouchOperationResult PerformTouch(string key, uint expires)
+		{
+			var hashedKey = this.keyTransformer.Transform(key);
+			var node = this.pool.Locate(hashedKey);
+			var result = TouchOperationResultFactory.Create();
+
+			if (node != null)
+			{
+				var command = this.pool.OperationFactory.Touch(hashedKey, expires);
+				var commandResult = node.Execute(command);
+
+				result.StatusCode = command.StatusCode;
+
+				if (commandResult.Success)
+				{
+					//if (this.performanceMonitor != null) this.performanceMonitor.s.Mutate(mode, 1, commandResult.Success);
+					//result.Value = command.Result;
+					result.Pass();
+					return result;
+				}
+				else
+				{
+					//if (this.performanceMonitor != null) this.performanceMonitor.Mutate(mode, 1, false);
+					result.InnerResult = commandResult;
+					result.Fail("Mutate operation failed, see InnerResult or StatusCode for more details");
+				}
+
+			}
+
+			//if (this.performanceMonitor != null) this.performanceMonitor.Mutate(mode, 1, false);
+
+			// TODO not sure about the return value when the command fails
 			result.Fail("Unable to locate node");
 			return result;
 		}

@@ -77,6 +77,10 @@ namespace Enyim.Caching.Memcached
 	{
 	}
 
+	public interface ITouchOperation : ISingleItemOperation
+	{
+	}
+
 	public struct CasResult<T>
 	{
 		public T Result { get; set; }
