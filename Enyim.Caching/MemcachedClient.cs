@@ -964,7 +964,7 @@ namespace Enyim.Caching
 			// accept MaxValue as infinite
 			if (expiresAt == DateTime.MaxValue) return 0;
 
-			uint retval = (uint)(expiresAt.ToUniversalTime() - UnixEpoch).TotalSeconds;
+			uint retval = (uint)(expiresAt.ToUniversalTime() - DateTime.Now.ToUniversalTime()).TotalSeconds;
 
 			return retval;
 		}
@@ -1011,7 +1011,7 @@ namespace Enyim.Caching
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila KiskÃ³, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
