@@ -100,6 +100,11 @@ namespace Enyim.Caching.Configuration
             {
                 _transcoder = options.Transcoder;
             }
+
+            if (options.NodeLocatorFactory != null)
+            {
+                NodeLocatorFactory = options.NodeLocatorFactory;
+            }
         }   
 
 		/// <summary>
