@@ -4,9 +4,9 @@ using System.IO;
 using System.Text;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Bson;
-using Newtonsoft.Json;
 using System.Collections;
 using System.Reflection;
+using Newtonsoft.Json;
 
 namespace Enyim.Caching.Memcached
 {
@@ -34,13 +34,13 @@ namespace Enyim.Caching.Memcached
 
             using (var ms = new MemoryStream(item.Data.ToArray()))
             {
-                using (BsonReader reader = new BsonReader(ms))
+                using (var reader = new BsonDataReader(ms))
                 {
                     if (typeof(T).GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEnumerable)))
                     {
                         reader.ReadRootValueAsArray = true;
                     }
-                    JsonSerializer serializer = new JsonSerializer();
+                    var serializer = new JsonSerializer();
                     return serializer.Deserialize<T>(reader);
                 }
             }
@@ -250,9 +250,9 @@ namespace Enyim.Caching.Memcached
         {
             using (var ms = new MemoryStream())
             {
-                using (BsonWriter writer = new BsonWriter(ms))
+                using (var writer = new BsonDataWriter(ms))
                 {
-                    JsonSerializer serializer = new JsonSerializer();
+                    var serializer = new JsonSerializer();
                     serializer.Serialize(writer, value);
                     return new ArraySegment<byte>(ms.ToArray(), 0, (int)ms.Length);
                 }
