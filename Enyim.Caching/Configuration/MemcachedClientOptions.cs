@@ -11,7 +11,7 @@ namespace Enyim.Caching.Configuration
     {
         public MemcachedProtocol Protocol { get; set; } = MemcachedProtocol.Binary;
 
-        public SocketPoolConfiguration SocketPool { get; set; } = new SocketPoolConfiguration();
+        public SocketPoolOptions SocketPool { get; set; }
 
         public List<Server> Servers { get; set; } = new List<Server>();
 
@@ -56,5 +56,15 @@ namespace Enyim.Caching.Configuration
         public string Type { get; set; }
 
         public Dictionary<string, string> Parameters { get; set; }
+    }
+
+    public class SocketPoolOptions
+    {
+        public int MinPoolSize { get; set; } = 10;
+        public int MaxPoolSize { get; set; } = 20;
+        public TimeSpan ConnectionTimeout { get; set; } = new TimeSpan(0, 0, 10);
+        public TimeSpan ReceiveTimeout { get; set; } = new TimeSpan(0, 0, 10);
+        public TimeSpan DeadTimeout { get; set; } = new TimeSpan(0, 0, 10);
+        public TimeSpan QueueTimeout { get; set; } = new TimeSpan(0, 0, 0, 0, 100);
     }
 }
