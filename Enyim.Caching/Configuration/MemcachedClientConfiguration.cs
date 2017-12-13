@@ -52,20 +52,27 @@ namespace Enyim.Caching.Configuration
             SocketPool = new SocketPoolConfiguration();
             if (options.SocketPool != null)
             {
+                options.SocketPool.CheckTimeout();
+
                 SocketPool.MinPoolSize = options.SocketPool.MinPoolSize;
                 _logger.LogInformation($"{nameof(SocketPool.MinPoolSize)}: {SocketPool.MinPoolSize}");
+
                 SocketPool.MaxPoolSize = options.SocketPool.MaxPoolSize;
                 _logger.LogInformation($"{nameof(SocketPool.MaxPoolSize)}: {SocketPool.MaxPoolSize}");
-                SocketPool.ConnectionTimeout = options.SocketPool.ConnectionTimeout;
-                _logger.LogInformation($"{nameof(SocketPool.ConnectionTimeout)}: {SocketPool.ConnectionTimeout}");
+
+                SocketPool.ConnectionTimeout = options.SocketPool.ConnectionTimeout;                
+                _logger.LogInformation($"{nameof(SocketPool.ConnectionTimeout)}: {SocketPool.ConnectionTimeout}");                              
+
                 SocketPool.ReceiveTimeout = options.SocketPool.ReceiveTimeout;
                 _logger.LogInformation($"{nameof(SocketPool.ReceiveTimeout)}: {SocketPool.ReceiveTimeout}");
+
                 SocketPool.DeadTimeout = options.SocketPool.DeadTimeout;
                 _logger.LogInformation($"{nameof(SocketPool.DeadTimeout)}: {SocketPool.DeadTimeout}");
+
                 SocketPool.QueueTimeout = options.SocketPool.QueueTimeout;
                 _logger.LogInformation($"{nameof(SocketPool.QueueTimeout)}: {SocketPool.QueueTimeout}");
             }
-            
+
             Protocol = options.Protocol;
 
             if (options.Authentication != null && !string.IsNullOrEmpty(options.Authentication.Type))
