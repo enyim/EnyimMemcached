@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Enyim.Caching;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace SampleWebApp
 {
@@ -36,22 +37,26 @@ namespace SampleWebApp
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddConsole(LogLevel.Debug);
-
             app.UseEnyimMemcached();
 
             var memcachedClient = app.ApplicationServices.GetService<IMemcachedClient>();
+            var distributedCache = app.ApplicationServices.GetService<IDistributedCache>();
             var logger = loggerFactory.CreateLogger<MemcachedClient>();
 
             app.Run(async (context) =>
             {
                 var cacheKey = "sample_response";
-                await memcachedClient.AddAsync(cacheKey, "Hello World!", 60);
+                var distributedCaceKey = "distributed_" + cacheKey;
+                await memcachedClient.AddAsync(cacheKey, $"Hello World from {nameof(memcachedClient)}!", 60);
+                await distributedCache.SetStringAsync(distributedCaceKey,$"Hello World from {nameof(distributedCache)}!");
                 var cacheResult = await memcachedClient.GetAsync<string>(cacheKey);
                 if (cacheResult.Success)
                 {
-                    await context.Response.WriteAsync(cacheResult.Value);
+                    var distributedCacheValue = await distributedCache.GetStringAsync(distributedCaceKey);
+                    await context.Response
+                        .WriteAsync($"memcachedClient: {cacheResult.Value}\ndistributedCache: {distributedCacheValue}");
                     await memcachedClient.RemoveAsync(cacheKey);
+                    await distributedCache.RemoveAsync(distributedCaceKey);
                     logger.LogDebug($"Hinted cache with '{cacheKey}' key");
                 }
                 else
