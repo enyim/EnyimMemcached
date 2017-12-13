@@ -996,7 +996,7 @@ namespace Enyim.Caching
                     }
                     catch (Exception e)
                     {
-                        _logger.LogError("PerformMultiGet", e);
+                        _logger.LogError(0, e, "PerformMultiGet");
                     }
                 }));
             }
