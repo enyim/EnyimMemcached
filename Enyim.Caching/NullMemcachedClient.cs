@@ -88,6 +88,11 @@ namespace Enyim.Caching
             return new Dictionary<string, T>();
         }
 
+        public Task<IDictionary<string, T>> GetAsync<T>(IEnumerable<string> keys)
+        {
+            return Task.FromResult<IDictionary<string, T>>(new Dictionary<string, T>());
+        }
+
         public object Get(string key)
         {
             return null;

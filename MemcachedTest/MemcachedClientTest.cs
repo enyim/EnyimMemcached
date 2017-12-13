@@ -261,7 +261,7 @@ namespace MemcachedTest
                     Assert.True(await client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(30)), "Store of " + k + " failed");
                 }
 
-                IDictionary<string, int> retvals = client.Get<int>(keys);
+                IDictionary<string, int> retvals = await client.GetAsync<int>(keys);
 
                 Assert.NotEmpty(retvals);
                 Assert.Equal(keys.Count, retvals.Count);
@@ -282,7 +282,7 @@ namespace MemcachedTest
                 await client.StoreAsync(StoreMode.Set, key1, obj1, DateTime.Now.AddSeconds(10));
                 await client.StoreAsync(StoreMode.Set, key2, obj2, DateTime.Now.AddSeconds(10));
 
-                var multiResult = client.Get<HashSet<int>>(new string[] { key1, key2 });
+                var multiResult = await client.GetAsync<HashSet<int>>(new string[] { key1, key2 });
                 Assert.Equal(2, multiResult.Count);
                 Assert.Equal(obj1.First(), multiResult[key1].First());
                 Assert.Equal(obj2.First(), multiResult[key2].First());
