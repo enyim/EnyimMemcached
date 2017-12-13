@@ -182,29 +182,9 @@ namespace Enyim.Caching
 
                     if (commandResult.Success)
                     {
-                        if (typeof(T).GetTypeCode() == TypeCode.Object && typeof(T) != typeof(Byte[]))
-                        {
-                            result.Success = true;
-                            result.Value = this.transcoder.Deserialize<T>(command.Result);
-                            return result;
-                        }
-                        else
-                        {
-                            var tempResult = this.transcoder.Deserialize(command.Result);
-                            if (tempResult != null)
-                            {
-                                result.Success = true;
-                                if (typeof(T) == typeof(Guid))
-                                {
-                                    result.Value = (T)(object)new Guid((string)tempResult);
-                                }
-                                else
-                                {
-                                    result.Value = (T)tempResult;
-                                }
-                                return result;
-                            }
-                        }
+                        result.Success = true;
+                        result.Value = transcoder.Deserialize<T>(command.Result);
+                        return result;
                     }
                 }
                 catch (Exception ex)
@@ -935,9 +915,9 @@ namespace Enyim.Caching
         /// </summary>
         /// <param name="keys">The list of identifiers for the items to retrieve.</param>
         /// <returns>a Dictionary holding all items indexed by their key.</returns>
-        public IDictionary<string, object> Get(IEnumerable<string> keys)
+        public IDictionary<string, T> Get<T>(IEnumerable<string> keys)
         {
-            return PerformMultiGet<object>(keys, (mget, kvp) => this.transcoder.Deserialize(kvp.Value));
+            return PerformMultiGet<T>(keys, (mget, kvp) => this.transcoder.Deserialize<T>(kvp.Value));
         }
 
         public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
@@ -985,6 +965,8 @@ namespace Enyim.Caching
                                 string original;
                                 if (hashed.TryGetValue(kvp.Key, out original))
                                 {
+                                    Console.WriteLine(kvp.Key);
+                                    Console.WriteLine(kvp.Value);
                                     var result = collector(mget, kvp);
 
                                     // the lock will serialize the merge,

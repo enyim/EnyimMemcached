@@ -80,17 +80,17 @@ namespace Enyim.Caching
 
         public void FlushAll()
         {
-            throw new NotImplementedException();
+            
         }
 
-        public IDictionary<string, object> Get(IEnumerable<string> keys)
+        public IDictionary<string, T> Get<T>(IEnumerable<string> keys)
         {
-            throw new NotImplementedException();
+            return new Dictionary<string, T>();
         }
 
         public object Get(string key)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public T Get<T>(string key)
