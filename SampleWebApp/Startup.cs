@@ -31,19 +31,8 @@ namespace SampleWebApp
 
         public void ConfigureServices(IServiceCollection services)
         {
-            if (IsDevelopment)
-            {
-                services.AddEnyimMemcached(options =>
-                {
-                    options.AddServer("memcached", 11211);
-                    //options.AddPlainTextAuthenticator("", "usename", "password");
-                });
-            }
-            else
-            {
-                services.AddEnyimMemcached(Configuration.GetSection("enyimMemcached"));
-            }
-        }        
+            services.AddEnyimMemcached(Configuration.GetSection("enyimMemcached"));
+        }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
