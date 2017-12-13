@@ -66,5 +66,21 @@ namespace Enyim.Caching.Configuration
         public TimeSpan ReceiveTimeout { get; set; } = new TimeSpan(0, 0, 10);
         public TimeSpan DeadTimeout { get; set; } = new TimeSpan(0, 0, 10);
         public TimeSpan QueueTimeout { get; set; } = new TimeSpan(0, 0, 0, 0, 100);
+
+        public void CheckTimeout()
+        {
+            CheckTimeout(nameof(ConnectionTimeout), ConnectionTimeout);
+            CheckTimeout(nameof(ReceiveTimeout), ReceiveTimeout);
+            CheckTimeout(nameof(DeadTimeout), DeadTimeout);
+            CheckTimeout(nameof(QueueTimeout), QueueTimeout);
+        }
+
+        private void CheckTimeout(string paramName, TimeSpan value)
+        {
+            if (value.TotalHours > 1)
+            {
+                throw new ArgumentOutOfRangeException(paramName, $"{paramName} must be <= 1 hour");
+            }
+        }
     }
 }
