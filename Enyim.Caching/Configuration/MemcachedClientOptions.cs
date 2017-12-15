@@ -19,7 +19,7 @@ namespace Enyim.Caching.Configuration
 
         public string KeyTransformer { get; set; }
 
-        public ITranscoder Transcoder { get; set; }
+        public string Transcoder { get; set; }
 
         public IProviderFactory<IMemcachedNodeLocator> NodeLocatorFactory { get; set; }
 
