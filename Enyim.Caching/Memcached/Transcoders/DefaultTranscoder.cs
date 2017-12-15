@@ -28,7 +28,7 @@ namespace Enyim.Caching.Memcached
             return this.Deserialize(item);
         }
 
-        T ITranscoder.Deserialize<T>(CacheItem item)
+        public virtual T Deserialize<T>(CacheItem item)
         {
             if (item.Data == null || item.Data.Count == 0) return default(T);
 
@@ -184,7 +184,7 @@ namespace Enyim.Caching.Memcached
                 // earlier versions serialized decimals with TypeCode.Decimal
                 // even though they were saved by BinaryFormatter
                 case TypeCode.Decimal:
-                //case TypeCode.Object: return this.DeserializeObject(data);
+                case TypeCode.Object: return this.DeserializeObject(data);
                 default: throw new InvalidOperationException("Unknown TypeCode was returned: " + code);
             }
         }

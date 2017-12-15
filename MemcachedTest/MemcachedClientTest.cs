@@ -19,21 +19,27 @@ namespace MemcachedTest
         private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MemcachedClientTest));
         public const string TestObjectKey = "Hello_World";
 
-        protected virtual MemcachedClient GetClient(MemcachedProtocol protocol = MemcachedProtocol.Binary)
+        protected virtual MemcachedClient GetClient(MemcachedProtocol protocol = MemcachedProtocol.Binary, bool useBinaryFormatterTranscoder = false)
         {
             IServiceCollection services = new ServiceCollection();
             services.AddEnyimMemcached(options =>
             {
                 options.AddServer("memcached", 11211);
                 options.Protocol = protocol;
+                if (useBinaryFormatterTranscoder)
+                {
+                    options.Transcoder = "BinaryFormatterTranscoder";
+                }
             });
-            services.AddLogging();
+            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Error).AddConsole());
+
             IServiceProvider serviceProvider = services.BuildServiceProvider();
             var client = serviceProvider.GetService<IMemcachedClient>() as MemcachedClient;
             client.Remove("VALUE");
             return client;
         }
 
+        [Serializable]// This attribute is for BinaryFormatterTranscoder
         public class TestData
         {
             public TestData() { }
@@ -60,6 +66,11 @@ namespace MemcachedTest
             {
                 Assert.True(await client.StoreAsync(StoreMode.Set, TestObjectKey, td, DateTime.Now.AddSeconds(5)));
             }
+
+            using (MemcachedClient client = GetClient(MemcachedProtocol.Binary, true))
+            {
+                Assert.True(await client.StoreAsync(StoreMode.Set, TestObjectKey, td, DateTime.Now.AddSeconds(5)));
+            }
         }
 
         [Fact]
@@ -75,6 +86,18 @@ namespace MemcachedTest
             {
                 Assert.True(client.Store(StoreMode.Set, TestObjectKey, td), "Initialization failed.");
 
+                TestData td2 = client.Get<TestData>(TestObjectKey);
+
+                Assert.NotNull(td2);
+                Assert.Equal(td2.FieldA, "Hello");
+                Assert.Equal(td2.FieldB, "World");
+                Assert.Equal(td2.FieldC, 19810619);
+                Assert.True(td2.FieldD, "Object was corrupted.");
+            }
+
+            using (MemcachedClient client = GetClient(MemcachedProtocol.Binary, true))
+            {
+                Assert.True(client.Store(StoreMode.Set, TestObjectKey, td), "Initialization failed.");
                 TestData td2 = client.Get<TestData>(TestObjectKey);
 
                 Assert.NotNull(td2);
