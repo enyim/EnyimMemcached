@@ -32,6 +32,26 @@ namespace Enyim.Caching.Memcached
         {
             if (item.Data == null || item.Data.Count == 0) return default(T);
 
+            if (typeof(T).GetTypeCode() != TypeCode.Object || typeof(T) == typeof(Byte[]))
+            {
+                var value = Deserialize(item);
+                if (value != null)
+                {
+                    if (typeof(T) == typeof(Guid))
+                    {
+                       return (T)(object)new Guid((string)value);
+                    }
+                    else
+                    {
+                        return (T)value;
+                    }
+                }
+                else
+                {
+                    return default(T);
+                }
+            }
+
             using (var ms = new MemoryStream(item.Data.ToArray()))
             {
                 using (var reader = new BsonDataReader(ms))

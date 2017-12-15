@@ -182,29 +182,9 @@ namespace Enyim.Caching
 
                     if (commandResult.Success)
                     {
-                        if (typeof(T).GetTypeCode() == TypeCode.Object && typeof(T) != typeof(Byte[]))
-                        {
-                            result.Success = true;
-                            result.Value = this.transcoder.Deserialize<T>(command.Result);
-                            return result;
-                        }
-                        else
-                        {
-                            var tempResult = this.transcoder.Deserialize(command.Result);
-                            if (tempResult != null)
-                            {
-                                result.Success = true;
-                                if (typeof(T) == typeof(Guid))
-                                {
-                                    result.Value = (T)(object)new Guid((string)tempResult);
-                                }
-                                else
-                                {
-                                    result.Value = (T)tempResult;
-                                }
-                                return result;
-                            }
-                        }
+                        result.Success = true;
+                        result.Value = transcoder.Deserialize<T>(command.Result);
+                        return result;
                     }
                 }
                 catch (Exception ex)
@@ -935,9 +915,14 @@ namespace Enyim.Caching
         /// </summary>
         /// <param name="keys">The list of identifiers for the items to retrieve.</param>
         /// <returns>a Dictionary holding all items indexed by their key.</returns>
-        public IDictionary<string, object> Get(IEnumerable<string> keys)
+        public IDictionary<string, T> Get<T>(IEnumerable<string> keys)
         {
-            return PerformMultiGet<object>(keys, (mget, kvp) => this.transcoder.Deserialize(kvp.Value));
+            return PerformMultiGet<T>(keys, (mget, kvp) => this.transcoder.Deserialize<T>(kvp.Value));
+        }
+
+        public async Task<IDictionary<string, T>> GetAsync<T>(IEnumerable<string> keys)
+        {
+            return await PerformMultiGetAsync<T>(keys, (mget, kvp) => this.transcoder.Deserialize<T>(kvp.Value));
         }
 
         public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
@@ -986,7 +971,6 @@ namespace Enyim.Caching
                                 if (hashed.TryGetValue(kvp.Key, out original))
                                 {
                                     var result = collector(mget, kvp);
-
                                     // the lock will serialize the merge,
                                     // but at least the commands were not waiting on each other
                                     lock (retval) retval[original] = result;
@@ -996,7 +980,7 @@ namespace Enyim.Caching
                     }
                     catch (Exception e)
                     {
-                        _logger.LogError("PerformMultiGet", e);
+                        _logger.LogError(0, e, "PerformMultiGet");
                     }
                 }));
             }
@@ -1006,6 +990,48 @@ namespace Enyim.Caching
             {
                 Task.WaitAll(tasks.ToArray());
             }
+
+            return retval;
+        }
+
+        protected virtual async Task<IDictionary<string, T>> PerformMultiGetAsync<T>(IEnumerable<string> keys, Func<IMultiGetOperation, KeyValuePair<string, CacheItem>, T> collector)
+        {
+            // transform the keys and index them by hashed => original
+            // the mget results will be mapped using this index
+            var hashed = new Dictionary<string, string>();
+            foreach (var key in keys)
+            {
+                hashed[this.keyTransformer.Transform(key)] = key;
+            }
+
+            var byServer = GroupByServer(hashed.Keys);
+
+            var retval = new Dictionary<string, T>(hashed.Count);
+            var tasks = new List<Task>();
+
+            //execute each list of keys on their respective node
+            foreach (var slice in byServer)
+            {
+                var node = slice.Key;
+                var nodeKeys = slice.Value;
+                var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
+                var task = Task.Run(async () => 
+                {
+                    if ((await node.ExecuteAsync(mget)).Success)
+                    {
+                        foreach (var kvp in mget.Result)
+                        {
+                            if (hashed.TryGetValue(kvp.Key, out var original))
+                            {
+                                lock (retval) retval[original] = collector(mget, kvp);
+                            }
+                        }
+                    }
+                });
+                tasks.Add(task);               
+            }
+
+            await Task.WhenAll(tasks);
 
             return retval;
         }

@@ -15,9 +15,10 @@ namespace Enyim.Caching
         Task<T> GetValueAsync<T>(string key);
         object Get(string key);
 		T Get<T>(string key);
-		IDictionary<string, object> Get(IEnumerable<string> keys);
+		IDictionary<string, T> Get<T>(IEnumerable<string> keys);
+        Task<IDictionary<string, T>> GetAsync<T>(IEnumerable<string> keys);
 
-		bool TryGet(string key, out object value);
+        bool TryGet(string key, out object value);
 		bool TryGetWithCas(string key, out CasResult<object> value);
 
 		CasResult<object> GetWithCas(string key);

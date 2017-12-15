@@ -10,6 +10,7 @@ using Xunit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace MemcachedTest
 {
@@ -252,20 +253,20 @@ namespace MemcachedTest
             {
                 var keys = new List<string>();
 
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < 10; i++)
                 {
                     string k = $"Hello_Multi_Get_{Guid.NewGuid()}_" + i;
                     keys.Add(k);
 
-                    Assert.True(await client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(300)), "Store of " + k + " failed");
+                    Assert.True(await client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(30)), "Store of " + k + " failed");
                 }
 
-                IDictionary<string, object> retvals = client.Get(keys);
+                IDictionary<string, int> retvals = await client.GetAsync<int>(keys);
 
                 Assert.NotEmpty(retvals);
                 Assert.Equal(keys.Count, retvals.Count);
 
-                object value = 0;
+                int value = 0;
                 for (int i = 0; i < keys.Count; i++)
                 {
                     string key = keys[i];
@@ -273,6 +274,18 @@ namespace MemcachedTest
                     Assert.True(retvals.TryGetValue(key, out value), "missing key: " + key);
                     Assert.Equal(value, i);
                 }
+
+                var key1 = $"test_key1_{Guid.NewGuid()}";
+                var key2 = $"test_key2_{Guid.NewGuid()}";
+                var obj1 = new HashSet<int> { 1, 2 };
+                var obj2 = new HashSet<int> { 3, 4 };
+                await client.StoreAsync(StoreMode.Set, key1, obj1, DateTime.Now.AddSeconds(10));
+                await client.StoreAsync(StoreMode.Set, key2, obj2, DateTime.Now.AddSeconds(10));
+
+                var multiResult = await client.GetAsync<HashSet<int>>(new string[] { key1, key2 });
+                Assert.Equal(2, multiResult.Count);
+                Assert.Equal(obj1.First(), multiResult[key1].First());
+                Assert.Equal(obj2.First(), multiResult[key2].First());
             }
         }
 
