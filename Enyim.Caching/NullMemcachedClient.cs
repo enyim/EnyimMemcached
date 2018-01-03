@@ -230,8 +230,19 @@ namespace Enyim.Caching
         {
         }
 
-        public async Task AddAsync(string key, object value, int cacheSeconds)
+        public Task AddAsync(string key, object value, int cacheSeconds)
         {
+            return Task.CompletedTask;
+        }
+
+        public void Set(string key, object value, int cacheSeconds)
+        {
+
+        }
+
+        public Task SetAsync(string key, object value, int cacheSeconds)
+        {
+            return Task.CompletedTask;
         }
     }
 }

@@ -11,6 +11,9 @@ namespace Enyim.Caching
         void Add(string key, object value, int cacheSeconds);
         Task AddAsync(string key, object value, int cacheSeconds);
 
+        void Set(string key, object value, int cacheSeconds);
+        Task SetAsync(string key, object value, int cacheSeconds);
+
         Task<IGetOperationResult<T>> GetAsync<T>(string key);
         Task<T> GetValueAsync<T>(string key);
         object Get(string key);
