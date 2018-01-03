@@ -98,6 +98,16 @@ namespace Enyim.Caching
             await StoreAsync(StoreMode.Add, key, value, new TimeSpan(0, 0, cacheSeconds));
         }
 
+        public void Set(string key, object value, int cacheSeconds)
+        {
+            Store(StoreMode.Set, key, value, new TimeSpan(0, 0, cacheSeconds));
+        }
+
+        public async Task SetAsync(string key, object value, int cacheSeconds)
+        {
+            await StoreAsync(StoreMode.Set, key, value, new TimeSpan(0, 0, cacheSeconds));
+        }
+
         /// <summary>
         /// Retrieves the specified item from the cache.
         /// </summary>
