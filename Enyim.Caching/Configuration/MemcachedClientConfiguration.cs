@@ -52,6 +52,7 @@ namespace Enyim.Caching.Configuration
             SocketPool = new SocketPoolConfiguration();
             if (options.SocketPool != null)
             {
+                options.SocketPool.CheckPoolSize();
                 options.SocketPool.CheckTimeout();
 
                 SocketPool.MinPoolSize = options.SocketPool.MinPoolSize;

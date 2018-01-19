@@ -67,6 +67,18 @@ namespace Enyim.Caching.Configuration
         public TimeSpan DeadTimeout { get; set; } = new TimeSpan(0, 0, 10);
         public TimeSpan QueueTimeout { get; set; } = new TimeSpan(0, 0, 0, 0, 100);
 
+        public void CheckPoolSize()
+        {
+            if (MinPoolSize < 0)
+                throw new ArgumentOutOfRangeException("value", "MinPoolSize must be >= 0!");
+
+            if (MinPoolSize > MaxPoolSize)
+                throw new ArgumentOutOfRangeException("value", "MinPoolSize must be <= MaxPoolSize!");
+
+            if (MaxPoolSize < MinPoolSize)
+                throw new ArgumentOutOfRangeException("value", "MaxPoolSize must be >= MinPoolSize!");
+        }
+
         public void CheckTimeout()
         {
             CheckTimeout(nameof(ConnectionTimeout), ConnectionTimeout);
