@@ -45,7 +45,9 @@ public class Startup
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddEnyimMemcached(options => Configuration.GetSection("enyimMemcached"));
+        services.AddEnyimMemcached(Configuration.GetSection("enyimMemcached"));
+	// or
+	//services.AddEnyimMemcached(options => someSetupAction(options));
     }
     
     public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
