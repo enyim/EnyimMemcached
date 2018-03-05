@@ -219,6 +219,22 @@ namespace Enyim.Caching
             return result.Success ? result.Value : default(T);
         }
 
+        public async Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Func<Task<T>> factory)
+        {
+            var result = await GetAsync<T>(key);
+            if(result.Success)
+            {
+                return result.Value;
+            }
+
+            var value = await factory();
+            if(value != null)
+            {
+                await AddAsync(key, value, cacheSeconds);
+            }            
+            return value;
+        }
+
         /// <summary>
         /// Tries to get an item from the cache.
         /// </summary>
