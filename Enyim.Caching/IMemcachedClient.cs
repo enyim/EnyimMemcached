@@ -16,6 +16,7 @@ namespace Enyim.Caching
 
         Task<IGetOperationResult<T>> GetAsync<T>(string key);
         Task<T> GetValueAsync<T>(string key);
+        Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Func<Task<T>> factory);
         object Get(string key);
 		T Get<T>(string key);
 		IDictionary<string, T> Get<T>(IEnumerable<string> keys);

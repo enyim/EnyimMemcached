@@ -247,5 +247,10 @@ namespace Enyim.Caching
         {
             return Task.CompletedTask;
         }
+
+        public Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Func<Task<T>> factory)
+        {
+            return Task.FromResult(default(T));
+        }
     }
 }
