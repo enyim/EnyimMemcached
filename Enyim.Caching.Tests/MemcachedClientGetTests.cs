@@ -103,18 +103,12 @@ namespace Enyim.Caching.Tests
         {
             var key = GetUniqueKey("Get");
             var expected = "hello word";
-            var value = await _client.GetValueOrCreateAsync(key, 10, async () =>
-            {
-                return await Task.FromResult(expected);
-            });
+            var value = await _client.GetValueOrCreateAsync(key, 10, Task.FromResult(expected));
             Assert.Equal(expected, value);
             Assert.Equal(expected, await _client.GetValueAsync<string>(key));
 
             key = GetUniqueKey("Get");
-            await _client.GetValueOrCreateAsync(key, 10, async () =>
-            {
-                return await Task.FromResult<string>(null);
-            });
+            await _client.GetValueOrCreateAsync(key, 10, Task.FromResult<string>(null));
             Assert.False((await _client.GetAsync<string>(key)).Success);
         }
     }

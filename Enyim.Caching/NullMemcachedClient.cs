@@ -76,12 +76,12 @@ namespace Enyim.Caching
 
         public void Dispose()
         {
-            
+
         }
 
         public void FlushAll()
         {
-            
+
         }
 
         public IDictionary<string, T> Get<T>(IEnumerable<string> keys)
@@ -248,9 +248,9 @@ namespace Enyim.Caching
             return Task.CompletedTask;
         }
 
-        public Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Func<Task<T>> factory)
+        public Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Task<T> generator)
         {
-            return factory();
+            return generator;
         }
     }
 }

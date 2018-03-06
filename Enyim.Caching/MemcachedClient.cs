@@ -219,19 +219,19 @@ namespace Enyim.Caching
             return result.Success ? result.Value : default(T);
         }
 
-        public async Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Func<Task<T>> factory)
+        public async Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Task<T> generator)
         {
             var result = await GetAsync<T>(key);
-            if(result.Success)
+            if (result.Success)
             {
                 return result.Value;
             }
 
-            var value = await factory();
-            if(value != null)
+            var value = await generator;
+            if (value != null)
             {
                 await AddAsync(key, value, cacheSeconds);
-            }            
+            }
             return value;
         }
 
@@ -1041,7 +1041,7 @@ namespace Enyim.Caching
                 var node = slice.Key;
                 var nodeKeys = slice.Value;
                 var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
-                var task = Task.Run(async () => 
+                var task = Task.Run(async () =>
                 {
                     if ((await node.ExecuteAsync(mget)).Success)
                     {
@@ -1054,7 +1054,7 @@ namespace Enyim.Caching
                         }
                     }
                 });
-                tasks.Add(task);               
+                tasks.Add(task);
             }
 
             await Task.WhenAll(tasks);
