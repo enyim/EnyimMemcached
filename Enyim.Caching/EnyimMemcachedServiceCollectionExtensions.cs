@@ -1,12 +1,11 @@
 ﻿using Enyim.Caching;
 using Enyim.Caching.Configuration;
+using Enyim.Caching.Memcached;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -46,7 +45,10 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddOptions();
             configure(services);
-            services.AddTransient<IMemcachedClientConfiguration, MemcachedClientConfiguration>();
+
+            services.TryAddSingleton<ITranscoder, DefaultTranscoder>();
+            services.TryAddSingleton<IMemcachedKeyTransformer, DefaultKeyTransformer>();
+            services.TryAddTransient<IMemcachedClientConfiguration, MemcachedClientConfiguration>();
             services.AddSingleton<MemcachedClient, MemcachedClient>();
 
             services.AddSingleton<IMemcachedClient>(factory => factory.GetService<MemcachedClient>());
