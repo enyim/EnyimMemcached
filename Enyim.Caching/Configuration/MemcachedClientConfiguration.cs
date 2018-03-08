@@ -122,6 +122,11 @@ namespace Enyim.Caching.Configuration
                     _logger.LogError(new EventId(), ex, $"Unable to load '{options.KeyTransformer}' KeyTransformer");
                 }
             }
+            else if (keyTransformer != null)
+            {
+                this._keyTransformer = keyTransformer;
+                _logger.LogDebug($"Use KeyTransformer Type : '{keyTransformer.ToString()}'");
+            }
 
             if (NodeLocator == null)
             {
