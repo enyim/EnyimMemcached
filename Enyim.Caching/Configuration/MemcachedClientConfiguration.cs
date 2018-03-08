@@ -106,10 +106,21 @@ namespace Enyim.Caching.Configuration
                 }
             }
 
-            if (keyTransformer != null)
+            if (!string.IsNullOrEmpty(options.KeyTransformer))
             {
-                this._keyTransformer = keyTransformer;
-                _logger.LogDebug($"Use KeyTransformer Type : '{keyTransformer.ToString()}'");
+                try
+                {
+                    var keyTransformerType = Type.GetType(options.KeyTransformer);
+                    if (keyTransformerType != null)
+                    {
+                        KeyTransformer = Activator.CreateInstance(keyTransformerType) as IMemcachedKeyTransformer;
+                        _logger.LogDebug($"Use '{options.KeyTransformer}' KeyTransformer");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(new EventId(), ex, $"Unable to load '{options.KeyTransformer}' KeyTransformer");
+                }
             }
 
             if (NodeLocator == null)
