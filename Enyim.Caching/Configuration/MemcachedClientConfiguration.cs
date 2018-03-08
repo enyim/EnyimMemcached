@@ -133,7 +133,26 @@ namespace Enyim.Caching.Configuration
                 NodeLocator = options.Servers.Count > 1 ? typeof(DefaultNodeLocator) : typeof(SingleNodeLocator);
             }
 
-            if (transcoder != null)
+            if (!string.IsNullOrEmpty(options.Transcoder))
+            {
+                try
+                {
+                    if (options.Transcoder == "BinaryFormatterTranscoder")
+                        options.Transcoder = "Enyim.Caching.Memcached.Transcoders.BinaryFormatterTranscoder";
+
+                    var transcoderType = Type.GetType(options.Transcoder);
+                    if (transcoderType != null)
+                    {
+                        Transcoder = Activator.CreateInstance(transcoderType) as ITranscoder;
+                        _logger.LogDebug($"Use '{options.Transcoder}'");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(new EventId(), ex, $"Unable to load '{options.Transcoder}'");
+                }
+            }
+            else if (transcoder != null)
             {
                 this._transcoder = transcoder;
                 _logger.LogDebug($"Use Transcoder Type : '{transcoder.ToString()}'");
