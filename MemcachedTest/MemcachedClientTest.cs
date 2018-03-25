@@ -358,6 +358,27 @@ namespace MemcachedTest
                 Assert.Equal(initialValue + 24, client.Increment("VALUE", 10UL, 24UL));
             }
         }
+
+        [Fact]
+        public async Task FlushTest()
+        {
+            using (MemcachedClient client = GetClient())
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    string cacheKey = $"Hello_Flush_{i}";
+                    Assert.True(await client.StoreAsync(StoreMode.Set, cacheKey, i, DateTime.Now.AddSeconds(30)));
+                }
+
+                await client.FlushAllAsync();
+
+                for (int i = 0; i < 10; i++)
+                {
+                    string cacheKey = $"Hello_Flush_{i}";
+                    Assert.Null(await client.GetValueAsync<string>(cacheKey));
+                }
+            }
+        }
     }
 }
 
