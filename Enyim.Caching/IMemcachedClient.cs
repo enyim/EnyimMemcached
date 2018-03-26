@@ -66,6 +66,7 @@ namespace Enyim.Caching
         Task<bool> RemoveAsync(string key);
 
         void FlushAll();
+        Task FlushAllAsync();
 
         ServerStats Stats();
         ServerStats Stats(string type);

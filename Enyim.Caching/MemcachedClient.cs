@@ -884,6 +884,20 @@ namespace Enyim.Caching
             }
         }
 
+        public async Task FlushAllAsync()
+        {
+            var tasks = new List<Task>();
+
+            foreach (var node in this.pool.GetWorkingNodes())
+            {
+                var command = this.pool.OperationFactory.Flush();
+
+                tasks.Add(node.ExecuteAsync(command));
+            }
+
+            await Task.WhenAll(tasks);
+        }
+
         /// <summary>
         /// Returns statistics about the servers.
         /// </summary>
