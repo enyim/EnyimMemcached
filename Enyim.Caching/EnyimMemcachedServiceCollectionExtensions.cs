@@ -26,7 +26,22 @@ namespace Microsoft.Extensions.DependencyInjection
             return AddEnyimMemcached(services, s => s.Configure(setupAction));
         }
 
-        public static IServiceCollection AddEnyimMemcached(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddEnyimMemcached(this IServiceCollection services, IConfigurationSection configurationSection)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (configurationSection == null)
+            {
+                throw new ArgumentNullException(nameof(configurationSection));
+            }
+
+            return AddEnyimMemcached(services, s => s.Configure<MemcachedClientOptions>(configurationSection));
+        }
+
+        public static IServiceCollection AddEnyimMemcached(this IServiceCollection services, IConfiguration configuration, string sectionKey = "enyimMemcached")
         {
             if (services == null)
             {
@@ -38,7 +53,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(configuration));
             }
 
-            return AddEnyimMemcached(services, s => s.Configure<MemcachedClientOptions>(configuration));
+            return AddEnyimMemcached(services, s => s.Configure<MemcachedClientOptions>(configuration.GetSection(sectionKey)));
         }
 
         private static IServiceCollection AddEnyimMemcached(IServiceCollection services, Action<IServiceCollection> configure)
