@@ -32,7 +32,8 @@ namespace SampleWebApp
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddEnyimMemcached(Configuration);
+            services.AddEnyimMemcached();
+            //services.AddEnyimMemcached(Configuration);
             //services.AddEnyimMemcached(Configuration, "enyimMemcached");
             //services.AddEnyimMemcached(Configuration.GetSection("enyimMemcached"));
         }

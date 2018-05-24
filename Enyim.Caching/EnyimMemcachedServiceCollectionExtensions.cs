@@ -11,6 +11,17 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class EnyimMemcachedServiceCollectionExtensions
     {
+        /// <summary>
+        /// Add EnyimMemcached to the specified <see cref="IServiceCollection"/>.
+        /// Read configuration via IConfiguration.GetSection("enyimMemcached")
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        public static IServiceCollection AddEnyimMemcached(this IServiceCollection services)
+        {
+            return AddEnyimMemcachedInternal(services, null);
+        }
+
         public static IServiceCollection AddEnyimMemcached(this IServiceCollection services, Action<MemcachedClientOptions> setupAction)
         {
             if (services == null)
@@ -23,7 +34,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(setupAction));
             }
 
-            return AddEnyimMemcached(services, s => s.Configure(setupAction));
+            return AddEnyimMemcachedInternal(services, s => s.Configure(setupAction));
         }
 
         public static IServiceCollection AddEnyimMemcached(this IServiceCollection services, IConfigurationSection configurationSection)
@@ -38,7 +49,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(configurationSection));
             }
 
-            return AddEnyimMemcached(services, s => s.Configure<MemcachedClientOptions>(configurationSection));
+            return AddEnyimMemcachedInternal(services, s => s.Configure<MemcachedClientOptions>(configurationSection));
         }
 
         public static IServiceCollection AddEnyimMemcached(this IServiceCollection services, IConfiguration configuration, string sectionKey = "enyimMemcached")
@@ -53,13 +64,13 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(configuration));
             }
 
-            return AddEnyimMemcached(services, s => s.Configure<MemcachedClientOptions>(configuration.GetSection(sectionKey)));
+            return AddEnyimMemcachedInternal(services, s => s.Configure<MemcachedClientOptions>(configuration.GetSection(sectionKey)));
         }
 
-        private static IServiceCollection AddEnyimMemcached(IServiceCollection services, Action<IServiceCollection> configure)
+        private static IServiceCollection AddEnyimMemcachedInternal(IServiceCollection services, Action<IServiceCollection> configure)
         {
             services.AddOptions();
-            configure(services);
+            configure?.Invoke(services);
 
             services.TryAddSingleton<ITranscoder, DefaultTranscoder>();
             services.TryAddSingleton<IMemcachedKeyTransformer, DefaultKeyTransformer>();
