@@ -6,6 +6,7 @@ using Enyim.Reflection;
 using Enyim.Caching.Memcached.Protocol.Binary;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 
 namespace Enyim.Caching.Configuration
 {
@@ -26,6 +27,7 @@ namespace Enyim.Caching.Configuration
         public MemcachedClientConfiguration(
             ILoggerFactory loggerFactory,
             IOptions<MemcachedClientOptions> optionsAccessor,
+            IConfiguration configuration,
             ITranscoder transcoder = null,
             IMemcachedKeyTransformer keyTransformer = null)
         {
@@ -37,6 +39,11 @@ namespace Enyim.Caching.Configuration
             _logger = loggerFactory.CreateLogger<MemcachedClientConfiguration>();
 
             var options = optionsAccessor.Value;
+            if(options == null || options.Servers.Count == 0)
+            {
+                configuration.GetSection("enyimMemcached").Bind(options);
+            }
+
             Servers = new List<EndPoint>();
             foreach (var server in options.Servers)
             {

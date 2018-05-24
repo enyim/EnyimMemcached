@@ -7,6 +7,7 @@ using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached;
 using Xunit;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 
 namespace Enyim.Caching.Tests
 {
@@ -17,6 +18,8 @@ namespace Enyim.Caching.Tests
         public MemcachedClientTestsBase()
         {
             IServiceCollection services = new ServiceCollection();
+            var configuration = new ConfigurationBuilder().Build();
+            services.AddSingleton<IConfiguration>(configuration);
             services.AddEnyimMemcached(options => options.AddServer("memcached", 11211));
             services.AddLogging();
             IServiceProvider serviceProvider = services.BuildServiceProvider();
