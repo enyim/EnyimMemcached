@@ -248,9 +248,9 @@ namespace Enyim.Caching
             return Task.CompletedTask;
         }
 
-        public Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Task<T> generator)
+        public Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Func<Task<T>> generator)
         {
-            return generator;
+            return generator?.Invoke();
         }
 
         public Task FlushAllAsync()
