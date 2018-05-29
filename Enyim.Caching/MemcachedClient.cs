@@ -219,7 +219,7 @@ namespace Enyim.Caching
             return result.Success ? result.Value : default(T);
         }
 
-        public async Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Task<T> generator)
+        public async Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Func<Task<T>> generator)
         {
             var result = await GetAsync<T>(key);
             if (result.Success)
@@ -227,7 +227,7 @@ namespace Enyim.Caching
                 return result.Value;
             }
 
-            var value = await generator;
+            var value = await generator?.Invoke();
             if (value != null)
             {
                 await AddAsync(key, value, cacheSeconds);

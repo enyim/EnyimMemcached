@@ -99,17 +99,17 @@ namespace Enyim.Caching.Tests
         }
 
         [Fact]
-        public async Task When_GetValueOrCreateAsync_Is_Successful()
+        public async Task GetValueOrCreateAsyncTest()
         {
-            var key = GetUniqueKey("Get");
-            var expected = "hello word";
-            var value = await _client.GetValueOrCreateAsync(key, 10, Task.FromResult(expected));
-            Assert.Equal(expected, value);
-            Assert.Equal(expected, await _client.GetValueAsync<string>(key));
+            var key = "GetValueOrCreateAsyncTest_" + Guid.NewGuid();
+            await _client.GetValueOrCreateAsync(key, 10, () => GenerateValue());
+            var cacheValue = await _client.GetValueAsync<string>(key);
+            Assert.Equal(nameof(GetValueOrCreateAsyncTest), cacheValue);
+        }
 
-            key = GetUniqueKey("Get");
-            await _client.GetValueOrCreateAsync(key, 10, Task.FromResult<string>(null));
-            Assert.False((await _client.GetAsync<string>(key)).Success);
+        private Task<string> GenerateValue()
+        {
+            return Task.FromResult(nameof(GetValueOrCreateAsyncTest));
         }
     }
 }
