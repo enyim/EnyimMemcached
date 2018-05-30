@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>EnyimMemcachedCore is a Memcached client library for .NET Core. Usage: Add services.AddEnyimMemcached(...) and app.UseEnyimMemcached() in Startup. Add IMemcachedClient into constructor.</Description>
-    <VersionPrefix>2.1.3</VersionPrefix>
+    <VersionPrefix>2.1.4</VersionPrefix>
     <Authors>cnblogs.com</Authors>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
