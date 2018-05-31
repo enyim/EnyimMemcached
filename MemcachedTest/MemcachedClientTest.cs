@@ -9,8 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System.Linq;
-using Microsoft.Extensions.Configuration;
-using System.IO;
 
 namespace MemcachedTest
 {
@@ -31,13 +29,11 @@ namespace MemcachedTest
                 //    options.Transcoder = "BinaryFormatterTranscoder";
                 //}
             });
-            if (useBinaryFormatterTranscoder)
+            if(useBinaryFormatterTranscoder)
             {
-                services.AddSingleton<ITranscoder, BinaryFormatterTranscoder>();
+                services.AddSingleton<ITranscoder,BinaryFormatterTranscoder>();
             }
 
-            var configuration = new ConfigurationBuilder().Build();
-            services.AddSingleton<IConfiguration>(configuration);
             services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Error).AddConsole());
 
             IServiceProvider serviceProvider = services.BuildServiceProvider();
