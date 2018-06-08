@@ -28,7 +28,7 @@ namespace Enyim.Caching.Memcached
         private Stream inputStream;
         private AsyncSocketHelper helper;
 
-        public PooledSocket(EndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger)
+        public PooledSocket(DnsEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger)
         {
             _logger = logger;
 
@@ -59,59 +59,23 @@ namespace Enyim.Caching.Memcached
             this.inputStream = new BasicNetworkStream(socket);            
         }
 
-        private void ConnectWithTimeout(Socket socket, EndPoint endpoint, int timeout)
+        private void ConnectWithTimeout(Socket socket, DnsEndPoint endpoint, int timeout)
         {
-            //var task = socket.ConnectAsync(endpoint);
-            //if(!task.Wait(timeout))
-            //{
-            //    using (socket)
-            //    {
-            //        throw new TimeoutException("Could not connect to " + endpoint);
-            //    }
-            //}  
-
-            if (endpoint is DnsEndPoint && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                var dnsEndPoint = ((DnsEndPoint)endpoint);
-                var host = dnsEndPoint.Host;
-                var addresses = Dns.GetHostAddresses(dnsEndPoint.Host);
-                var address = addresses.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
-                if (address == null)
-                {
-                    throw new ArgumentException(String.Format("Could not resolve host '{0}'.", host));
-                }
-                _logger.LogDebug($"Resolved '{host}' to '{address}'");
-                endpoint = new IPEndPoint(address, dnsEndPoint.Port);
-            }
-
             var completed = new AutoResetEvent(false);
+
             var args = new SocketAsyncEventArgs();
             args.RemoteEndPoint = endpoint;
             args.Completed += OnConnectCompleted;
             args.UserToken = completed;
             socket.ConnectAsync(args);
+
             if (!completed.WaitOne(timeout) || !socket.Connected)
             {
                 using (socket)
                 {
                     throw new TimeoutException("Could not connect to " + endpoint);
                 }
-            }
-
-            /*
-            var mre = new ManualResetEvent(false);
-            socket.Connect(endpoint, iar =>
-            {
-                try { using (iar.AsyncWaitHandle) socket.EndConnect(iar); }
-                catch { }
-
-                mre.Set();
-            }, null);
-
-            if (!mre.WaitOne(timeout) || !socket.Connected)
-                using (socket)
-                    throw new TimeoutException("Could not connect to " + endpoint);
-           */
+            }            
         }
 
         private void OnConnectCompleted(object sender, SocketAsyncEventArgs args)

@@ -27,13 +27,13 @@ namespace Enyim.Caching.Memcached
 
         private bool isDisposed;
 
-        private EndPoint endPoint;
+        private DnsEndPoint endPoint;
         private ISocketPoolConfiguration config;
         private InternalPoolImpl internalPoolImpl;
         private bool isInitialized;
 
         public MemcachedNode(
-            EndPoint endpoint, 
+            DnsEndPoint endpoint, 
             ISocketPoolConfiguration socketPoolConfig,
             ILogger logger
             )

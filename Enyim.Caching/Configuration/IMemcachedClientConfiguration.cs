@@ -13,7 +13,7 @@ namespace Enyim.Caching.Configuration
 		/// <summary>
 		/// Gets a list of <see cref="T:IPEndPoint"/> each representing a Memcached server in the pool.
 		/// </summary>
-		IList<EndPoint> Servers { get; }
+		IList<DnsEndPoint> Servers { get; }
 
 		/// <summary>
 		/// Gets the configuration of the socket pool.
