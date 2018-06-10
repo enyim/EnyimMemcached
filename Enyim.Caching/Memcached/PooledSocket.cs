@@ -34,10 +34,8 @@ namespace Enyim.Caching.Memcached
 
             this.isAlive = true;
 
-            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            // TODO test if we're better off using nagle
-            //PHP: OPT_TCP_NODELAY
-            //socket.NoDelay = true;
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);         
+            socket.NoDelay = true;
 
             var timeout = connectionTimeout == TimeSpan.MaxValue
                             ? Timeout.Infinite
