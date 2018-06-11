@@ -221,16 +221,30 @@ namespace Enyim.Caching
 
         public async Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Func<Task<T>> generator)
         {
-            var result = await GetAsync<T>(key);
-            if (result.Success)
+            try
             {
-                return result.Value;
+                var result = await GetAsync<T>(key);
+                if (result.Success)
+                {
+                    return result.Value;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"{nameof(GetAsync)}<{typeof(T)}>(\"{key}\")");
             }
 
             var value = await generator?.Invoke();
             if (value != null)
             {
-                await AddAsync(key, value, cacheSeconds);
+                try
+                {
+                    await AddAsync(key, value, cacheSeconds);
+                }
+                catch(Exception ex)
+                {
+                    _logger.LogError(ex, $"{nameof(AddAsync)}(\"{key}\", ..., {cacheSeconds})");
+                }
             }
             return value;
         }
