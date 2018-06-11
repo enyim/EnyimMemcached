@@ -41,13 +41,22 @@ namespace Enyim.Caching.Configuration
             var options = optionsAccessor.Value;
             if ((options == null || options.Servers.Count == 0) && configuration != null)
             {
-                configuration.GetSection("enyimMemcached").Bind(options);
+                var section = configuration.GetSection("enyimMemcached");                
+                if (section.Exists())
+                {
+                    section.Bind(options);                    
+                }
+                else
+                {
+                    _logger.LogWarning($"No enyimMemcached setting in appsetting.json. Use default configuration");
+                    options.AddDefaultServer();
+                }                
             }
 
             Servers = new List<DnsEndPoint>();
             foreach (var server in options.Servers)
             {
-                    Servers.Add(new DnsEndPoint(server.Address, server.Port));
+                Servers.Add(new DnsEndPoint(server.Address, server.Port));
             }
 
             SocketPool = new SocketPoolConfiguration();
