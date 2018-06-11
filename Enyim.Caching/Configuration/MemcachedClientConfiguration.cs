@@ -47,7 +47,7 @@ namespace Enyim.Caching.Configuration
             Servers = new List<DnsEndPoint>();
             foreach (var server in options.Servers)
             {
-                Servers.Add(new DnsEndPoint(server.Address, server.Port));
+                    Servers.Add(new DnsEndPoint(server.Address, server.Port));
             }
 
             SocketPool = new SocketPoolConfiguration();

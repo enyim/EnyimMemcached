@@ -35,8 +35,7 @@ namespace Enyim.Caching.Memcached
         public MemcachedNode(
             DnsEndPoint endpoint, 
             ISocketPoolConfiguration socketPoolConfig,
-            ILogger logger
-            )
+            ILogger logger)
         {
             this.endPoint = endpoint;
             this.config = socketPoolConfig;
