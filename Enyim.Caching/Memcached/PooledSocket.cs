@@ -28,16 +28,14 @@ namespace Enyim.Caching.Memcached
         private Stream inputStream;
         private AsyncSocketHelper helper;
 
-        public PooledSocket(EndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger)
+        public PooledSocket(DnsEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger)
         {
             _logger = logger;
 
             this.isAlive = true;
 
-            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            // TODO test if we're better off using nagle
-            //PHP: OPT_TCP_NODELAY
-            //socket.NoDelay = true;
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);         
+            socket.NoDelay = true;
 
             var timeout = connectionTimeout == TimeSpan.MaxValue
                             ? Timeout.Infinite
@@ -48,77 +46,46 @@ namespace Enyim.Caching.Memcached
                 : (int)receiveTimeout.TotalMilliseconds;
 
             socket.ReceiveTimeout = rcv;
-            socket.SendTimeout = rcv;
-            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+            socket.SendTimeout = rcv;            
 
             ConnectWithTimeout(socket, endpoint, timeout);
 
             this.socket = socket;
             this.endpoint = endpoint;
 
-            this.inputStream = new BasicNetworkStream(socket);            
+            this.inputStream = new NetworkStream(socket);            
         }
 
-        private void ConnectWithTimeout(Socket socket, EndPoint endpoint, int timeout)
+        private void ConnectWithTimeout(Socket socket, DnsEndPoint endpoint, int timeout)
         {
-            //var task = socket.ConnectAsync(endpoint);
-            //if(!task.Wait(timeout))
-            //{
-            //    using (socket)
-            //    {
-            //        throw new TimeoutException("Could not connect to " + endpoint);
-            //    }
-            //}  
-
-            if (endpoint is DnsEndPoint && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                var dnsEndPoint = ((DnsEndPoint)endpoint);
-                var host = dnsEndPoint.Host;
-                var addresses = Dns.GetHostAddresses(dnsEndPoint.Host);
-                var address = addresses.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
-                if (address == null)
-                {
-                    throw new ArgumentException(String.Format("Could not resolve host '{0}'.", host));
-                }
-                _logger.LogDebug($"Resolved '{host}' to '{address}'");
-                endpoint = new IPEndPoint(address, dnsEndPoint.Port);
-            }
-
-            var completed = new AutoResetEvent(false);
+            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
             var args = new SocketAsyncEventArgs();
-            args.RemoteEndPoint = endpoint;
-            args.Completed += OnConnectCompleted;
-            args.UserToken = completed;
-            socket.ConnectAsync(args);
-            if (!completed.WaitOne(timeout) || !socket.Connected)
+
+            //Workaround for https://github.com/dotnet/corefx/issues/26840
+            if (!IPAddress.TryParse(endpoint.Host, out var address))
             {
-                using (socket)
-                {
-                    throw new TimeoutException("Could not connect to " + endpoint);
-                }
+                address = Dns.GetHostAddresses(endpoint.Host).FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+                if (address == null)
+                    throw new ArgumentException(String.Format("Could not resolve host '{0}'.", endpoint.Host));
+                args.RemoteEndPoint = new IPEndPoint(address, endpoint.Port);
+            }
+            else
+            {
+                args.RemoteEndPoint = endpoint;
             }
 
-            /*
-            var mre = new ManualResetEvent(false);
-            socket.Connect(endpoint, iar =>
+            using (var mres = new ManualResetEventSlim())
             {
-                try { using (iar.AsyncWaitHandle) socket.EndConnect(iar); }
-                catch { }
-
-                mre.Set();
-            }, null);
-
-            if (!mre.WaitOne(timeout) || !socket.Connected)
-                using (socket)
-                    throw new TimeoutException("Could not connect to " + endpoint);
-           */
-        }
-
-        private void OnConnectCompleted(object sender, SocketAsyncEventArgs args)
-        {
-            EventWaitHandle handle = (EventWaitHandle)args.UserToken;
-            handle.Set();
-        }
+                args.Completed += (s, e) => mres.Set();
+                if (socket.ConnectAsync(args))
+                {
+                    if(!mres.Wait(timeout))
+                    {
+                        throw new TimeoutException("Could not connect to " + endpoint);
+                    }
+                }
+            }           
+        }        
 
         public Action<PooledSocket> CleanupCallback { get; set; }
 
