@@ -71,7 +71,8 @@ namespace Enyim.Caching.Memcached
             }
             else
             {
-                args.RemoteEndPoint = endpoint;
+                //DnsEndPoint is not working on linux
+                args.RemoteEndPoint = new IPEndPoint(address, endpoint.Port);
             }
 
             using (var mres = new ManualResetEventSlim())
