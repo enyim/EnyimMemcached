@@ -1,18 +1,16 @@
-//#define DEBUG_IO
+using Microsoft.Extensions.Logging;
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Dawn.Net.Sockets;
-using System.Runtime.InteropServices;
-using System.Reflection;
 
 namespace Enyim.Caching.Memcached
 {
@@ -34,7 +32,7 @@ namespace Enyim.Caching.Memcached
 
             this.isAlive = true;
 
-            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);         
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socket.NoDelay = true;
 
             var timeout = connectionTimeout == TimeSpan.MaxValue
@@ -46,14 +44,14 @@ namespace Enyim.Caching.Memcached
                 : (int)receiveTimeout.TotalMilliseconds;
 
             socket.ReceiveTimeout = rcv;
-            socket.SendTimeout = rcv;            
+            socket.SendTimeout = rcv;
 
             ConnectWithTimeout(socket, endpoint, timeout);
 
             this.socket = socket;
             this.endpoint = endpoint;
 
-            this.inputStream = new NetworkStream(socket);            
+            this.inputStream = new NetworkStream(socket);
         }
 
         private void ConnectWithTimeout(Socket socket, DnsEndPoint endpoint, int timeout)
@@ -80,13 +78,13 @@ namespace Enyim.Caching.Memcached
                 args.Completed += (s, e) => mres.Set();
                 if (socket.ConnectAsync(args))
                 {
-                    if(!mres.Wait(timeout))
+                    if (!mres.Wait(timeout))
                     {
                         throw new TimeoutException("Could not connect to " + endpoint);
                     }
                 }
-            }           
-        }        
+            }
+        }
 
         public Action<PooledSocket> CleanupCallback { get; set; }
 
@@ -212,12 +210,9 @@ namespace Enyim.Caching.Memcached
 
         public async Task<byte[]> ReadBytesAsync(int count)
         {
-            using (var awaitable = new SocketAwaitable())
-            {
-                awaitable.Buffer = new ArraySegment<byte>(new byte[count], 0, count);
-                await this.socket.ReceiveAsync(awaitable);
-                return awaitable.Transferred.Array;
-            }
+            var buffer = new ArraySegment<byte>(new byte[count], 0, count);
+            await this.socket.ReceiveAsync(buffer, SocketFlags.None);
+            return buffer.Array;
         }
 
         /// <summary>
@@ -297,24 +292,14 @@ namespace Enyim.Caching.Memcached
 
         public async Task WriteSync(IList<ArraySegment<byte>> buffers)
         {
-            using (var awaitable = new SocketAwaitable())
+            try
             {
-                awaitable.Arguments.BufferList = buffers;
-                try
-                {
-                    await this.socket.SendAsync(awaitable);
-                }
-                catch
-                {
-                    this.isAlive = false;
-                    ThrowHelper.ThrowSocketWriteError(this.endpoint, awaitable.Arguments.SocketError);
-                }
-
-                if (awaitable.Arguments.SocketError != SocketError.Success)
-                {
-                    this.isAlive = false;
-                    ThrowHelper.ThrowSocketWriteError(this.endpoint, awaitable.Arguments.SocketError);
-                }
+                await socket.SendAsync(buffers, SocketFlags.None);
+            }
+            catch (Exception ex)
+            {
+                isAlive = false;
+                _logger.LogError(ex, nameof(PooledSocket.WriteSync));
             }
         }
 
