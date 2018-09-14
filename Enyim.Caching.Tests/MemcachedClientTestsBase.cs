@@ -9,6 +9,7 @@ using Xunit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching.Tests
 {
@@ -16,10 +17,18 @@ namespace Enyim.Caching.Tests
     {
         protected MemcachedClient _client;
 
-        public MemcachedClientTestsBase()
+        public MemcachedClientTestsBase(Action<MemcachedClientOptions> onAddEnyimMemcached = null)
         {
             IServiceCollection services = new ServiceCollection();
-            services.AddEnyimMemcached(options => options.AddServer("memcached", 11211));
+            services.AddEnyimMemcached(options =>
+            {
+                options.AddServer("memcached", 11211);
+                if (onAddEnyimMemcached != null)
+                {
+                    onAddEnyimMemcached(options);
+                }
+            });
+
             services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug).AddConsole());
             IServiceProvider serviceProvider = services.BuildServiceProvider();
             _client = serviceProvider.GetService<IMemcachedClient>() as MemcachedClient;
@@ -63,6 +72,20 @@ namespace Enyim.Caching.Tests
             return _client.ExecuteStore(mode, key, value);
         }
 
+        protected Task<bool> StoreAsync(StoreMode mode = StoreMode.Set, string key = null, object value = null)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                key = GetUniqueKey("store");
+            }
+
+            if (value == null)
+            {
+                value = GetRandomString();
+            }
+            return _client.StoreAsync(mode, key, value, TimeSpan.MaxValue);
+        }
+
         protected void StoreAssertPass(IStoreOperationResult result)
         {
             Assert.True(result.Success, "Success was false");
@@ -87,6 +110,15 @@ namespace Enyim.Caching.Tests
         }
 
         protected void GetAssertFail(IGetOperationResult result)
+        {
+            Assert.False(result.Success, "Success was true");
+            Assert.Equal((ulong)0, result.Cas);
+            Assert.True(result.StatusCode > 0, "StatusCode not greater than 0");
+            Assert.False(result.HasValue, "HasValue was true");
+            Assert.Null(result.Value);
+        }
+
+        protected void GetAssertFail(IGetOperationResult<object> result)
         {
             Assert.False(result.Success, "Success was true");
             Assert.Equal((ulong)0, result.Cas);
