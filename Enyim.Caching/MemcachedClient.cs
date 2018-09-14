@@ -196,6 +196,12 @@ namespace Enyim.Caching
                         result.Value = transcoder.Deserialize<T>(command.Result);
                         return result;
                     }
+                    else
+                    {
+                        commandResult.Combine(result);
+
+                        return result;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -208,8 +214,7 @@ namespace Enyim.Caching
                 _logger.LogError($"Unable to locate memcached node");
             }
 
-            result.Success = false;
-            result.Value = default(T);
+            result.Fail("Unable to locate node");
             return result;
         }
 
