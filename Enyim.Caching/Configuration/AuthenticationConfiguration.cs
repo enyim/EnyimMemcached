@@ -1,35 +1,35 @@
+ï»¿using Enyim.Caching.Memcached;
 using System;
 using System.Collections.Generic;
-using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Configuration
 {
-	public class AuthenticationConfiguration : IAuthenticationConfiguration
-	{
-		private Type authenticator;
-		private Dictionary<string, object> parameters;
+    public class AuthenticationConfiguration : IAuthenticationConfiguration
+    {
+        private Type authenticator;
+        private Dictionary<string, object> parameters;
 
-		Type IAuthenticationConfiguration.Type
-		{
-			get { return this.authenticator; }
-			set
-			{
-				ConfigurationHelper.CheckForInterface(value, typeof(ISaslAuthenticationProvider));
-				this.authenticator = value;
-			}
-		}
+        Type IAuthenticationConfiguration.Type
+        {
+            get { return this.authenticator; }
+            set
+            {
+                ConfigurationHelper.CheckForInterface(value, typeof(ISaslAuthenticationProvider));
+                this.authenticator = value;
+            }
+        }
 
-		Dictionary<string, object> IAuthenticationConfiguration.Parameters
-		{
-			get { return this.parameters ?? (this.parameters = new Dictionary<string, object>()); }
-		}
-	}
+        Dictionary<string, object> IAuthenticationConfiguration.Parameters
+        {
+            get { return this.parameters ?? (this.parameters = new Dictionary<string, object>()); }
+        }
+    }
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk? enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
