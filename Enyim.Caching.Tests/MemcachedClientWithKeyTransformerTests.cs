@@ -1,25 +1,18 @@
-﻿using System;
+﻿using Enyim.Caching.Configuration;
+using Enyim.Caching.Memcached;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Enyim.Caching.Configuration;
-using Enyim.Caching.Memcached;
 using Xunit;
 
 namespace Enyim.Caching.Tests
 {
     public class MemcachedClientWithKeyTransformerTests : MemcachedClientTestsBase
     {
-        public MemcachedClientWithKeyTransformerTests(Action<MemcachedClientOptions> onAddEnyimMemcached = null)
-            : base(options =>
-                    {
-                        options.KeyTransformer = "Enyim.Caching.Memcached.TigerHashKeyTransformer";
-                        if (onAddEnyimMemcached != null)
-                        {
-                            onAddEnyimMemcached(options);
-                        }
-                    })
+        public MemcachedClientWithKeyTransformerTests()
+            : base(options => options.KeyTransformer = "Enyim.Caching.Memcached.TigerHashKeyTransformer")
         {
         }
 

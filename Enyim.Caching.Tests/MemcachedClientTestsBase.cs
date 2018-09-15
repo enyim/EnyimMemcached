@@ -1,15 +1,15 @@
-﻿using System;
+﻿using Enyim.Caching.Configuration;
+using Enyim.Caching.Memcached;
+using Enyim.Caching.Memcached.Results;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Enyim.Caching.Configuration;
-using Enyim.Caching.Memcached.Results;
-using Enyim.Caching.Memcached;
-using Xunit;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using Xunit;
 
 namespace Enyim.Caching.Tests
 {
@@ -23,10 +23,7 @@ namespace Enyim.Caching.Tests
             services.AddEnyimMemcached(options =>
             {
                 options.AddServer("memcached", 11211);
-                if (onAddEnyimMemcached != null)
-                {
-                    onAddEnyimMemcached(options);
-                }
+                onAddEnyimMemcached?.Invoke(options);
             });
 
             services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug).AddConsole());
