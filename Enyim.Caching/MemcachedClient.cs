@@ -1,18 +1,18 @@
-using System;
-using System.Linq;
-using Enyim.Caching.Configuration;
+﻿using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
-using System.Collections.Generic;
-using System.Threading;
-using System.Net;
-using System.Diagnostics;
 using Enyim.Caching.Memcached.Results;
-using Enyim.Caching.Memcached.Results.Factories;
 using Enyim.Caching.Memcached.Results.Extensions;
-using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results.Factories;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Caching.Distributed;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
@@ -113,7 +113,6 @@ namespace Enyim.Caching
         /// </summary>
         /// <param name="key">The identifier for the item to retrieve.</param>
         /// <returns>The retrieved item, or <value>null</value> if the key was not found.</returns>
-        [Obsolete]
         public object Get(string key)
         {
             object tmp;
@@ -129,93 +128,83 @@ namespace Enyim.Caching
         [Obsolete]
         public T Get<T>(string key)
         {
-            var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var result = PerformGet<T>(key);
+            return result.Success ? result.Value : default(T);
+        }
 
-            if (node != null)
+        public IGetOperationResult<T> PerformGet<T>(string key)
+        {
+            if (!CreateGetCommand<T>(key, out var result, out var node, out var command))
             {
-                try
-                {
-                    var command = this.pool.OperationFactory.Get(hashedKey);
-                    var commandResult = node.Execute(command);
+                return result;
+            }
 
-                    if (commandResult.Success)
-                    {
-                        if (typeof(T).GetTypeCode() == TypeCode.Object && typeof(T) != typeof(Byte[]))
-                        {
-                            return this.transcoder.Deserialize<T>(command.Result);
-                        }
-                        else
-                        {
-                            var tempResult = this.transcoder.Deserialize(command.Result);
-                            if (tempResult != null)
-                            {
-                                if (typeof(T) == typeof(Guid))
-                                {
-                                    return (T)(object)new Guid((string)tempResult);
-                                }
-                                else
-                                {
-                                    return (T)tempResult;
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(0, ex, $"{nameof(GetAsync)}(\"{key}\")");
-                    throw ex;
-                }
+            try
+            {
+                var commandResult = node.Execute(command);
+                return BuildGetCommandResult<T>(result, command, commandResult);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(0, ex, $"{nameof(PerformGet)}(\"{key}\")");
+                result.Fail(ex.Message);
+                return result;
+            }
+        }
+
+        private bool CreateGetCommand<T>(string key, out IGetOperationResult<T> result, out IMemcachedNode node, out IGetOperation command)
+        {
+            result = new DefaultGetOperationResultFactory<T>().Create();
+            var hashedKey = this.keyTransformer.Transform(key);
+
+            node = this.pool.Locate(hashedKey);
+            if (node == null)
+            {
+                var errorMessage = $"Unable to locate node with \"{key}\" key";
+                _logger.LogError(errorMessage);
+                result.Fail(errorMessage);
+                command = null;
+                return false;
+            }
+
+            command = this.pool.OperationFactory.Get(hashedKey);
+            return true;
+        }
+
+        private IGetOperationResult<T> BuildGetCommandResult<T>(IGetOperationResult<T> result, IGetOperation command, IOperationResult commandResult)
+        {
+            if (commandResult.Success)
+            {
+                result.Value = transcoder.Deserialize<T>(command.Result);
+                result.Pass();
             }
             else
             {
-                _logger.LogError($"Unable to locate memcached node");
+                commandResult.Combine(result);
             }
 
-            return default(T);
+            return result;
         }
 
         public async Task<IGetOperationResult<T>> GetAsync<T>(string key)
         {
-            var result = new DefaultGetOperationResultFactory<T>().Create();
-
-            var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
-
-            if (node != null)
+            if (!CreateGetCommand<T>(key, out var result, out var node, out var command))
             {
-                try
-                {
-                    var command = this.pool.OperationFactory.Get(hashedKey);
-                    var commandResult = await node.ExecuteAsync(command);
-
-                    if (commandResult.Success)
-                    {
-                        result.Success = true;
-                        result.Value = transcoder.Deserialize<T>(command.Result);
-                        return result;
-                    }
-                    else
-                    {
-                        commandResult.Combine(result);
-
-                        return result;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(0, ex, $"{nameof(GetAsync)}(\"{key}\")");
-                    throw ex;
-                }
-            }
-            else
-            {
-                _logger.LogError($"Unable to locate memcached node");
+                return result;
             }
 
-            result.Fail("Unable to locate node");
-            return result;
+            try
+            {
+                var commandResult = await node.ExecuteAsync(command);
+                return BuildGetCommandResult<T>(result, command, commandResult);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(0, ex, $"{nameof(GetAsync)}(\"{key}\")");
+                result.Fail(ex.Message);
+                return result;
+            }
         }
 
         public async Task<T> GetValueAsync<T>(string key)
@@ -246,7 +235,7 @@ namespace Enyim.Caching
                 {
                     await AddAsync(key, value, cacheSeconds);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _logger.LogError(ex, $"{nameof(AddAsync)}(\"{key}\", ..., {cacheSeconds})");
                 }
@@ -260,7 +249,6 @@ namespace Enyim.Caching
         /// <param name="key">The identifier for the item to retrieve.</param>
         /// <param name="value">The retrieved item or null if not found.</param>
         /// <returns>The <value>true</value> if the item was successfully retrieved.</returns>
-        [Obsolete]
         public bool TryGet(string key, out object value)
         {
             ulong cas = 0;
@@ -268,13 +256,11 @@ namespace Enyim.Caching
             return this.PerformTryGet(key, out cas, out value).Success;
         }
 
-        [Obsolete]
         public CasResult<object> GetWithCas(string key)
         {
             return this.GetWithCas<object>(key);
         }
 
-        [Obsolete]
         public CasResult<T> GetWithCas<T>(string key)
         {
             CasResult<object> tmp;
@@ -284,7 +270,6 @@ namespace Enyim.Caching
                     : new CasResult<T> { Cas = tmp.Cas, Result = default(T) };
         }
 
-        [Obsolete]
         public bool TryGetWithCas(string key, out CasResult<object> value)
         {
             object tmp;
