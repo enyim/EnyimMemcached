@@ -444,13 +444,13 @@ namespace Enyim.Caching
 		/// <returns>true if the item was successfully removed from the cache; false otherwise.</returns>
 		public IRemoveOperationResult ExecuteRemove(string key)
 		{
-			//var hashedKey = this.keyTransformer.Transform(key);
-			var node = this.pool.Locate(key);
+			var hashedKey = this.keyTransformer.Transform(key);
+			var node = this.pool.Locate(hashedKey);
 			var result = RemoveOperationResultFactory.Create();
 
 			if (node != null)
 			{
-				var command = this.pool.OperationFactory.Delete(key, 0);
+				var command = this.pool.OperationFactory.Delete(hashedKey, 0);
 				var commandResult = node.Execute(command);
 
 				if (commandResult.Success)
@@ -472,12 +472,13 @@ namespace Enyim.Caching
 
         public async Task<IRemoveOperationResult> ExecuteRemoveAsync(string key)
         {
-            var node = this.pool.Locate(key);
+            var hashedKey = this.keyTransformer.Transform(key);
+            var node = this.pool.Locate(hashedKey);
             var result = RemoveOperationResultFactory.Create();
 
             if (node != null)
             {
-                var command = this.pool.OperationFactory.Delete(key, 0);
+                var command = this.pool.OperationFactory.Delete(hashedKey, 0);
                 var commandResult = await node.ExecuteAsync(command);
 
                 if (commandResult.Success)
