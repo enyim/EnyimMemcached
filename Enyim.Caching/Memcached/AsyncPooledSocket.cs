@@ -1,19 +1,18 @@
 //#define DEBUG_IO
+using Microsoft.Extensions.Logging;
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Dawn.Net.Sockets;
-using System.Runtime.InteropServices;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace Enyim.Caching.Memcached
 {
@@ -29,7 +28,7 @@ namespace Enyim.Caching.Memcached
         public AsyncPooledSocket(ILogger logger)
         {
             _logger = logger;
-            _isAlive = true;            
+            _isAlive = true;
         }
 
         private async Task CreateSocketAsync(DnsEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
@@ -65,7 +64,7 @@ namespace Enyim.Caching.Memcached
             _socket.NoDelay = true;
             _socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
 
-            _inputStream = new NetworkStream(_socket, ownsSocket: true);        
+            _inputStream = new NetworkStream(_socket, ownsSocket: true);
         }
 
         //From https://github.com/dotnet/corefx/blob/master/src/System.Net.Http/src/System/Net/Http/SocketsHttpHandler/ConnectHelper.cs
@@ -78,7 +77,7 @@ namespace Enyim.Caching.Memcached
             {
                 CancellationToken = cancellationToken;
                 var b = new AsyncTaskMethodBuilder();
-                var ignored = b.Task; 
+                var ignored = b.Task;
                 Builder = b;
             }
 
@@ -104,7 +103,7 @@ namespace Enyim.Caching.Memcached
                         break;
                 }
             }
-        }        
+        }
 
         public Action<AsyncPooledSocket> CleanupCallback { get; set; }
 
@@ -230,12 +229,9 @@ namespace Enyim.Caching.Memcached
 
         public async Task<byte[]> ReadBytesAsync(int count)
         {
-            using (var awaitable = new SocketAwaitable())
-            {
-                awaitable.Buffer = new ArraySegment<byte>(new byte[count], 0, count);
-                await _socket.ReceiveAsync(awaitable);
-                return awaitable.Transferred.Array;
-            }
+            var buffer = new ArraySegment<byte>(new byte[count], 0, count);
+            await _socket.ReceiveAsync(buffer, SocketFlags.None);
+            return buffer.Array;
         }
 
         /// <summary>
@@ -315,24 +311,14 @@ namespace Enyim.Caching.Memcached
 
         public async Task WriteSync(IList<ArraySegment<byte>> buffers)
         {
-            using (var awaitable = new SocketAwaitable())
+            try
             {
-                awaitable.Arguments.BufferList = buffers;
-                try
-                {
-                    await _socket.SendAsync(awaitable);
-                }
-                catch
-                {
-                    _isAlive = false;
-                    ThrowHelper.ThrowSocketWriteError(_socket.RemoteEndPoint, awaitable.Arguments.SocketError);
-                }
-
-                if (awaitable.Arguments.SocketError != SocketError.Success)
-                {
-                    _isAlive = false;
-                    ThrowHelper.ThrowSocketWriteError(_socket.RemoteEndPoint, awaitable.Arguments.SocketError);
-                }
+                await _socket.SendAsync(buffers, SocketFlags.None);
+            }
+            catch (Exception ex)
+            {
+                _isAlive = false;
+                _logger.LogError(ex, nameof(PooledSocket.WriteSync));
             }
         }
 

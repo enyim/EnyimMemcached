@@ -25,12 +25,12 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             this.CorrelationId = Interlocked.Increment(ref InstanceCounter);
         }
 
-        public unsafe IList<ArraySegment<byte>> CreateBuffer()
+        public IList<ArraySegment<byte>> CreateBuffer()
         {
             return CreateBuffer(null);
         }
 
-        public unsafe IList<ArraySegment<byte>> CreateBuffer(IList<ArraySegment<byte>> appendTo)
+        public IList<ArraySegment<byte>> CreateBuffer(IList<ArraySegment<byte>> appendTo)
         {
             // key size 
             byte[] keyData = BinaryConverter.EncodeKey(this.Key);
@@ -51,80 +51,59 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             int totalLength = extraLength + keyLength + bodyLength;
 
             //build the header
-            byte[] header = new byte[24];
+            Span<byte> header = stackalloc byte[24];
 
-            fixed (byte* buffer = header)
+            header[0x00] = 0x80; // magic
+            header[0x01] = this.Operation;
+
+            // key length
+            header[0x02] = (byte)(keyLength >> 8);
+            header[0x03] = (byte)(keyLength & 255);
+
+            // extra length
+            header[0x04] = (byte)(extraLength);
+
+            // 5 -- data type, 0 (RAW)
+            // 6,7 -- reserved, always 0
+
+            header[0x06] = (byte)(this.Reserved >> 8);
+            header[0x07] = (byte)(this.Reserved & 255);
+
+            // body length
+            header[0x08] = (byte)(totalLength >> 24);
+            header[0x09] = (byte)(totalLength >> 16);
+            header[0x0a] = (byte)(totalLength >> 8);
+            header[0x0b] = (byte)(totalLength & 255);
+
+            header[0x0c] = (byte)(this.CorrelationId >> 24);
+            header[0x0d] = (byte)(this.CorrelationId >> 16);
+            header[0x0e] = (byte)(this.CorrelationId >> 8);
+            header[0x0f] = (byte)(this.CorrelationId & 255);
+
+            ulong cas = this.Cas;
+            // CAS
+            if (cas > 0)
             {
-                buffer[0x00] = 0x80; // magic
-                buffer[0x01] = this.Operation;
-
-                // key length
-                buffer[0x02] = (byte)(keyLength >> 8);
-                buffer[0x03] = (byte)(keyLength & 255);
-
-                // extra length
-                buffer[0x04] = (byte)(extraLength);
-
-                // 5 -- data type, 0 (RAW)
-                // 6,7 -- reserved, always 0
-
-                buffer[0x06] = (byte)(this.Reserved >> 8);
-                buffer[0x07] = (byte)(this.Reserved & 255);
-
-                // body length
-                buffer[0x08] = (byte)(totalLength >> 24);
-                buffer[0x09] = (byte)(totalLength >> 16);
-                buffer[0x0a] = (byte)(totalLength >> 8);
-                buffer[0x0b] = (byte)(totalLength & 255);
-
-                buffer[0x0c] = (byte)(this.CorrelationId >> 24);
-                buffer[0x0d] = (byte)(this.CorrelationId >> 16);
-                buffer[0x0e] = (byte)(this.CorrelationId >> 8);
-                buffer[0x0f] = (byte)(this.CorrelationId & 255);
-
-                ulong cas = this.Cas;
-                // CAS
-                if (cas > 0)
-                {
-                    // skip this if no cas is specfied
-                    buffer[0x10] = (byte)(cas >> 56);
-                    buffer[0x11] = (byte)(cas >> 48);
-                    buffer[0x12] = (byte)(cas >> 40);
-                    buffer[0x13] = (byte)(cas >> 32);
-                    buffer[0x14] = (byte)(cas >> 24);
-                    buffer[0x15] = (byte)(cas >> 16);
-                    buffer[0x16] = (byte)(cas >> 8);
-                    buffer[0x17] = (byte)(cas & 255);
-                }
+                // skip this if no cas is specfied
+                header[0x10] = (byte)(cas >> 56);
+                header[0x11] = (byte)(cas >> 48);
+                header[0x12] = (byte)(cas >> 40);
+                header[0x13] = (byte)(cas >> 32);
+                header[0x14] = (byte)(cas >> 24);
+                header[0x15] = (byte)(cas >> 16);
+                header[0x16] = (byte)(cas >> 8);
+                header[0x17] = (byte)(cas & 255);
             }
 
             var retval = appendTo ?? new List<ArraySegment<byte>>(4);
 
-            retval.Add(new ArraySegment<byte>(header));
+            retval.Add(new ArraySegment<byte>(header.ToArray()));
 
             if (extraLength > 0) retval.Add(extras);
 
             // NOTE key must be already encoded and should not contain any invalid characters which are not allowed by the protocol
             if (keyLength > 0) retval.Add(new ArraySegment<byte>(keyData));
             if (bodyLength > 0) retval.Add(body);
-
-#if DEBUG_PROTOCOL
-			if (log.IsDebugEnabled)
-			{
-				log.Debug("Building binary request");
-				StringBuilder sb = new StringBuilder(128).AppendLine();
-
-				for (int i = 0; i < header.Length; i++)
-				{
-					byte value = header[i];
-					sb.Append(value < 16 ? "0x0" : "0x").Append(value.ToString("X"));
-
-					if (i % 4 == 3) sb.AppendLine(); else sb.Append(" ");
-				}
-
-				log.Debug(sb.ToString());
-			}
-#endif
 
             return retval;
         }

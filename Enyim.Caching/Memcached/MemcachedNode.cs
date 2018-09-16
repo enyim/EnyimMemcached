@@ -1,18 +1,18 @@
+using Enyim.Caching.Configuration;
+using Enyim.Caching.Memcached.Protocol.Binary;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
+using Enyim.Collections;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net;
-using System.Threading;
-using Enyim.Caching.Configuration;
-using Enyim.Collections;
-using System.Security;
-using Enyim.Caching.Memcached.Protocol.Binary;
-using System.Runtime.Serialization;
 using System.IO;
-using Enyim.Caching.Memcached.Results;
-using Enyim.Caching.Memcached.Results.Extensions;
+using System.Net;
+using System.Runtime.Serialization;
+using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace Enyim.Caching.Memcached
 {
@@ -27,13 +27,13 @@ namespace Enyim.Caching.Memcached
 
         private bool isDisposed;
 
-        private DnsEndPoint endPoint;
-        private ISocketPoolConfiguration config;
+        private readonly DnsEndPoint endPoint;
+        private readonly ISocketPoolConfiguration config;
         private InternalPoolImpl internalPoolImpl;
         private bool isInitialized;
 
         public MemcachedNode(
-            DnsEndPoint endpoint, 
+            DnsEndPoint endpoint,
             ISocketPoolConfiguration socketPoolConfig,
             ILogger logger)
         {
@@ -186,7 +186,7 @@ namespace Enyim.Caching.Memcached
         private class InternalPoolImpl : IDisposable
         {
             private readonly ILogger _logger;
-            private bool _isDebugEnabled;
+            private readonly bool _isDebugEnabled;
 
             /// <summary>
             /// A list of already connected but free to use sockets
@@ -197,18 +197,18 @@ namespace Enyim.Caching.Memcached
             private bool isAlive;
             private DateTime markedAsDeadUtc;
 
-            private int minItems;
-            private int maxItems;
+            private readonly int minItems;
+            private readonly int maxItems;
 
             private MemcachedNode ownerNode;
-            private EndPoint endPoint;
-            private TimeSpan queueTimeout;
+            private readonly EndPoint endPoint;
+            private readonly TimeSpan queueTimeout;
             private Semaphore semaphore;
 
-            private object initLock = new Object();
+            private readonly object initLock = new Object();
 
             internal InternalPoolImpl(
-                MemcachedNode ownerNode, 
+                MemcachedNode ownerNode,
                 ISocketPoolConfiguration config,
                 ILogger logger)
             {
@@ -519,9 +519,9 @@ namespace Enyim.Caching.Memcached
             {
                 return new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, _logger);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                _logger.LogError(new EventId (this.GetHashCode(), nameof(MemcachedNode) ), ex, $"Create {nameof(PooledSocket)}");
+                _logger.LogError(new EventId(this.GetHashCode(), nameof(MemcachedNode)), ex, $"Create {nameof(PooledSocket)}");
                 throw;
             }
         }
@@ -582,12 +582,16 @@ namespace Enyim.Caching.Memcached
 
         protected async virtual Task<IPooledSocketResult> ExecuteOperationAsync(IOperation op)
         {
+            _logger.LogDebug($"ExecuteOperationAsync({op})");
+
             var result = this.Acquire();
             if (result.Success && result.HasValue)
             {
                 try
                 {
                     var pooledSocket = result.Value;
+
+
                     //if Get, call BinaryRequest.CreateBuffer()
                     var b = op.GetBuffer();
 
