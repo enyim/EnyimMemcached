@@ -1,37 +1,54 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public class FlushOperation : BinaryOperation, IFlushOperation
-	{
-		public FlushOperation() { }
+    public class FlushOperation : BinaryOperation, IFlushOperation
+    {
+        public FlushOperation() { }
 
-		protected override BinaryRequest Build()
-		{
-			var request = new BinaryRequest(OpCode.Flush);
+        protected override BinaryRequest Build()
+        {
+            var request = new BinaryRequest(OpCode.Flush);
 
-			return request;
-		}
+            return request;
+        }
 
-		protected internal override IOperationResult ReadResponse(PooledSocket socket)
-		{
-			var response = new BinaryResponse();
-			var retval = response.Read(socket);
+        protected internal override IOperationResult ReadResponse(PooledSocket socket)
+        {
+            var response = new BinaryResponse();
+            var retval = response.Read(socket);
 
-			this.StatusCode = StatusCode;
-			var result = new BinaryOperationResult()
-			{
-				Success = retval,
-				StatusCode = this.StatusCode
-			};
+            this.StatusCode = StatusCode;
+            var result = new BinaryOperationResult()
+            {
+                Success = retval,
+                StatusCode = this.StatusCode
+            };
 
-			result.PassOrFail(retval, "Failed to read response");
-			return result;
-		}
-	}
+            result.PassOrFail(retval, "Failed to read response");
+            return result;
+        }
+
+        protected internal override async ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        {
+            var response = new BinaryResponse();
+            var retval = await response.ReadAsync(socket);
+
+            this.StatusCode = StatusCode;
+            var result = new BinaryOperationResult()
+            {
+                Success = retval,
+                StatusCode = this.StatusCode
+            };
+
+            result.PassOrFail(retval, "Failed to read response");
+            return result;
+        }
+    }
 }
 
 #region [ License information          ]

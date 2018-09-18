@@ -1,38 +1,42 @@
 using System;
+using System.Threading.Tasks;
 using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Text
 {
-	public class DeleteOperation : SingleItemOperation, IDeleteOperation
-	{
-		internal DeleteOperation(string key) : base(key) { }
+    public class DeleteOperation : SingleItemOperation, IDeleteOperation
+    {
+        internal DeleteOperation(string key) : base(key) { }
 
-		protected internal override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
-		{
-			var command = "delete " + this.Key + TextSocketHelper.CommandTerminator;
-
-			return TextSocketHelper.GetCommandBuffer(command);
-		}
-
-		protected internal override IOperationResult ReadResponse(PooledSocket socket)
-		{
-			return new TextOperationResult
-			{
-				Success = String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0
-			};
-		}
-
-        protected internal override System.Threading.Tasks.Task<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        protected internal override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
         {
-            throw new NotImplementedException();
+            var command = "delete " + this.Key + TextSocketHelper.CommandTerminator;
+
+            return TextSocketHelper.GetCommandBuffer(command);
         }
 
-		protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
-		{
-			throw new System.NotSupportedException();
-		}
-	}
+        protected internal override IOperationResult ReadResponse(PooledSocket socket)
+        {
+            return new TextOperationResult
+            {
+                Success = String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0
+            };
+        }
+
+        protected internal override async ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        {
+            return new TextOperationResult
+            {
+                Success = String.Compare(TextSocketHelper.ReadResponse(socket), "DELETED", StringComparison.Ordinal) == 0
+            };
+        }
+
+        protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
+        {
+            throw new System.NotSupportedException();
+        }
+    }
 }
 
 #region [ License information          ]

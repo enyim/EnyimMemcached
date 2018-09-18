@@ -1,87 +1,123 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading.Tasks;
 using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Text
 {
-	public class StatsOperation : Operation, IStatsOperation
-	{
-		private static Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StatsOperation));
+    public class StatsOperation : Operation, IStatsOperation
+    {
+        private static Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StatsOperation));
 
-		private string type;
-		private Dictionary<string, string> result;
+        private readonly string type;
+        private Dictionary<string, string> result;
 
-		public StatsOperation(string type)
-		{
-			this.type = type;
-		}
-
-		protected internal override IList<ArraySegment<byte>> GetBuffer()
-		{
-			var command = String.IsNullOrEmpty(this.type)
-							? "stats" + TextSocketHelper.CommandTerminator
-							: "stats " + this.type + TextSocketHelper.CommandTerminator;
-
-			return TextSocketHelper.GetCommandBuffer(command);
-		}
-
-		protected internal override IOperationResult ReadResponse(PooledSocket socket)
-		{
-			var serverData = new Dictionary<string, string>();
-
-			while (true)
-			{
-				string line = TextSocketHelper.ReadResponse(socket);
-
-				// stat values are terminated by END
-				if (String.Compare(line, "END", StringComparison.Ordinal) == 0)
-					break;
-
-				// expected response is STAT item_name item_value
-				if (line.Length < 6 || String.Compare(line, 0, "STAT ", 0, 5, StringComparison.Ordinal) != 0)
-				{
-					if (log.IsWarnEnabled)
-						log.Warn("Unknow response: " + line);
-
-					continue;
-				}
-
-				// get the key&value
-				string[] parts = line.Remove(0, 5).Split(' ');
-				if (parts.Length != 2)
-				{
-					if (log.IsWarnEnabled)
-						log.Warn("Unknow response: " + line);
-
-					continue;
-				}
-
-				// store the stat item
-				serverData[parts[0]] = parts[1];
-			}
-
-			this.result = serverData;
-
-			return new TextOperationResult().Pass();
-		}
-
-		Dictionary<string, string> IStatsOperation.Result
-		{
-			get { return result; }
-		}
-
-        protected internal override System.Threading.Tasks.Task<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        public StatsOperation(string type)
         {
-            throw new NotImplementedException();
+            this.type = type;
         }
 
-		protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
-		{
-			throw new System.NotSupportedException();
-		}
-	}
+        protected internal override IList<ArraySegment<byte>> GetBuffer()
+        {
+            var command = String.IsNullOrEmpty(this.type)
+                            ? "stats" + TextSocketHelper.CommandTerminator
+                            : "stats " + this.type + TextSocketHelper.CommandTerminator;
+
+            return TextSocketHelper.GetCommandBuffer(command);
+        }
+
+        protected internal override IOperationResult ReadResponse(PooledSocket socket)
+        {
+            var serverData = new Dictionary<string, string>();
+
+            while (true)
+            {
+                string line = TextSocketHelper.ReadResponse(socket);
+
+                // stat values are terminated by END
+                if (String.Compare(line, "END", StringComparison.Ordinal) == 0)
+                    break;
+
+                // expected response is STAT item_name item_value
+                if (line.Length < 6 || String.Compare(line, 0, "STAT ", 0, 5, StringComparison.Ordinal) != 0)
+                {
+                    if (log.IsWarnEnabled)
+                        log.Warn("Unknow response: " + line);
+
+                    continue;
+                }
+
+                // get the key&value
+                string[] parts = line.Remove(0, 5).Split(' ');
+                if (parts.Length != 2)
+                {
+                    if (log.IsWarnEnabled)
+                        log.Warn("Unknow response: " + line);
+
+                    continue;
+                }
+
+                // store the stat item
+                serverData[parts[0]] = parts[1];
+            }
+
+            this.result = serverData;
+
+            return new TextOperationResult().Pass();
+        }
+
+        Dictionary<string, string> IStatsOperation.Result
+        {
+            get { return result; }
+        }
+
+        protected internal override async ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        {
+            var serverData = new Dictionary<string, string>();
+
+            while (true)
+            {
+                string line = TextSocketHelper.ReadResponse(socket);
+
+                // stat values are terminated by END
+                if (String.Compare(line, "END", StringComparison.Ordinal) == 0)
+                    break;
+
+                // expected response is STAT item_name item_value
+                if (line.Length < 6 || String.Compare(line, 0, "STAT ", 0, 5, StringComparison.Ordinal) != 0)
+                {
+                    if (log.IsWarnEnabled)
+                        log.Warn("Unknow response: " + line);
+
+                    continue;
+                }
+
+                // get the key&value
+                string[] parts = line.Remove(0, 5).Split(' ');
+                if (parts.Length != 2)
+                {
+                    if (log.IsWarnEnabled)
+                        log.Warn("Unknow response: " + line);
+
+                    continue;
+                }
+
+                // store the stat item
+                serverData[parts[0]] = parts[1];
+            }
+
+            this.result = serverData;
+
+            return new TextOperationResult().Pass();
+        }
+
+        protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
+        {
+            throw new System.NotSupportedException();
+        }
+    }
 }
 
 #region [ License information          ]

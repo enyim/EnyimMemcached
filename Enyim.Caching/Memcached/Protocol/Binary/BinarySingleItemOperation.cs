@@ -44,7 +44,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             return result;
         }
 
-        protected internal override async Task<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        protected internal override async ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
         {
             var response = new BinaryResponse();
             var retval = await response.ReadAsync(socket);
