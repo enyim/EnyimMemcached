@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Enyim.Caching.Memcached.Results;
@@ -37,7 +38,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
             if (status == 0)
             {
-                int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
+                int flags = BinaryConverter.DecodeInt32(response.Extra.AsSpan(), 0);
                 this.result = new CacheItem((ushort)flags, response.Data);
                 this.Cas = response.CAS;
 

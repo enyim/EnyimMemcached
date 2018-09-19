@@ -1,9 +1,3 @@
-using Enyim.Caching.Configuration;
-using Enyim.Caching.Memcached.Protocol.Binary;
-using Enyim.Caching.Memcached.Results;
-using Enyim.Caching.Memcached.Results.Extensions;
-using Enyim.Collections;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,6 +7,12 @@ using System.Runtime.Serialization;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Enyim.Caching.Configuration;
+using Enyim.Caching.Memcached.Protocol.Binary;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Extensions;
+using Enyim.Collections;
+using Microsoft.Extensions.Logging;
 
 namespace Enyim.Caching.Memcached
 {

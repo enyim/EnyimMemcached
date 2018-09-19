@@ -1,6 +1,6 @@
 using System;
-using System.Text;
 using System.Diagnostics;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
@@ -64,7 +64,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             if (dataLength > 0)
             {
                 var data = new byte[dataLength];
-                socket.Read(data, 0, dataLength);                
+                socket.Read(data, 0, dataLength);
 
                 this.Extra = new ArraySegment<byte>(data, 0, extraLength);
                 this.Data = new ArraySegment<byte>(data, extraLength, data.Length - extraLength);
@@ -207,24 +207,22 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             if (this.shouldCallNext) this.next(true);
         }
 
-        private unsafe void DeserializeHeader(byte[] header, out int dataLength, out int extraLength)
+
+        private void DeserializeHeader(Span<byte> header, out int dataLength, out int extraLength)
         {
-            fixed (byte* buffer = header)
-            {
-                if (buffer[0] != MAGIC_VALUE)
-                    throw new InvalidOperationException("Expected magic value " + MAGIC_VALUE + ", received: " + buffer[0]);
+            if (header[0] != MAGIC_VALUE)
+                throw new InvalidOperationException("Expected magic value " + MAGIC_VALUE + ", received: " + header[0]);
 
-                this.DataType = buffer[HEADER_DATATYPE];
-                this.Opcode = buffer[HEADER_OPCODE];
-                this.StatusCode = BinaryConverter.DecodeUInt16(buffer, HEADER_STATUS);
+            this.DataType = header[HEADER_DATATYPE];
+            this.Opcode = header[HEADER_OPCODE];
+            this.StatusCode = BinaryConverter.DecodeUInt16(header, HEADER_STATUS);
 
-                this.KeyLength = BinaryConverter.DecodeUInt16(buffer, HEADER_KEY);
-                this.CorrelationId = BinaryConverter.DecodeInt32(buffer, HEADER_OPAQUE);
-                this.CAS = BinaryConverter.DecodeUInt64(buffer, HEADER_CAS);
+            this.KeyLength = BinaryConverter.DecodeUInt16(header, HEADER_KEY);
+            this.CorrelationId = BinaryConverter.DecodeInt32(header, HEADER_OPAQUE);
+            this.CAS = BinaryConverter.DecodeUInt64(header, HEADER_CAS);
 
-                dataLength = BinaryConverter.DecodeInt32(buffer, HEADER_BODY);
-                extraLength = buffer[HEADER_EXTRA];
-            }
+            dataLength = BinaryConverter.DecodeInt32(header, HEADER_BODY);
+            extraLength = header[HEADER_EXTRA];
         }
 
         private void LogExecutionTime(string title, DateTime startTime, int thresholdMs)
