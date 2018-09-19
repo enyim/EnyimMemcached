@@ -1,76 +1,104 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Text
 {
-	public class MultiGetOperation : MultiItemOperation, IMultiGetOperation
-	{
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MultiGetOperation));
+    public class MultiGetOperation : MultiItemOperation, IMultiGetOperation
+    {
+        private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MultiGetOperation));
 
-		private Dictionary<string, CacheItem> result;
+        private Dictionary<string, CacheItem> result;
 
-		public MultiGetOperation(IList<string> keys) : base(keys) { }
+        public MultiGetOperation(IList<string> keys) : base(keys) { }
 
-		protected internal override IList<ArraySegment<byte>> GetBuffer()
-		{
-			// gets key1 key2 key3 ... keyN\r\n
-
-			var command = "gets " + String.Join(" ", Keys.ToArray()) + TextSocketHelper.CommandTerminator;
-
-			return TextSocketHelper.GetCommandBuffer(command);
-		}
-
-		protected internal override IOperationResult ReadResponse(PooledSocket socket)
-		{
-			var retval = new Dictionary<string, CacheItem>();
-			var cas = new Dictionary<string, ulong>();
-
-			try
-			{
-				GetResponse r;
-
-				while ((r = GetHelper.ReadItem(socket)) != null)
-				{
-					var key = r.Key;
-
-					retval[key] = r.Item;
-					cas[key] = r.CasValue;
-				}
-			}
-			catch (NotSupportedException)
-			{
-				throw;
-			}
-			catch (Exception e)
-			{
-				log.Error(e);
-			}
-
-			this.result = retval;
-			this.Cas = cas;
-
-			return new TextOperationResult().Pass();
-		}
-
-		Dictionary<string, CacheItem> IMultiGetOperation.Result
-		{
-			get { return this.result; }
-		}
-
-        protected internal override System.Threading.Tasks.Task<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        protected internal override IList<ArraySegment<byte>> GetBuffer()
         {
-            throw new NotImplementedException();
+            // gets key1 key2 key3 ... keyN\r\n
+
+            var command = "gets " + String.Join(" ", Keys.ToArray()) + TextSocketHelper.CommandTerminator;
+
+            return TextSocketHelper.GetCommandBuffer(command);
         }
 
-		protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
-		{
-			throw new System.NotSupportedException();
-		}
-	}
+        protected internal override IOperationResult ReadResponse(PooledSocket socket)
+        {
+            var retval = new Dictionary<string, CacheItem>();
+            var cas = new Dictionary<string, ulong>();
+
+            try
+            {
+                GetResponse r;
+
+                while ((r = GetHelper.ReadItem(socket)) != null)
+                {
+                    var key = r.Key;
+
+                    retval[key] = r.Item;
+                    cas[key] = r.CasValue;
+                }
+            }
+            catch (NotSupportedException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                log.Error(e);
+            }
+
+            this.result = retval;
+            this.Cas = cas;
+
+            return new TextOperationResult().Pass();
+        }
+
+        Dictionary<string, CacheItem> IMultiGetOperation.Result
+        {
+            get { return this.result; }
+        }
+
+        protected internal override async ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        {
+            var retval = new Dictionary<string, CacheItem>();
+            var cas = new Dictionary<string, ulong>();
+
+            try
+            {
+                GetResponse r;
+
+                while ((r = GetHelper.ReadItem(socket)) != null)
+                {
+                    var key = r.Key;
+
+                    retval[key] = r.Item;
+                    cas[key] = r.CasValue;
+                }
+            }
+            catch (NotSupportedException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                log.Error(e);
+            }
+
+            this.result = retval;
+            this.Cas = cas;
+
+            return new TextOperationResult().Pass();
+        }
+
+        protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
+        {
+            throw new System.NotSupportedException();
+        }
+    }
 }
 
 #region [ License information          ]

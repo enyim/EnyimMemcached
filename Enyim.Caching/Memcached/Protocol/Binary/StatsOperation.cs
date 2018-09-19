@@ -1,72 +1,97 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Net;
+using System.Text;
+using System.Threading.Tasks;
 using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached.Results.Extensions;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	public class StatsOperation : BinaryOperation, IStatsOperation
-	{
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StatsOperation));
+    public class StatsOperation : BinaryOperation, IStatsOperation
+    {
+        private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StatsOperation));
 
-		private string type;
-		private Dictionary<string, string> result;
+        private readonly string type;
+        private Dictionary<string, string> result;
 
-		public StatsOperation(string type)
-		{
-			this.type = type;
-		}
-
-		protected override BinaryRequest Build()
-		{
-			var request = new BinaryRequest(OpCode.Stat);
-			if (!String.IsNullOrEmpty(this.type))
-				request.Key = this.type;
-
-			return request;
-		}
-
-		protected internal override IOperationResult ReadResponse(PooledSocket socket)
-		{
-			var response = new BinaryResponse();
-			var serverData = new Dictionary<string, string>();
-			var retval = false;
-
-			while (response.Read(socket) && response.KeyLength > 0)
-			{
-				retval = true;
-
-				var data = response.Data;
-				var key = BinaryConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
-				var value = BinaryConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
-
-				serverData[key] = value;
-			}
-
-			this.result = serverData;
-			this.StatusCode = response.StatusCode;
-
-			var result = new BinaryOperationResult()
-			{
-				StatusCode = StatusCode
-			};
-
-			result.PassOrFail(retval, "Failed to read response");
-			return result;
-		}
-
-        protected internal override System.Threading.Tasks.Task<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        public StatsOperation(string type)
         {
-            throw new NotImplementedException();
+            this.type = type;
         }
 
-		Dictionary<string, string> IStatsOperation.Result
-		{
-			get { return this.result; }
-		}
-	}
+        protected override BinaryRequest Build()
+        {
+            var request = new BinaryRequest(OpCode.Stat);
+            if (!String.IsNullOrEmpty(this.type))
+                request.Key = this.type;
+
+            return request;
+        }
+
+        protected internal override IOperationResult ReadResponse(PooledSocket socket)
+        {
+            var response = new BinaryResponse();
+            var serverData = new Dictionary<string, string>();
+            var retval = false;
+
+            while (response.Read(socket) && response.KeyLength > 0)
+            {
+                retval = true;
+
+                var data = response.Data;
+                var key = BinaryConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
+                var value = BinaryConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
+
+                serverData[key] = value;
+            }
+
+            this.result = serverData;
+            this.StatusCode = response.StatusCode;
+
+            var result = new BinaryOperationResult()
+            {
+                StatusCode = StatusCode
+            };
+
+            result.PassOrFail(retval, "Failed to read response");
+            return result;
+        }
+
+        protected internal override async ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        {
+            var response = new BinaryResponse();
+            var serverData = new Dictionary<string, string>();
+            var retval = false;
+
+            while ((await response.ReadAsync(socket)) && response.KeyLength > 0)
+            {
+                retval = true;
+
+                var data = response.Data;
+                var key = BinaryConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
+                var value = BinaryConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
+
+                serverData[key] = value;
+            }
+
+            this.result = serverData;
+            this.StatusCode = response.StatusCode;
+
+            var result = new BinaryOperationResult()
+            {
+                StatusCode = StatusCode
+            };
+
+            result.PassOrFail(retval, "Failed to read response");
+            return result;
+        }
+
+        Dictionary<string, string> IStatsOperation.Result
+        {
+            get { return this.result; }
+        }
+    }
 }
 
 #region [ License information          ]
