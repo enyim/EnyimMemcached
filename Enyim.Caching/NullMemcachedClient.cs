@@ -122,6 +122,11 @@ namespace Enyim.Caching
             return new Dictionary<string, CasResult<object>>();
         }
 
+        public async Task<IDictionary<string, CasResult<object>>> GetWithCasAsync(IEnumerable<string> keys)
+        {
+            return await Task.FromResult(new Dictionary<string, CasResult<object>>());
+        }
+
         public CasResult<object> GetWithCas(string key)
         {
             return new CasResult<object>();

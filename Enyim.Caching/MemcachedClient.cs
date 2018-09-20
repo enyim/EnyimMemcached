@@ -975,7 +975,16 @@ namespace Enyim.Caching
 
         public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
         {
-            return PerformMultiGet<CasResult<object>>(keys, (mget, kvp) => new CasResult<object>
+            return PerformMultiGet(keys, (mget, kvp) => new CasResult<object>
+            {
+                Result = this.transcoder.Deserialize(kvp.Value),
+                Cas = mget.Cas[kvp.Key]
+            });
+        }
+
+        public async Task<IDictionary<string, CasResult<object>>> GetWithCasAsync(IEnumerable<string> keys)
+        {
+            return await PerformMultiGetAsync(keys, (mget, kvp) => new CasResult<object>
             {
                 Result = this.transcoder.Deserialize(kvp.Value),
                 Cas = mget.Cas[kvp.Key]
