@@ -321,29 +321,40 @@ namespace MemcachedTest
             using (var client = GetClient())
             {
                 var keys = new List<string>();
+                var tasks = new List<Task<bool>>();
 
                 for (int i = 0; i < 100; i++)
                 {
-                    string k = $"Hello_Multi_Get_{Guid.NewGuid()}_" + i;
+                    string k = $"Hello_Multi_Get_{Guid.NewGuid()}_{new Random().Next()}" + i;
                     keys.Add(k);
 
-                    Assert.True(await client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(300)), "Store of " + k + " failed");
+                    tasks.Add(client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(60)));
                 }
 
-                var retvals = client.GetWithCas(keys);
+                await Task.WhenAll(tasks);
 
-                CasResult<object> value;
+                foreach (var task in tasks)
+                { 
+                    Assert.True(await task, "Store failed");
+                }
+
+                var retvals = await client.GetWithCasAsync(keys);
 
                 Assert.Equal(keys.Count, retvals.Count);
 
+                tasks.Clear();
                 for (int i = 0; i < keys.Count; i++)
                 {
                     string key = keys[i];
 
-                    Assert.True(retvals.TryGetValue(key, out value), "missing key: " + key);
+                    Assert.True(retvals.TryGetValue(key, out var value), "missing key: " + key);
                     Assert.Equal(value.Result, i);
                     Assert.NotEqual(value.Cas, (ulong)0);
+
+                    tasks.Add(client.RemoveAsync(key));
                 }
+
+                await Task.WhenAll(tasks);                
             }
         }
 
