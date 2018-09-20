@@ -62,33 +62,28 @@ public class Startup
 ## Example usage
 ### Use IMemcachedClient interface
 ```cs
-public class TabNavService
+public class HomeController : Controller
 {
-    private ITabNavRepository _tabNavRepository;
-    private IMemcachedClient _memcachedClient;
+    private readonly IMemcachedClient _memcachedClient;
+    private readonly IBlogPostService _blogPostService;
 
-    public TabNavService(
-        ITabNavRepository tabNavRepository,
-        IMemcachedClient memcachedClient)
+    public HomeController(IMemcachedClient memcachedClient, IBlogPostService blogPostService)
     {
-        _tabNavRepository = tabNavRepository;
         _memcachedClient = memcachedClient;
+        _blogPostService = blogPostService;
     }
 
-    public async Task<IEnumerable<TabNav>> GetAll()
+    public async Task<IActionResult> Index()
     {
-		var cacheKey = "aboutus_tabnavs_all";
-        var result = await _memcachedClient.GetAsync<IEnumerable<TabNav>>(cacheKey);
-        if (!result.Success)
-        {
-            var tabNavs = await _tabNavRepository.GetAll();
-            await _memcachedClient.AddAsync(cacheKey, tabNavs, 300);
-            return tabNavs;
-        }
-        else
-        {
-            return result.Value;
-        }
+        var cacheKey = "blogposts-recent";
+        var cacheSeconds = 600;
+
+        var posts = await _memcachedClient.GetValueOrCreateAsync(
+            cacheKey,
+            cacheSeconds,
+            async () => await _blogPostService.GetRecent(10));
+
+        return Ok(posts);
     }
 }
 ```
