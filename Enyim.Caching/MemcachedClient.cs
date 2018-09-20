@@ -214,18 +214,11 @@ namespace Enyim.Caching
 
         public async Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Func<Task<T>> generator)
         {
-            try
+            var result = await GetAsync<T>(key);
+            if (result.Success)
             {
-                var result = await GetAsync<T>(key);
-                if (result.Success)
-                {
-                    _logger.LogDebug($"Cache is hint. Key is '{key}'.");
-                    return result.Value;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"{nameof(GetAsync)}<{typeof(T)}>(\"{key}\")");
+                _logger.LogDebug($"Cache is hint. Key is '{key}'.");
+                return result.Value;
             }
 
             _logger.LogDebug($"Cache is missed. Key is '{key}'.");
