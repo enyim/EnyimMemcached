@@ -74,12 +74,12 @@ namespace Enyim.Caching.Memcached.Protocol.Text
             };
         }
 
-        protected internal override async ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        protected internal override ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
         {
-            return new TextOperationResult
+            return new ValueTask<IOperationResult>(new TextOperationResult
             {
                 Success = String.Compare(TextSocketHelper.ReadResponse(socket), "STORED", StringComparison.Ordinal) == 0
-            };
+            });
         }
 
         protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)

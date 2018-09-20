@@ -60,7 +60,7 @@ namespace MemcachedTest
                 // get back the item and check the cas value (it should match the cas from the set)
                 var r2 = client.GetWithCas<string>("CasItem1");
 
-                Assert.Equal(r2.Result, "foo");
+                Assert.Equal("foo", r2.Result);
                 Assert.Equal(r1.Cas, r2.Cas);
 
                 var r3 = client.Cas(StoreMode.Set, "CasItem1", "bar", r1.Cas - 1);
@@ -72,7 +72,7 @@ namespace MemcachedTest
                 Assert.True(r4.Result, "Overwriting with 'baz' should have succeeded.");
 
                 var r5 = client.GetWithCas<string>("CasItem1");
-                Assert.Equal(r5.Result, "baz");
+                Assert.Equal("baz", r5.Result);
             }
         }
 
@@ -94,7 +94,7 @@ namespace MemcachedTest
                 // get back the item and check the cas value (it should match the cas from the set)
                 var r3 = client.GetWithCas<string>("CasAppend");
 
-                Assert.Equal(r3.Result, "fool");
+                Assert.Equal("fool", r3.Result);
                 Assert.Equal(r2.Cas, r3.Cas);
 
                 var r4 = client.Append("CasAppend", r1.Cas, new System.ArraySegment<byte>(new byte[] { (byte)'l' }));
@@ -120,7 +120,7 @@ namespace MemcachedTest
                 // get back the item and check the cas value (it should match the cas from the set)
                 var r3 = client.GetWithCas<string>("CasPrepend");
 
-                Assert.Equal(r3.Result, "fool");
+                Assert.Equal("fool", r3.Result);
                 Assert.Equal(r2.Cas, r3.Cas);
 
                 var r4 = client.Prepend("CasPrepend", r1.Cas, new System.ArraySegment<byte>(new byte[] { (byte)'l' }));

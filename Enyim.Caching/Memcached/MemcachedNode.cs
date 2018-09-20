@@ -96,7 +96,7 @@ namespace Enyim.Caching.Memcached
                     if (this.isDisposed) return false;
 
                     // try to connect to the server
-                    using (var socket = this.CreateSocket()) ;
+                    using (var socket = this.CreateSocket());
 
                     if (this.internalPoolImpl.IsAlive)
                         return true;

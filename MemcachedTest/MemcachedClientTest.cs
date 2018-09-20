@@ -92,9 +92,9 @@ namespace MemcachedTest
                 TestData td2 = client.Get<TestData>(TestObjectKey);
 
                 Assert.NotNull(td2);
-                Assert.Equal(td2.FieldA, "Hello");
-                Assert.Equal(td2.FieldB, "World");
-                Assert.Equal(td2.FieldC, 19810619);
+                Assert.Equal("Hello", td2.FieldA);
+                Assert.Equal("World", td2.FieldB);
+                Assert.Equal(19810619, td2.FieldC);
                 Assert.True(td2.FieldD, "Object was corrupted.");
             }
 
@@ -104,9 +104,9 @@ namespace MemcachedTest
                 TestData td2 = client.Get<TestData>(TestObjectKey);
 
                 Assert.NotNull(td2);
-                Assert.Equal(td2.FieldA, "Hello");
-                Assert.Equal(td2.FieldB, "World");
-                Assert.Equal(td2.FieldC, 19810619);
+                Assert.Equal("Hello", td2.FieldA);
+                Assert.Equal("World", td2.FieldB);
+                Assert.Equal(19810619, td2.FieldC);
                 Assert.True(td2.FieldD, "Object was corrupted.");
             }
         }
@@ -330,7 +330,7 @@ namespace MemcachedTest
                     string k = $"Hello_Multi_Get_{Guid.NewGuid()}_{new Random().Next()}" + i;
                     keys.Add(k);
 
-                    tasks.Add(client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(60)));
+                    tasks.Add(client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(300)));
                 }
 
                 await Task.WhenAll(tasks);

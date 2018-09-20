@@ -45,7 +45,7 @@ namespace MemcachedTest
 				// get back the item and check the cas value (it should match the cas from the set)
 				var r2 = client.GetWithCas<string>("CasItem1");
 
-				Assert.Equal(r2.Result, "foo");
+				Assert.Equal("foo", r2.Result);
 				Assert.NotEqual((ulong)0, r2.Cas);
 
 				var r3 = client.Cas(StoreMode.Set, "CasItem1", "bar", r2.Cas - 1);
@@ -57,7 +57,7 @@ namespace MemcachedTest
 				Assert.True(r4.Result, "Overwriting with 'baz' should have succeeded.");
 
 				var r5 = client.GetWithCas<string>("CasItem1");
-				Assert.Equal(r5.Result, "baz");
+				Assert.Equal("baz", r5.Result);
 			}
 		}
 

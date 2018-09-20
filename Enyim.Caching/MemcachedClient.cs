@@ -125,7 +125,6 @@ namespace Enyim.Caching
         /// </summary>
         /// <param name="key">The identifier for the item to retrieve.</param>
         /// <returns>The retrieved item, or <value>default(T)</value> if the key was not found.</returns>
-        [Obsolete]
         public T Get<T>(string key)
         {
             var result = PerformGet<T>(key);
