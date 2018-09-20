@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <RootNamespace>Enyim.Caching.SampleWebApp</RootNamespace>
+    <AssemblyName>Enyim.Caching.SampleWebApp</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
