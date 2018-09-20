@@ -34,7 +34,7 @@ namespace MemcachedTest
                 services.AddSingleton<ITranscoder,BinaryFormatterTranscoder>();
             }
 
-            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Error).AddConsole());
+            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug).AddConsole());
 
             IServiceProvider serviceProvider = services.BuildServiceProvider();
             var client = serviceProvider.GetService<IMemcachedClient>() as MemcachedClient;
@@ -92,9 +92,9 @@ namespace MemcachedTest
                 TestData td2 = client.Get<TestData>(TestObjectKey);
 
                 Assert.NotNull(td2);
-                Assert.Equal(td2.FieldA, "Hello");
-                Assert.Equal(td2.FieldB, "World");
-                Assert.Equal(td2.FieldC, 19810619);
+                Assert.Equal("Hello", td2.FieldA);
+                Assert.Equal("World", td2.FieldB);
+                Assert.Equal(19810619, td2.FieldC);
                 Assert.True(td2.FieldD, "Object was corrupted.");
             }
 
@@ -104,9 +104,9 @@ namespace MemcachedTest
                 TestData td2 = client.Get<TestData>(TestObjectKey);
 
                 Assert.NotNull(td2);
-                Assert.Equal(td2.FieldA, "Hello");
-                Assert.Equal(td2.FieldB, "World");
-                Assert.Equal(td2.FieldC, 19810619);
+                Assert.Equal("Hello", td2.FieldA);
+                Assert.Equal("World", td2.FieldB);
+                Assert.Equal(19810619, td2.FieldC);
                 Assert.True(td2.FieldD, "Object was corrupted.");
             }
         }
@@ -218,38 +218,40 @@ namespace MemcachedTest
             {
                 log.Debug("Cache should be empty.");
 
-                Assert.True(client.Store(StoreMode.Set, "VALUE", "1"), "Initialization failed");
+                var cacheKey = $"{nameof(AddSetReplaceTest)}-{Guid.NewGuid()}";
+
+                Assert.True(client.Store(StoreMode.Set, cacheKey, "1"), "Initialization failed");
 
                 log.Debug("Setting VALUE to 1.");
 
-                Assert.Equal("1", client.Get("VALUE"));
+                Assert.Equal("1", client.Get(cacheKey));
 
                 log.Debug("Adding VALUE; this should return false.");
-                Assert.False(client.Store(StoreMode.Add, "VALUE", "2"), "Add should have failed");
+                Assert.False(client.Store(StoreMode.Add, cacheKey, "2"), "Add should have failed");
 
                 log.Debug("Checking if VALUE is still '1'.");
-                Assert.Equal("1", client.Get("VALUE"));
+                Assert.Equal("1", client.Get(cacheKey));
 
                 log.Debug("Replacing VALUE; this should return true.");
-                Assert.True(client.Store(StoreMode.Replace, "VALUE", "4"), "Replace failed");
+                Assert.True(client.Store(StoreMode.Replace, cacheKey, "4"), "Replace failed");
 
                 log.Debug("Checking if VALUE is '4' so it got replaced.");
-                Assert.Equal("4", client.Get("VALUE"));
+                Assert.Equal("4", client.Get(cacheKey));
 
                 log.Debug("Removing VALUE.");
-                Assert.True(client.Remove("VALUE"), "Remove failed");
+                Assert.True(client.Remove(cacheKey), "Remove failed");
 
                 log.Debug("Replacing VALUE; this should return false.");
-                Assert.False(client.Store(StoreMode.Replace, "VALUE", "8"), "Replace should not have succeeded");
+                Assert.False(client.Store(StoreMode.Replace, cacheKey, "8"), "Replace should not have succeeded");
 
                 log.Debug("Checking if VALUE is 'null' so it was not replaced.");
-                Assert.Null(client.Get("VALUE"));
+                Assert.Null(client.Get(cacheKey));
 
                 log.Debug("Adding VALUE; this should return true.");
-                Assert.True(client.Store(StoreMode.Add, "VALUE", "16"), "Item should have been Added");
+                Assert.True(client.Store(StoreMode.Add, cacheKey, "16"), "Item should have been Added");
 
                 log.Debug("Checking if VALUE is '16' so it was added.");
-                Assert.Equal("16", client.Get("VALUE"));
+                Assert.Equal("16", client.Get(cacheKey));
 
                 log.Debug("Passed AddSetReplaceTest.");
             }
@@ -321,29 +323,40 @@ namespace MemcachedTest
             using (var client = GetClient())
             {
                 var keys = new List<string>();
+                var tasks = new List<Task<bool>>();
 
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < 10; i++)
                 {
-                    string k = $"Hello_Multi_Get_{Guid.NewGuid()}_" + i;
+                    string k = $"Hello_Multi_Get_{Guid.NewGuid()}_{new Random().Next()}" + i;
                     keys.Add(k);
 
-                    Assert.True(await client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(300)), "Store of " + k + " failed");
+                    tasks.Add(client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(300)));
                 }
 
-                var retvals = client.GetWithCas(keys);
+                await Task.WhenAll(tasks);
 
-                CasResult<object> value;
+                foreach (var task in tasks)
+                { 
+                    Assert.True(await task, "Store failed");
+                }
+
+                var retvals = await client.GetWithCasAsync(keys);
 
                 Assert.Equal(keys.Count, retvals.Count);
 
+                tasks.Clear();
                 for (int i = 0; i < keys.Count; i++)
                 {
                     string key = keys[i];
 
-                    Assert.True(retvals.TryGetValue(key, out value), "missing key: " + key);
+                    Assert.True(retvals.TryGetValue(key, out var value), "missing key: " + key);
                     Assert.Equal(value.Result, i);
                     Assert.NotEqual(value.Cas, (ulong)0);
+
+                    tasks.Add(client.RemoveAsync(key));
                 }
+
+                await Task.WhenAll(tasks);                
             }
         }
 

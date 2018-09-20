@@ -62,7 +62,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
             get { return this.result; }
         }
 
-        protected internal override async ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        protected internal override ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
         {
             var retval = new Dictionary<string, CacheItem>();
             var cas = new Dictionary<string, ulong>();
@@ -91,7 +91,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
             this.result = retval;
             this.Cas = cas;
 
-            return new TextOperationResult().Pass();
+            return new ValueTask<IOperationResult>(new TextOperationResult().Pass());
         }
 
         protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)

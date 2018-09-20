@@ -37,19 +37,19 @@ namespace Enyim.Caching.Memcached.Protocol.Text
             get { return this.result; }
         }
 
-        protected internal override async ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
+        protected internal override ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
         {
             GetResponse r = GetHelper.ReadItem(socket);
             var result = new TextOperationResult();
 
-            if (r == null) return result.Fail("Failed to read response");
+            if (r == null) return new ValueTask<IOperationResult>(result.Fail("Failed to read response"));
 
             this.result = r.Item;
             this.Cas = r.CasValue;
 
             GetHelper.FinishCurrent(socket);
 
-            return result.Pass();
+            return new ValueTask<IOperationResult>(result.Pass());
         }
 
         protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)

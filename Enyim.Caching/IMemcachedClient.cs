@@ -28,6 +28,7 @@ namespace Enyim.Caching
         CasResult<object> GetWithCas(string key);
         CasResult<T> GetWithCas<T>(string key);
         IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys);
+        Task<IDictionary<string, CasResult<object>>> GetWithCasAsync(IEnumerable<string> keys);
 
         bool Append(string key, ArraySegment<byte> data);
         CasResult<bool> Append(string key, ulong cas, ArraySegment<byte> data);
