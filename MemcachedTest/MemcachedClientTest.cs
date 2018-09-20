@@ -34,7 +34,7 @@ namespace MemcachedTest
                 services.AddSingleton<ITranscoder,BinaryFormatterTranscoder>();
             }
 
-            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Error).AddConsole());
+            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug).AddConsole());
 
             IServiceProvider serviceProvider = services.BuildServiceProvider();
             var client = serviceProvider.GetService<IMemcachedClient>() as MemcachedClient;
@@ -325,7 +325,7 @@ namespace MemcachedTest
                 var keys = new List<string>();
                 var tasks = new List<Task<bool>>();
 
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < 10; i++)
                 {
                     string k = $"Hello_Multi_Get_{Guid.NewGuid()}_{new Random().Next()}" + i;
                     keys.Add(k);
