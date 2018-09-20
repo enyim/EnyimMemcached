@@ -1,82 +1,88 @@
 using System;
-using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached.Results.Extensions;
 using Enyim.Caching.Memcached.Results.Helpers;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-    public class MutatorOperation : BinarySingleItemOperation, IMutatorOperation
-    {
-        private readonly ulong defaultValue;
-        private readonly ulong delta;
-        private readonly uint expires;
-        private readonly MutationMode mode;
-        private ulong result;
+	public class MutatorOperation : BinarySingleItemOperation, IMutatorOperation
+	{
+		private ulong defaultValue;
+		private ulong delta;
+		private uint expires;
+		private MutationMode mode;
+		private ulong result;
 
-        public MutatorOperation(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
-            : base(key)
-        {
-            if (delta < 0) throw new ArgumentOutOfRangeException("delta", "delta must be >= 0");
+		public MutatorOperation(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+			: base(key)
+		{
+			if (delta < 0) throw new ArgumentOutOfRangeException("delta", "delta must be >= 0");
 
-            this.defaultValue = defaultValue;
-            this.delta = delta;
-            this.expires = expires;
-            this.mode = mode;
-        }
+			this.defaultValue = defaultValue;
+			this.delta = delta;
+			this.expires = expires;
+			this.mode = mode;
+		}
 
-        protected void UpdateExtra(BinaryRequest request)
-        {
-            Span<byte> buffer = stackalloc byte[20];
-            BinaryConverter.EncodeUInt64(this.delta, buffer, 0);
-            BinaryConverter.EncodeUInt64(this.defaultValue, buffer, 8);
-            BinaryConverter.EncodeUInt32(this.expires, buffer, 16);
-            request.Extra = new ArraySegment<byte>(buffer.ToArray());
-        }
+		protected unsafe void UpdateExtra(BinaryRequest request)
+		{
+			byte[] extra = new byte[20];
 
-        protected override BinaryRequest Build()
-        {
-            var request = new BinaryRequest((OpCode)this.mode)
-            {
-                Key = this.Key,
-                Cas = this.Cas
-            };
+			fixed (byte* buffer = extra)
+			{
+				BinaryConverter.EncodeUInt64(this.delta, buffer, 0);
 
-            this.UpdateExtra(request);
+				BinaryConverter.EncodeUInt64(this.defaultValue, buffer, 8);
+				BinaryConverter.EncodeUInt32(this.expires, buffer, 16);
+			}
 
-            return request;
-        }
+			request.Extra = new ArraySegment<byte>(extra);
+		}
 
-        protected override IOperationResult ProcessResponse(BinaryResponse response)
-        {
-            var result = new BinaryOperationResult();
-            var status = response.StatusCode;
-            this.StatusCode = status;
+		protected override BinaryRequest Build()
+		{
+			var request = new BinaryRequest((OpCode)this.mode)
+			{
+				Key = this.Key,
+				Cas = this.Cas
+			};
 
-            if (status == 0)
-            {
-                var data = response.Data;
-                if (data.Count != 8)
-                    return result.Fail("Result must be 8 bytes long, received: " + data.Count, new InvalidOperationException());
+			this.UpdateExtra(request);
 
-                this.result = BinaryConverter.DecodeUInt64(data.Array, data.Offset);
+			return request;
+		}
 
-                return result.Pass();
-            }
+		protected override IOperationResult ProcessResponse(BinaryResponse response)
+		{
+			var result = new BinaryOperationResult();
+			var status = response.StatusCode;
+			this.StatusCode = status;
 
-            var message = ResultHelper.ProcessResponseData(response.Data);
-            return result.Fail(message);
-        }
+			if (status == 0)
+			{
+				var data = response.Data;
+				if (data.Count != 8)
+					return result.Fail("Result must be 8 bytes long, received: " + data.Count, new InvalidOperationException());
 
-        MutationMode IMutatorOperation.Mode
-        {
-            get { return this.mode; }
-        }
+				this.result = BinaryConverter.DecodeUInt64(data.Array, data.Offset);
 
-        ulong IMutatorOperation.Result
-        {
-            get { return this.result; }
-        }
-    }
+				return result.Pass();
+			}
+
+			var message = ResultHelper.ProcessResponseData(response.Data);
+			return result.Fail(message);
+		}
+
+		MutationMode IMutatorOperation.Mode
+		{
+			get { return this.mode; }
+		}
+
+		ulong IMutatorOperation.Result
+		{
+			get { return this.result; }
+		}
+	}
 }
 
 #region [ License information          ]

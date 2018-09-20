@@ -5,58 +5,110 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 {
     public static class BinaryConverter
     {
-        public static ushort DecodeUInt16(Span<byte> buffer, int offset)
+        public static unsafe ushort DecodeUInt16(byte[] buffer, int offset)
         {
             return (ushort)((buffer[offset] << 8) + buffer[offset + 1]);
         }
 
-        public static int DecodeInt32(Span<byte> buffer, int offset)
+        public static unsafe ushort DecodeUInt16(byte* buffer, int offset)
         {
-            var slice = buffer.Slice(offset);
-
-            return (slice[0] << 24) | (slice[1] << 16) | (slice[2] << 8) | slice[3];
+            return (ushort)((buffer[offset] << 8) + buffer[offset + 1]);
         }
 
-        public static unsafe ulong DecodeUInt64(Span<byte> buffer, int offset)
+        public static unsafe int DecodeInt32(ArraySegment<byte> segment, int offset)
         {
-            var slice = buffer.Slice(offset);
+            fixed (byte* buffer = segment.Array)
+            {
+                byte* ptr = buffer + segment.Offset + offset;
 
-            var part1 = (uint)((slice[0] << 24) | (slice[1] << 16) | (slice[2] << 8) | slice[3]);
-            var part2 = (uint)((slice[4] << 24) | (slice[5] << 16) | (slice[6] << 8) | slice[7]);
+                return DecodeInt32(buffer, 0);
+            }
+        }
+
+        public static unsafe int DecodeInt32(byte* buffer, int offset)
+        {
+            buffer += offset;
+
+            return (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+        }
+
+        public static unsafe int DecodeInt32(byte[] buffer, int offset)
+        {
+            return (buffer[offset] << 24) | (buffer[offset + 1] << 16) | (buffer[offset + 2] << 8) | buffer[offset + 3];
+        }
+
+        public static unsafe ulong DecodeUInt64(byte[] buffer, int offset)
+        {
+            fixed (byte* ptr = buffer)
+            {
+                return DecodeUInt64(ptr, offset);
+            }
+        }
+
+        public static unsafe ulong DecodeUInt64(byte* buffer, int offset)
+        {
+            buffer += offset;
+
+            var part1 = (uint)((buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3]);
+            var part2 = (uint)((buffer[4] << 24) | (buffer[5] << 16) | (buffer[6] << 8) | buffer[7]);
 
             return ((ulong)part1 << 32) | part2;
         }
 
-        public static unsafe void EncodeUInt16(uint value, Span<byte> buffer, int offset)
+        public static unsafe void EncodeUInt16(uint value, byte[] buffer, int offset)
         {
-            var slice = buffer.Slice(offset);
-
-            slice[0] = (byte)(value >> 8);
-            slice[1] = (byte)(value & 255);
+            fixed (byte* bufferPtr = buffer)
+            {
+                EncodeUInt16(value, bufferPtr, offset);
+            }
         }
 
-        public static unsafe void EncodeUInt32(uint value, Span<byte> buffer, int offset)
+        public static unsafe void EncodeUInt16(uint value, byte* buffer, int offset)
         {
-            var slice = buffer.Slice(offset);
+            byte* ptr = buffer + offset;
 
-            slice[0] = (byte)(value >> 24);
-            slice[1] = (byte)(value >> 16);
-            slice[2] = (byte)(value >> 8);
-            slice[3] = (byte)(value & 255);
+            ptr[0] = (byte)(value >> 8);
+            ptr[1] = (byte)(value & 255);
         }
 
-        public static unsafe void EncodeUInt64(ulong value, Span<byte> buffer, int offset)
+        public static unsafe void EncodeUInt32(uint value, byte[] buffer, int offset)
         {
-            var slice = buffer.Slice(offset);
+            fixed (byte* bufferPtr = buffer)
+            {
+                EncodeUInt32(value, bufferPtr, offset);
+            }
+        }
 
-            slice[0] = (byte)(value >> 56);
-            slice[1] = (byte)(value >> 48);
-            slice[2] = (byte)(value >> 40);
-            slice[3] = (byte)(value >> 32);
-            slice[4] = (byte)(value >> 24);
-            slice[5] = (byte)(value >> 16);
-            slice[6] = (byte)(value >> 8);
-            slice[7] = (byte)(value & 255);
+        public static unsafe void EncodeUInt32(uint value, byte* buffer, int offset)
+        {
+            byte* ptr = buffer + offset;
+
+            ptr[0] = (byte)(value >> 24);
+            ptr[1] = (byte)(value >> 16);
+            ptr[2] = (byte)(value >> 8);
+            ptr[3] = (byte)(value & 255);
+        }
+
+        public static unsafe void EncodeUInt64(ulong value, byte[] buffer, int offset)
+        {
+            fixed (byte* bufferPtr = buffer)
+            {
+                EncodeUInt64(value, bufferPtr, offset);
+            }
+        }
+
+        public static unsafe void EncodeUInt64(ulong value, byte* buffer, int offset)
+        {
+            byte* ptr = buffer + offset;
+
+            ptr[0] = (byte)(value >> 56);
+            ptr[1] = (byte)(value >> 48);
+            ptr[2] = (byte)(value >> 40);
+            ptr[3] = (byte)(value >> 32);
+            ptr[4] = (byte)(value >> 24);
+            ptr[5] = (byte)(value >> 16);
+            ptr[6] = (byte)(value >> 8);
+            ptr[7] = (byte)(value & 255);
         }
 
         public static byte[] EncodeKey(string key)
