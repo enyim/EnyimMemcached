@@ -26,7 +26,7 @@ namespace Enyim.Caching.Tests
                 onAddEnyimMemcached?.Invoke(options);
             });
 
-            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug).AddConsole());
+            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Information).AddConsole());
             IServiceProvider serviceProvider = services.BuildServiceProvider();
             _client = serviceProvider.GetService<IMemcachedClient>() as MemcachedClient;
         }
