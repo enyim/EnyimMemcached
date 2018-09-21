@@ -34,7 +34,7 @@ namespace MemcachedTest
                 services.AddSingleton<ITranscoder,BinaryFormatterTranscoder>();
             }
 
-            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug).AddConsole());
+            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Information).AddConsole());
 
             IServiceProvider serviceProvider = services.BuildServiceProvider();
             var client = serviceProvider.GetService<IMemcachedClient>() as MemcachedClient;
