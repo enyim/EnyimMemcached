@@ -5,8 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,12 +34,12 @@ namespace Enyim.Caching.Memcached
             socket.NoDelay = true;
 
             var timeout = connectionTimeout == TimeSpan.MaxValue
-                            ? Timeout.Infinite
-                            : (int)connectionTimeout.TotalMilliseconds;
+                ? Timeout.Infinite
+                : (int) connectionTimeout.TotalMilliseconds;
 
             var rcv = receiveTimeout == TimeSpan.MaxValue
                 ? Timeout.Infinite
-                : (int)receiveTimeout.TotalMilliseconds;
+                : (int) receiveTimeout.TotalMilliseconds;
 
             socket.ReceiveTimeout = rcv;
             socket.SendTimeout = rcv;
@@ -62,7 +60,8 @@ namespace Enyim.Caching.Memcached
             //Workaround for https://github.com/dotnet/corefx/issues/26840
             if (!IPAddress.TryParse(endpoint.Host, out var address))
             {
-                address = Dns.GetHostAddresses(endpoint.Host).FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+                address = Dns.GetHostAddresses(endpoint.Host)
+                    .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
                 if (address == null)
                     throw new ArgumentException(String.Format("Could not resolve host '{0}'.", endpoint.Host));
                 args.RemoteEndPoint = new IPEndPoint(address, endpoint.Port);
@@ -105,7 +104,9 @@ namespace Enyim.Caching.Memcached
             if (available > 0)
             {
                 if (_logger.IsEnabled(LogLevel.Warning))
-                    _logger.LogWarning("Socket bound to {0} has {1} unread data! This is probably a bug in the code. InstanceID was {2}.", this.socket.RemoteEndPoint, available, this.InstanceId);
+                    _logger.LogWarning(
+                        "Socket bound to {0} has {1} unread data! This is probably a bug in the code. InstanceID was {2}.",
+                        this.socket.RemoteEndPoint, available, this.InstanceId);
 
                 byte[] data = new byte[available];
 
@@ -140,8 +141,13 @@ namespace Enyim.Caching.Memcached
 
         ~PooledSocket()
         {
-            try { this.Dispose(true); }
-            catch { }
+            try
+            {
+                this.Dispose(true);
+            }
+            catch
+            {
+            }
         }
 
         protected void Dispose(bool disposing)
@@ -153,8 +159,13 @@ namespace Enyim.Caching.Memcached
                 try
                 {
                     if (socket != null)
-                        try { this.socket.Dispose(); }
-                        catch { }
+                        try
+                        {
+                            this.socket.Dispose();
+                        }
+                        catch
+                        {
+                        }
 
                     if (this.inputStream != null)
                         this.inputStream.Dispose();
@@ -223,11 +234,42 @@ namespace Enyim.Caching.Memcached
             }
         }
 
+//        public async Task<byte[]> ReadBytesAsync(int count)
+//        {
+//            var buffer = new ArraySegment<byte>(new byte[count], 0, count);
+//            await this.socket.ReceiveAsync(buffer, SocketFlags.None);
+//            return buffer.Array;
+//        }
+//        
         public async Task<byte[]> ReadBytesAsync(int count)
         {
-            var buffer = new ArraySegment<byte>(new byte[count], 0, count);
-            await this.socket.ReceiveAsync(buffer, SocketFlags.None);
-            return buffer.Array;
+            this.CheckDisposed();
+            try
+            {
+                var buffer = new ArraySegment<byte>(new byte[count], 0, count);
+                int read = 0;
+                int offset = 0;
+                int shouldRead = count;
+                while (read < count)
+                {
+                    var currentRead = await inputStream.ReadAsync(buffer.Array, offset, shouldRead);
+                    if (currentRead < 1)
+                    {
+                        continue;
+                    }
+
+                    read += currentRead;
+                    offset += currentRead;
+                    shouldRead -= currentRead;
+                }
+
+                return buffer.Array;
+            }
+            catch (IOException)
+            {
+                this.isAlive = false;
+                throw;
+            }
         }
 
         /// <summary>
@@ -343,6 +385,7 @@ namespace Enyim.Caching.Memcached
 }
 
 #region [ License information          ]
+
 /* ************************************************************
  * 
  *    Copyright (c) 2010 Attila Kisk? enyim.com
@@ -360,4 +403,5 @@ namespace Enyim.Caching.Memcached
  *    limitations under the License.
  *    
  * ************************************************************/
+
 #endregion
