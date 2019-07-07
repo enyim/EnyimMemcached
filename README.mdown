@@ -1,3 +1,9 @@
+**This project is archived**
+
+Further development is happening at https://github.com/enyim/Memcached2
+
+----
+
 # Enyim Memcached Client
 
 This is a .NET client library for [memcached](http://memcached.org) written in C#. There is also a client for [Membase](http://membase.com)'s persistent memcached server.
