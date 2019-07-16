@@ -291,6 +291,7 @@
     </Compile>
     <Compile Include="Memcached\Transcoders\CacheItem.cs">
     </Compile>
+    <Compile Include="Memcached\Transcoders\CompressingTranscoder.cs" />
     <Compile Include="Memcached\Transcoders\DataContractTranscoder.cs" />
     <Compile Include="Memcached\Transcoders\DefaultTranscoder.cs">
     </Compile>
